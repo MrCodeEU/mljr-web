@@ -1,0 +1,12 @@
+@import "tailwindcss";
+@import "../../../../ui/css/_base.css";
+@import "../../../../ui/css/_layout.css";
+@import "../../../../ui/css/_primitive.css";
+@import "../../../../ui/css/_overlay.css";
+@import "../../../../ui/css/_form.css";
+@import "../../../../ui/css/_data.css";
+@import "../../../../ui/css/_feedback.css";
+
+@source "../../../../ui";
+@source "../../pages";
+@source "../../main.go";

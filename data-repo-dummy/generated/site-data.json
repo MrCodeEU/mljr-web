@@ -1,0 +1,30 @@
+{
+  "schema_version": "site-data.v1",
+  "generated_at": "2026-06-10T08:00:00Z",
+  "profile": {
+    "name": "Michael Reinegger",
+    "headline": "Software engineer focused on Go, security, homelab infrastructure, and practical web systems.",
+    "avatar": "assets/avatar.webp"
+  },
+  "github_projects": [],
+  "timeline": [],
+  "strava_data": {
+    "year": "2026",
+    "total_stats": {
+      "count": 84,
+      "distance": 482300.4,
+      "moving_time": 167420,
+      "elapsed_time": 171902,
+      "elevation_gain": 3280.5
+    },
+    "year_to_date_stats": {
+      "count": 27,
+      "distance": 31388.4,
+      "moving_time": 67209,
+      "elapsed_time": 67498,
+      "elevation_gain": 99.8
+    },
+    "recent_activities": [],
+    "disciplines": []
+  }
+}

@@ -1,0 +1,11 @@
+/* mljr-ui design system — import index.
+ * Add new component partials here; projects only need to @import this file.
+ * Partial naming: _base (tokens/themes), _<category> (components).
+ */
+@import "./_base.css";
+@import "./_layout.css";
+@import "./_primitive.css";
+@import "./_overlay.css";
+@import "./_form.css";
+@import "./_data.css";
+@import "./_feedback.css";

@@ -1,0 +1,15 @@
+/bin/*
+!/bin/.gitkeep
+/tools/icongen/.cache/
+*.css
+!ui/css/*.css
+!projects/*/assets/css/*.css
+projects/*/assets/static/app.css
+projects/*/assets/static/datastar.js
+projects/*/assets/static/altcha.js
+projects/homepage/assets/static/portfolio/
+projects/homepage/assets/static/logos/
+projects/homepage/assets/static/img/
+projects/homepage/data/seed-cache.json
+.DS_Store
+.playwright-mcp/

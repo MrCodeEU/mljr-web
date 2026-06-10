@@ -1,0 +1,218 @@
+// icongen — fetch Iconify icon sets at build time, emit ui/icon/icons_gen.go.
+//
+// Reads tools/icongen/icons.txt (one "set:name" per line, # for comments),
+// fetches https://cdn.jsdelivr.net/npm/@iconify-json/<set>/icons.json once per
+// set, caches under tools/icongen/.cache/<set>.json, and writes a Go source
+// file containing a map[string]string keyed by "set:name" -> inline SVG.
+package main
+
+import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"go/format"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+)
+
+const (
+	cacheDir = "tools/icongen/.cache"
+	listPath = "tools/icongen/icons.txt"
+	outPath  = "ui/icon/icons_gen.go"
+)
+
+type iconifyJSON struct {
+	Prefix string `json:"prefix"`
+	Width  int    `json:"width"`
+	Height int    `json:"height"`
+	Icons  map[string]struct {
+		Body   string `json:"body"`
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
+	} `json:"icons"`
+	Aliases map[string]struct {
+		Parent string `json:"parent"`
+		Body   string `json:"body"`
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
+	} `json:"aliases"`
+}
+
+func resolveIcon(ij iconifyJSON, name string) (body string, w, h int, ok bool) {
+	if ic, found := ij.Icons[name]; found {
+		return ic.Body, ic.Width, ic.Height, true
+	}
+	seen := map[string]bool{}
+	cur := name
+	for {
+		if seen[cur] {
+			return "", 0, 0, false
+		}
+		seen[cur] = true
+		al, found := ij.Aliases[cur]
+		if !found {
+			return "", 0, 0, false
+		}
+		if al.Body != "" {
+			return al.Body, al.Width, al.Height, true
+		}
+		if ic, found := ij.Icons[al.Parent]; found {
+			return ic.Body, orZero(al.Width, ic.Width), orZero(al.Height, ic.Height), true
+		}
+		cur = al.Parent
+	}
+}
+
+func orZero(a, b int) int {
+	if a != 0 {
+		return a
+	}
+	return b
+}
+
+func main() {
+	want, err := readList(listPath)
+	if err != nil {
+		die("read list: %v", err)
+	}
+	if err := os.MkdirAll(cacheDir, 0o750); err != nil {
+		die("mkdir cache: %v", err)
+	}
+
+	sets := map[string]iconifyJSON{}
+	out := map[string]string{}
+
+	setNames := make([]string, 0, len(want))
+	for s := range want {
+		setNames = append(setNames, s)
+	}
+	sort.Strings(setNames)
+
+	for _, set := range setNames {
+		ij, ok := sets[set]
+		if !ok {
+			ij, err = loadSet(set)
+			if err != nil {
+				die("load set %q: %v", set, err)
+			}
+			sets[set] = ij
+		}
+		defW, defH := orDefault(ij.Width, 24), orDefault(ij.Height, 24)
+		names := want[set]
+		sort.Strings(names)
+		for _, n := range names {
+			body, iw, ih, found := resolveIcon(ij, n)
+			if !found {
+				die("missing icon %s:%s", set, n)
+			}
+			w := orDefault(iw, defW)
+			hh := orDefault(ih, defH)
+			svg := fmt.Sprintf(
+				`<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 %d %d" fill="currentColor" aria-hidden="true">%s</svg>`,
+				w, hh, body)
+			out[set+":"+n] = svg
+		}
+	}
+
+	if err := writeGo(outPath, out); err != nil {
+		die("write: %v", err)
+	}
+	fmt.Printf("icongen: wrote %d icons → %s\n", len(out), outPath)
+}
+
+func readList(p string) (map[string][]string, error) {
+	f, err := os.Open(p) // #nosec G304 -- p is the repo-local icons.txt constant.
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = f.Close() }()
+	out := map[string][]string{}
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		line := strings.TrimSpace(sc.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("bad line %q", line)
+		}
+		set, name := parts[0], parts[1]
+		out[set] = append(out[set], name)
+	}
+	return out, sc.Err()
+}
+
+func loadSet(set string) (iconifyJSON, error) {
+	cache := filepath.Join(cacheDir, set+".json")
+	if b, err := os.ReadFile(cache); err == nil { // #nosec G304 -- cache is under the repo-local icon cache directory.
+		var ij iconifyJSON
+		if err := json.Unmarshal(b, &ij); err == nil {
+			return ij, nil
+		}
+	}
+	url := fmt.Sprintf("https://cdn.jsdelivr.net/npm/@iconify-json/%s/icons.json", set)
+	fmt.Printf("icongen: fetching %s\n", url)
+	resp, err := http.Get(url) // #nosec G107 -- URL is pinned to jsdelivr Iconify JSON for configured icon sets.
+	if err != nil {
+		return iconifyJSON{}, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != 200 {
+		return iconifyJSON{}, fmt.Errorf("status %d", resp.StatusCode)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return iconifyJSON{}, err
+	}
+	if err := os.WriteFile(cache, body, 0o600); err != nil {
+		return iconifyJSON{}, err
+	}
+	var ij iconifyJSON
+	if err := json.Unmarshal(body, &ij); err != nil {
+		return iconifyJSON{}, err
+	}
+	return ij, nil
+}
+
+func orDefault(v, d int) int {
+	if v == 0 {
+		return d
+	}
+	return v
+}
+
+func writeGo(path string, m map[string]string) error {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var b strings.Builder
+	b.WriteString("// Code generated by tools/icongen. DO NOT EDIT.\n\n")
+	b.WriteString("package icon\n\n")
+	b.WriteString("var icons = map[string]string{\n")
+	for _, k := range keys {
+		fmt.Fprintf(&b, "\t%q: %q,\n", k, m[k])
+	}
+	b.WriteString("}\n")
+
+	src, err := format.Source([]byte(b.String()))
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+		return err
+	}
+	return os.WriteFile(path, src, 0o644) // #nosec G306 -- generated Go source should be readable like normal source files.
+}
+
+func die(f string, a ...any) {
+	fmt.Fprintf(os.Stderr, "icongen: "+f+"\n", a...)
+	os.Exit(1)
+}

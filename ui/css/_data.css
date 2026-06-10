@@ -1,0 +1,297 @@
+/* mljr-ui — data components: timeline, carousel, pagination, stat-card, table */
+@layer components {
+
+  /* data: timeline — brutalist vertical timeline */
+  [data-component="timeline"] { display:flex; flex-direction:column; position:relative; gap:0; padding-left:var(--sp-2); }
+  [data-component="timeline-item"] { display:grid; grid-template-columns:36px 1fr; gap:var(--sp-4); padding-bottom:var(--sp-7); position:relative; }
+  [data-component="timeline-item"] [data-slot="dot"] {
+    width:24px; height:24px;
+    background:var(--accent); color:var(--accent-ink);
+    border:var(--bw-2) solid var(--line);
+    border-radius:50%; margin-top:var(--sp-4); justify-self:center;
+    z-index:1; position:relative; box-shadow:var(--shadow-xs); flex-shrink:0;
+  }
+  [data-component="timeline-item"] [data-slot="line"] { position:absolute;left:17px;top:48px;bottom:0;width:3px;background:var(--line);opacity:.25; }
+  [data-component="timeline-item"]:last-child [data-slot="line"] { display:none; }
+  [data-component="timeline-item"] [data-slot="card"] { position:relative; }
+  [data-component="timeline-item"] [data-slot="card"] > [data-component="card"] { position:relative; overflow:visible; }
+  [data-component="timeline-item"] [data-slot="logo"] {
+    position:absolute; top:-10px; right:-10px;
+    width:52px; height:52px; object-fit:contain;
+    background:#fff; border:var(--bw-2) solid var(--line);
+    box-shadow:var(--shadow-xs); padding:4px; z-index:2;
+  }
+  [data-component="timeline-item"] [data-slot="period"] {
+    display:block; font-size:var(--t-xs); font-family:var(--font-display);
+    font-weight:700; letter-spacing:.08em; opacity:.65;
+    margin-bottom:var(--sp-2); padding-right:56px;
+  }
+  [data-component="timeline-item"] [data-slot="title"] {
+    font-family:var(--font-display); font-weight:800; font-size:var(--t-lg);
+    line-height:var(--leading-snug); letter-spacing:var(--tracking-tight);
+    margin:.1em 0 .3em; padding-right:56px;
+  }
+  [data-component="timeline-item"] [data-slot="org"] {
+    font-family:var(--font-display); font-weight:700; font-size:var(--t-sm);
+    opacity:.8; margin-bottom:var(--sp-2);
+  }
+  [data-component="timeline-item"] [data-slot="desc"] { margin:0; font-size:var(--t-sm); }
+  [data-component="timeline-item"] [data-slot="tags"] { display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-top:var(--sp-2); }
+
+  /* data: snake timeline */
+  [data-component="snake-timeline"] {
+    --snake-line: 6px;
+    --snake-card-min: 280px;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    padding:0 var(--sp-1) var(--sp-2);
+    overflow-x:auto;
+    overflow-y:visible;
+    scrollbar-width:thin;
+    scrollbar-color:var(--muted) transparent;
+  }
+  [data-component="snake-timeline"][data-cols="1"] [data-slot="row"] { min-width:var(--snake-card-min); }
+  [data-component="snake-timeline"][data-cols="2"] [data-slot="row"] { min-width:640px; }
+  [data-component="snake-timeline"][data-cols="3"] [data-slot="row"] { min-width:960px; }
+  [data-component="snake-timeline"][data-cols="4"] [data-slot="row"] { min-width:1240px; }
+  [data-component="snake-timeline"] [data-slot="row"] {
+    position:relative;
+    padding-bottom:var(--sp-7);
+  }
+  [data-component="snake-timeline"] [data-slot="path"] {
+    min-height:52px;
+    margin-bottom:var(--sp-2);
+    position:relative;
+    display:flex;
+    align-items:center;
+  }
+  [data-component="snake-timeline"] [data-slot="rail"] {
+    position:absolute;
+    left:0;
+    right:0;
+    top:50%;
+    height:var(--snake-line);
+    transform:translateY(-50%);
+    background:var(--ink);
+    border-radius:0;
+    z-index:0;
+  }
+  [data-component="snake-timeline"] [data-slot="dots"],
+  [data-component="snake-timeline"] [data-slot="items"] {
+    display:grid;
+    grid-template-columns:repeat(var(--snake-cols), minmax(0, 1fr));
+    gap:var(--sp-4);
+    width:100%;
+  }
+  [data-component="snake-timeline"] [data-dir="rtl"] [data-slot="dots"],
+  [data-component="snake-timeline"] [data-dir="rtl"] [data-slot="items"] {
+    direction:rtl;
+  }
+  [data-component="snake-timeline"] [data-slot="dot-cell"] {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:58px;
+  }
+  [data-component="snake-timeline"] [data-slot="dot"] {
+    width:52px;
+    height:52px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:var(--ink);
+    color:var(--bg);
+    border:var(--bw-2) solid var(--bg);
+    outline:var(--bw-2) solid var(--ink);
+    box-shadow:var(--shadow), inset 0 0 0 var(--bw-1) var(--bg);
+    font-family:var(--font-display);
+    font-size:var(--t-xl);
+    font-weight:900;
+    line-height:1;
+    direction:ltr;
+    position:relative;
+    z-index:1;
+  }
+  [data-component="snake-timeline"] [data-slot="turn"] {
+    position:absolute;
+    top:26px;
+    bottom:-26px;
+    width:var(--snake-line);
+    background:var(--ink);
+    border-radius:0;
+    z-index:0;
+  }
+  [data-component="snake-timeline"] [data-slot="turn"][data-side="right"] { right:0; }
+  [data-component="snake-timeline"] [data-slot="turn"][data-side="left"] { left:0; }
+  [data-component="snake-timeline"] [data-slot="item"] {
+    min-width:0;
+  }
+  [data-component="snake-timeline"] [data-slot="item"] > [data-component="card"] {
+    min-height:100%;
+    border-width:var(--bw-2);
+  }
+
+  /* data: carousel — full-bleed in card, black bg, contain mode */
+  [data-component="carousel"] {
+    position:relative; overflow:hidden; background:#000;
+    border:var(--border-w) solid var(--line); border-radius:var(--radius);
+    margin:-clamp(1.25rem,2vw,2rem); margin-bottom:0;
+  }
+  [data-component="carousel"] [data-slot="track"] { width:100%; height:220px; position:relative; }
+  [data-component="carousel"] [data-slot="track"] > div {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity .4s ease;
+    pointer-events:none;
+  }
+  [data-component="carousel"] [data-slot="track"] > div[style*="display: none"] { opacity:0; }
+  [data-component="carousel"] [data-slot="track"] > div:not([style*="display: none"]) {
+    opacity:1; pointer-events:auto;
+  }
+  [data-component="carousel"] [data-slot="track"] img { max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain; }
+  [data-component="carousel"] [data-slot="prev"],
+  [data-component="carousel"] [data-slot="next"] {
+    position:absolute; top:50%; transform:translateY(-50%); z-index:2;
+    background:rgba(0,0,0,.6); color:#fff;
+    border:var(--bw-1) solid rgba(255,255,255,.3);
+    padding:var(--sp-2) var(--sp-3);
+    cursor:pointer; display:flex; font-size:var(--t-md); line-height:1;
+    transition:background var(--fade);
+  }
+  [data-component="carousel"] [data-slot="prev"]:hover,
+  [data-component="carousel"] [data-slot="next"]:hover { background:rgba(0,0,0,.85); }
+  [data-component="carousel"] [data-slot="prev"] { left:0; }
+  [data-component="carousel"] [data-slot="next"] { right:0; }
+  [data-component="carousel"] [data-slot="dots"] { position:absolute;bottom:var(--sp-2);left:50%;transform:translateX(-50%);display:flex;gap:var(--sp-2); }
+  [data-component="carousel"] [data-slot="dots"] button { width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,.6);background:transparent;cursor:pointer;padding:0; }
+  [data-component="carousel"] [data-slot="dots"] button[data-state="active"] { background:#fff; }
+
+  /* data: pagination */
+  [data-component="pagination"] { display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap; }
+  [data-component="pagination"] [data-slot="btn"],
+  [data-component="pagination"] [data-slot="prev"],
+  [data-component="pagination"] [data-slot="next"] { font-family:var(--font-display);font-weight:700;border:var(--border-w) solid var(--line);padding:.4rem .8rem;cursor:pointer;background:var(--surface);box-shadow:var(--shadow-xs);font-size:var(--t-sm);transition:transform var(--press),box-shadow var(--press); }
+  [data-component="pagination"] [data-slot="btn"]:hover,
+  [data-component="pagination"] [data-slot="prev"]:hover,
+  [data-component="pagination"] [data-slot="next"]:hover { transform:translate(2px,2px);box-shadow:0 0 0 var(--line); }
+  [data-component="pagination"] [data-slot="btn"][data-state="active"] {
+    background:var(--accent); color:var(--accent-ink); box-shadow:var(--shadow);
+  }
+  [data-component="pagination"] [data-slot="prev"][data-state="disabled"],
+  [data-component="pagination"] [data-slot="next"][data-state="disabled"] {
+    opacity:.35; cursor:not-allowed; transform:none; box-shadow:var(--shadow-xs);
+  }
+
+  /* data: stat-card */
+  [data-component="stat-card"] {
+    display:flex; flex-direction:column; gap:var(--sp-2);
+    padding:var(--sp-5); background:var(--surface);
+    border:var(--border-w) var(--border-style) var(--line);
+    border-radius:var(--radius); box-shadow:var(--shadow-xs);
+  }
+  [data-component="stat-card"] [data-slot="label"] {
+    font-size:var(--t-xs); color:var(--muted); font-weight:700;
+    text-transform:uppercase; letter-spacing:var(--tracking-wide);
+  }
+  [data-component="stat-card"] [data-slot="value"] {
+    font-family:var(--font-display); font-size:var(--t-2xl);
+    font-weight:900; line-height:1;
+  }
+  [data-component="stat-card"] [data-slot="delta"] { font-size:var(--t-sm); font-weight:600; }
+  [data-component="stat-card"] [data-slot="delta"][data-state="up"]   { color:var(--success); }
+  [data-component="stat-card"] [data-slot="delta"][data-state="down"] { color:var(--danger); }
+
+  /* data: table */
+  [data-component="table-wrap"] { overflow-x:auto; }
+  [data-component="table"] { width:100%; border-collapse:collapse; font-size:var(--t-sm); }
+  [data-component="table"] th {
+    text-align:left; padding:var(--sp-2) var(--sp-4);
+    border-bottom:var(--bw-2) solid var(--line);
+    font-family:var(--font-display); font-weight:700;
+    font-size:var(--t-xs); text-transform:uppercase; letter-spacing:var(--tracking-wide);
+  }
+  [data-component="table"] td {
+    padding:var(--sp-3) var(--sp-4);
+    border-bottom:var(--border-w) solid color-mix(in srgb,var(--line) 25%,transparent);
+  }
+  [data-component="table"][data-variant="striped"] tbody tr:nth-child(even) td { background:var(--surface-2); }
+  [data-component="table"] tbody tr:hover td { background:color-mix(in srgb,var(--accent) 5%,var(--surface)); }
+
+  /* data: list */
+  [data-component="list"] { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; }
+  [data-component="list"][data-variant="ordered"] { list-style:decimal; padding-left:var(--sp-5); }
+  [data-component="list"][data-variant="divided"] [data-component="list-item"] {
+    border-bottom:var(--bw-1) solid color-mix(in srgb,var(--line) 20%,transparent);
+  }
+  [data-component="list"][data-variant="divided"] [data-component="list-item"]:last-child { border-bottom:none; }
+  [data-component="list-item"] { padding:var(--sp-3) 0; }
+
+  /* data: description list */
+  [data-component="dl"] {
+    display:grid; grid-template-columns:auto 1fr;
+    gap:var(--sp-2) var(--sp-6); align-items:baseline;
+  }
+  [data-component="dt"] {
+    font-weight:700; font-family:var(--font-display);
+    font-size:var(--t-sm); color:var(--muted); white-space:nowrap;
+  }
+  [data-component="dd"] { margin:0; }
+}
+
+@layer components {
+  /* tree-view */
+  [data-component="tree-view"] ul { list-style:none; padding:0; margin:0; }
+  [data-component="tree-view"] [data-slot="root"] > li { padding-left:0; }
+  [data-component="tree-view"] [data-slot="subtree"] { padding-left:var(--sp-5); border-left:var(--bw-1) solid var(--line); margin-left:var(--sp-2); margin-top:var(--sp-1); }
+  [data-component="tree-view"] summary[data-slot="branch"] {
+    display:flex; align-items:center; gap:var(--sp-2);
+    padding:var(--sp-1) var(--sp-2); cursor:pointer;
+    border-radius:var(--radius); font-size:var(--t-sm); font-weight:600;
+    list-style:none; user-select:none;
+  }
+  [data-component="tree-view"] summary[data-slot="branch"]:hover { background:var(--surface-2); }
+  [data-component="tree-view"] details[open] > summary [data-component="icon"] { transform:rotate(90deg); }
+  [data-component="tree-view"] [data-slot="leaf"] { padding:var(--sp-1) var(--sp-2); }
+  [data-component="tree-view"] [data-slot="label"] {
+    display:flex; align-items:center; gap:var(--sp-2);
+    font-size:var(--t-sm); color:var(--muted); padding:var(--sp-1) var(--sp-2);
+    border-radius:var(--radius); text-decoration:none;
+  }
+  [data-component="tree-view"] [data-slot="label"]:hover { color:var(--fg); background:var(--surface-2); }
+}
+
+@layer components {
+  /* data-grid */
+  [data-component="data-grid"] { display:flex; flex-direction:column; gap:var(--sp-2); }
+  [data-component="data-grid"] th[data-sortable]:hover { background:var(--surface-2); }
+  [data-component="data-grid"] th[data-sorted="asc"]::after  { content:' ↑'; opacity:.6; }
+  [data-component="data-grid"] th[data-sorted="desc"]::after { content:' ↓'; opacity:.6; }
+  [data-component="data-grid"] tr:hover td { background:var(--surface-2); }
+  [data-component="data-grid"] [data-slot="toolbar"] { flex-wrap:wrap; }
+}
+
+/* ── virtual-list ─────────────────────────────────────────────── */
+[data-component="virtual-list"] {
+  border:var(--bw-2) solid var(--ink); border-radius:var(--radius);
+  scrollbar-width:thin; scrollbar-color:var(--muted) transparent;
+}
+[data-component="virtual-list"]::-webkit-scrollbar { width:6px; }
+[data-component="virtual-list"]::-webkit-scrollbar-thumb {
+  background:var(--muted); border-radius:3px;
+}
+[data-component="virtual-list"] [data-slot="row"]:last-child {
+  border-bottom:none;
+}
+
+/* ── sortable ─────────────────────────────────────────────────── */
+[data-component="sortable"] [data-slot="sortable-item"] {
+  cursor: grab;
+}
+[data-component="sortable"][data-handle="true"] [data-slot="sortable-item"] {
+  cursor: default;
+}
+[data-component="sortable"] [data-slot="handle"] { cursor: grab; }
+[data-component="sortable"] [data-slot="sortable-item"].drag-over {
+  outline: 2px solid var(--accent); border-radius: var(--radius);
+}
