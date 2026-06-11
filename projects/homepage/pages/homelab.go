@@ -52,8 +52,10 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 				h.Style("display:flex;flex-direction:column;gap:var(--sp-4)"),
 				crowdsecCard(snap),
 				pingCard(snap),
+				cpuCard(snap),
 			),
 		),
+		attacksHeatmapCard(snap),
 		h.Div(
 			h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-3);font-size:var(--t-xs);color:var(--muted);font-weight:700"),
 			h.Span(h.Style("width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse-dot 2s ease infinite;flex-shrink:0")),
@@ -124,6 +126,61 @@ func crowdsecCard(snap homelab.Snapshot) g.Node {
 			stat(snap.ActiveBans, "Active bans"),
 			stat(snap.Attacks24h, "Blocked · 24h"),
 			stat(snap.HostsOnline, "Hosts online"),
+		),
+	)
+}
+
+func cpuCard(snap homelab.Snapshot) g.Node {
+	if len(snap.CPUUtil) < 2 {
+		return nil
+	}
+	last := snap.CPUUtil[len(snap.CPUUtil)-1]
+	return primitive.Card(primitive.CardProps{Tone: token.ToneLime},
+		h.Div(h.Style("display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
+			h.H3(h.Style("font-size:var(--t-base);font-weight:900;margin:0"), g.Text("Avg CPU · all hosts · 24h")),
+			h.Span(h.Style("font-family:var(--font-mono,monospace);font-weight:800;font-size:var(--t-sm)"),
+				g.Text(fmt.Sprintf("%.0f%%", last))),
+		),
+		uidata.LineChart(uidata.LineChartProps{
+			Height: 70,
+			Labels: snap.CPULabels,
+			Series: []uidata.LineChartSeries{{
+				Points: snap.CPUUtil,
+				Color:  "var(--accent)",
+				Fill:   true,
+			}},
+		}),
+	)
+}
+
+func attacksHeatmapCard(snap homelab.Snapshot) g.Node {
+	if len(snap.AttackDays) == 0 {
+		return nil
+	}
+	cells := make([]uidata.HeatmapCell, len(snap.AttackDays))
+	total := 0
+	for i, d := range snap.AttackDays {
+		cells[i] = uidata.HeatmapCell{
+			Date:  d.Date,
+			Value: d.Count,
+			Label: fmt.Sprintf("%d attacks blocked on %s", d.Count, d.Date.Format("Jan 2")),
+		}
+		total += d.Count
+	}
+	return h.Div(h.Style("margin-top:var(--sp-4)"),
+		primitive.Card(primitive.CardProps{Tone: token.ToneNone},
+			h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3);flex-wrap:wrap"),
+				h.Div(
+					h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("CrowdSec · last 12 months")),
+					h.H3(h.Style("font-size:var(--t-xl);font-weight:900;margin:var(--sp-1) 0 0"), g.Text("Attacks blocked per day")),
+				),
+				primitive.Tag(primitive.TagProps{Tone: token.ToneViolet},
+					g.Text(fmt.Sprintf("%d total · recording since Jun 2026", total))),
+			),
+			uidata.Heatmap(uidata.HeatmapProps{
+				Weeks: 52, CellSize: 11, Gap: 3,
+				ShowMonthLabels: true, ShowDayLabels: true,
+			}, cells),
 		),
 	)
 }

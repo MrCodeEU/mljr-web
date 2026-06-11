@@ -40,6 +40,17 @@ type Snapshot struct {
 	Attacks24h     int
 	HostsOnline    int
 	SecurityEvents int // total alert scenarios triggered since CrowdSec start
+
+	// PromQL range data
+	AttackDays []DayValue // attacks blocked per day, oldest→newest (≤365)
+	CPUUtil    []float64  // avg CPU % across hosts, last 24h, oldest→newest
+	CPULabels  []string   // hour labels aligned to CPUUtil
+}
+
+// DayValue is one day of an aggregated counter (for heatmaps).
+type DayValue struct {
+	Date  time.Time
+	Count int
 }
 
 // Sample returns a plausible snapshot for dev environments without
@@ -64,7 +75,38 @@ func Sample() Snapshot {
 		Attacks24h:     37,
 		HostsOnline:    3,
 		SecurityEvents: 2841,
+		AttackDays:     sampleAttackDays(),
+		CPUUtil:        []float64{12, 14, 11, 18, 22, 19, 15, 13, 24, 31, 28, 21, 17, 14, 16, 19, 23, 26, 20, 15, 13, 12, 14, 17},
+		CPULabels:      sampleHourLabels(24),
 	}
+}
+
+func sampleAttackDays() []DayValue {
+	seed := uint64(0xC0FFEE)
+	next := func() uint64 {
+		seed ^= seed << 13
+		seed ^= seed >> 7
+		seed ^= seed << 17
+		return seed
+	}
+	now := time.Now()
+	out := make([]DayValue, 0, 90)
+	for i := 89; i >= 0; i-- {
+		out = append(out, DayValue{
+			Date:  now.AddDate(0, 0, -i),
+			Count: int(next() % 60),
+		})
+	}
+	return out
+}
+
+func sampleHourLabels(n int) []string {
+	now := time.Now()
+	out := make([]string, n)
+	for i := range out {
+		out[i] = now.Add(time.Duration(i-n+1) * time.Hour).Format("15h")
+	}
+	return out
 }
 
 type Poller struct {
@@ -255,6 +297,85 @@ func (p *Poller) fetchProm(ctx context.Context, s *Snapshot) {
 		}
 		*q.dst = int(v)
 	}
+
+	now := time.Now()
+
+	// Attacks blocked per day, last ~12 months (heatmap fills as data accrues).
+	// VictoriaMetrics range queries spanning >40 days can return empty results
+	// (per-day index cutoff), so fetch the year in 30-day chunks.
+	seenDay := map[string]bool{}
+	for chunk := 11; chunk >= 0; chunk-- {
+		start := now.AddDate(0, 0, -30*(chunk+1))
+		end := now.AddDate(0, 0, -30*chunk)
+		pts, err := p.promQueryRange(ctx,
+			`sum(increase(cs_bucket_overflowed_total[1d]))`,
+			start, end, 24*time.Hour,
+		)
+		if err != nil {
+			continue // empty chunks are expected until a year of data exists
+		}
+		for _, pt := range pts {
+			day := time.Unix(int64(pt[0]), 0)
+			key := day.Format("2006-01-02")
+			if pt[1] > 0 && !seenDay[key] {
+				seenDay[key] = true
+				s.AttackDays = append(s.AttackDays, DayValue{Date: day, Count: int(pt[1])})
+			}
+		}
+	}
+
+	// Avg CPU across hosts, last 24h, 30-minute resolution.
+	if pts, err := p.promQueryRange(ctx,
+		`100 - avg(rate(node_cpu_seconds_total{mode="idle"}[10m])) * 100`,
+		now.Add(-24*time.Hour), now, 30*time.Minute,
+	); err != nil {
+		log.Printf("homelab: promql cpu range failed: %v", err)
+	} else {
+		for _, pt := range pts {
+			s.CPUUtil = append(s.CPUUtil, pt[1])
+			label := ""
+			t := time.Unix(int64(pt[0]), 0)
+			if t.Minute() == 0 && t.Hour()%6 == 0 {
+				label = t.Format("15h")
+			}
+			s.CPULabels = append(s.CPULabels, label)
+		}
+	}
+}
+
+// promQueryRange runs a PromQL range query and returns [timestamp, value]
+// pairs of the first result series.
+func (p *Poller) promQueryRange(ctx context.Context, query string, start, end time.Time, step time.Duration) ([][2]float64, error) {
+	var res struct {
+		Status string `json:"status"`
+		Data   struct {
+			Result []struct {
+				Values [][2]any `json:"values"`
+			} `json:"result"`
+		} `json:"data"`
+	}
+	u := p.promURL + "/api/v1/query_range?query=" + url.QueryEscape(query) +
+		fmt.Sprintf("&start=%d&end=%d&step=%d", start.Unix(), end.Unix(), int(step.Seconds()))
+	if err := p.getJSON(ctx, u, &res); err != nil {
+		return nil, err
+	}
+	if res.Status != "success" || len(res.Data.Result) == 0 {
+		return nil, fmt.Errorf("no data")
+	}
+	out := make([][2]float64, 0, len(res.Data.Result[0].Values))
+	for _, v := range res.Data.Result[0].Values {
+		ts, ok1 := v[0].(float64)
+		str, ok2 := v[1].(string)
+		if !ok1 || !ok2 {
+			continue
+		}
+		f, err := strconv.ParseFloat(str, 64)
+		if err != nil {
+			continue
+		}
+		out = append(out, [2]float64{ts, f})
+	}
+	return out, nil
 }
 
 func (p *Poller) promQuery(ctx context.Context, query string) (float64, error) {
