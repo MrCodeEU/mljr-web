@@ -1,0 +1,138 @@
+package pages
+
+import (
+	"fmt"
+	"time"
+
+	g "maragu.dev/gomponents"
+	h "maragu.dev/gomponents/html"
+
+	hpdata "mljr-web/projects/homepage/data"
+	uidata "mljr-web/ui/data"
+	"mljr-web/ui/icon"
+	"mljr-web/ui/layout"
+	"mljr-web/ui/primitive"
+	"mljr-web/ui/token"
+)
+
+// githubSection renders the open-source activity panel: a contribution
+// heatmap, language-share gauges, and headline counters. Repo and star
+// counts come from real seed data; the heatmap and commit counters are
+// placeholder values until the GitHub stats pipeline lands.
+func githubSection(d hpdata.SiteData) g.Node {
+	repoCount := len(d.GitHub)
+	stars := 0
+	for _, p := range d.GitHub {
+		stars += p.Stars
+	}
+
+	return h.Section(
+		h.ID("opensource"),
+		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink)"),
+		layout.Container(layout.ContainerProps{},
+			sectionHeader("04", "Open source", "sample data", token.ToneMint),
+			h.Div(
+				h.Class("oss-grid"),
+				h.Style("display:grid;grid-template-columns:1.4fr 1fr;gap:var(--sp-5);align-items:stretch"),
+				// Left: heatmap card
+				primitive.Card(primitive.CardProps{Tone: token.ToneMint},
+					h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-4)"),
+						h.Div(
+							h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("Contributions")),
+							h.H3(h.Style("font-size:var(--t-xl);font-weight:900;margin:var(--sp-1) 0 0"), g.Text("A year of commits")),
+						),
+						h.A(h.Href("https://github.com/MrCodeEU"), g.Attr("target", "_blank"), g.Attr("rel", "noopener"),
+							primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
+								icon.Icon("simple-icons:github"),
+								g.Text("Profile"),
+							),
+						),
+					),
+					uidata.Heatmap(uidata.HeatmapProps{
+						Weeks: 52, CellSize: 11, Gap: 3,
+						ShowMonthLabels: true, ShowDayLabels: true,
+					}, placeholderContributions()),
+					// Language share gauges below the heatmap
+					h.Div(
+						h.Style("display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-top:var(--sp-4);justify-items:center"),
+						uidata.Gauge(uidata.GaugeProps{Value: 58, Label: "Go", Unit: "%", Size: 130}),
+						uidata.Gauge(uidata.GaugeProps{Value: 22, Label: "TS / Svelte", Unit: "%", Size: 130, Color: "var(--info)"}),
+						uidata.Gauge(uidata.GaugeProps{Value: 20, Label: "Other", Unit: "%", Size: 130, Color: "var(--warning)"}),
+					),
+				),
+				// Right: counters
+				h.Div(
+					h.Style("display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:var(--sp-4)"),
+					ossStat("nt-oss-repos", float64(repoCount), "", "Public repos", token.ToneCyan, "lucide:folder-git-2"),
+					ossStat("nt-oss-stars", float64(stars), "", "GitHub stars", token.ToneYellow, "lucide:star"),
+					ossStat("nt-oss-commits", 1200, "+", "Commits / year*", token.ToneViolet, "lucide:git-commit-horizontal"),
+					ossStat("nt-oss-streak", 23, "d", "Longest streak*", token.TonePink, "lucide:flame"),
+				),
+			),
+			h.P(h.Style("margin:var(--sp-3) 0 0;font-size:var(--t-xs);color:var(--muted)"),
+				g.Text("* heatmap, commit and streak numbers are sample data — live GitHub stats pipeline coming soon."),
+			),
+		),
+	)
+}
+
+func ossStat(id string, value float64, suffix, label string, tone token.Tone, ic string) g.Node {
+	return primitive.Card(primitive.CardProps{Tone: tone},
+		h.Div(h.Style("display:flex;flex-direction:column;justify-content:space-between;height:100%;gap:var(--sp-3)"),
+			icon.Icon(ic, icon.Props{Size: "1.6rem"}),
+			h.Div(
+				h.Div(h.Style("font-size:clamp(2.2rem,3.5vw,3.2rem);font-weight:900;line-height:1;font-variant-numeric:tabular-nums"),
+					primitive.NumberTicker(primitive.NumberTickerProps{
+						Value: value, Suffix: suffix, TriggerOnView: true, ID: id, Duration: 2600,
+					}),
+				),
+				h.Div(h.Style("font-size:var(--t-xs);font-weight:800;text-transform:uppercase;letter-spacing:.1em;opacity:.7;margin-top:var(--sp-2)"),
+					g.Text(label),
+				),
+			),
+		),
+	)
+}
+
+// placeholderContributions generates a deterministic, plausible-looking year
+// of contribution data: weekday-weighted, with hot streaks and quiet weeks.
+// Uses a tiny xorshift PRNG so the pattern is stable across renders.
+func placeholderContributions() []uidata.HeatmapCell {
+	seed := uint64(0x9E3779B97F4A7C15)
+	next := func() float64 {
+		seed ^= seed << 13
+		seed ^= seed >> 7
+		seed ^= seed << 17
+		return float64(seed%1000) / 1000
+	}
+	now := time.Now()
+	cells := make([]uidata.HeatmapCell, 0, 365)
+	for i := 364; i >= 0; i-- {
+		date := now.AddDate(0, 0, -i)
+		wd := date.Weekday()
+		base := 3.0
+		if wd == time.Saturday || wd == time.Sunday {
+			base = 1.2
+		}
+		// Quiet weeks and hot streaks based on the week index
+		week := i / 7
+		switch week % 9 {
+		case 2:
+			base *= 0.2 // exam / vacation week
+		case 5, 6:
+			base *= 2.1 // release crunch
+		}
+		v := int(base * next() * 4)
+		if next() < 0.18 {
+			v = 0
+		}
+		if v > 0 {
+			cells = append(cells, uidata.HeatmapCell{
+				Date:  date,
+				Value: v,
+				Label: fmt.Sprintf("%d contributions on %s (sample)", v, date.Format("Jan 2")),
+			})
+		}
+	}
+	return cells
+}

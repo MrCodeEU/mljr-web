@@ -9,6 +9,8 @@ import (
 
 	"mljr-web/internal/mail"
 	"mljr-web/internal/web"
+	"mljr-web/projects/homepage/homelab"
+	"mljr-web/projects/homepage/pages"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/primitive"
 	"mljr-web/ui/token"
@@ -146,4 +148,15 @@ func patchFormError(sse *datastar.ServerSentEventGenerator, msg string) error {
 		return err
 	}
 	return sse.MarshalAndPatchSignals(map[string]any{"sending": false})
+}
+
+// ── /api/homelab ──────────────────────────────────────────────────────────────
+
+// registerHomelabHandler serves the live homelab panel fragment. The homepage
+// re-fetches it every 60s via data-on-interval and patches #homelab-panel.
+func registerHomelabHandler(e *echo.Echo, snapshot func() homelab.Snapshot) {
+	e.GET("/api/homelab", func(c echo.Context) error {
+		sse := datastar.NewSSE(c.Response().Writer, c.Request())
+		return sse.PatchElements(web.RenderToString(pages.HomelabPanel(snapshot())))
+	})
 }

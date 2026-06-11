@@ -27,9 +27,9 @@ func stravaSection(d hpdata.SiteData) g.Node {
 
 	return h.Section(
 		h.ID("activity"),
-		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink);border-bottom:var(--bw-2) solid var(--ink);background:color-mix(in srgb,var(--accent) 7%,var(--bg))"),
+		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink);border-bottom:var(--bw-2) solid var(--ink)"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("Activity", publicActivityBadge(s), token.ToneAccent),
+			sectionHeader("06", "Activity", publicActivityBadge(s), token.ToneAccent),
 			h.Div(
 				h.Class("activity-grid"),
 				h.Style("display:grid;grid-template-columns:1.1fr .9fr;gap:var(--sp-5);align-items:stretch"),

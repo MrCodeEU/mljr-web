@@ -5,6 +5,7 @@ import (
 	h "maragu.dev/gomponents/html"
 
 	hpdata "mljr-web/projects/homepage/data"
+	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/primitive"
@@ -47,11 +48,53 @@ func skillsSection() g.Node {
 		}
 	}
 
+	// Build radar chart data: normalize skill counts to 0–100
+	maxSkills := 1
+	for _, sg := range groups {
+		if len(sg.Skills) > maxSkills {
+			maxSkills = len(sg.Skills)
+		}
+	}
+	radarAxes := make([]string, len(groups))
+	radarValues := make([]float64, len(groups))
+	for i, sg := range groups {
+		radarAxes[i] = sg.Label
+		radarValues[i] = float64(len(sg.Skills)) / float64(maxSkills) * 100
+	}
+
 	return h.Section(
 		h.ID("skills"),
 		h.Style("padding:var(--sp-12) 0"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("Skills", "My tech stack", token.ToneViolet),
+			sectionHeader("07", "Skills", "My tech stack", token.ToneViolet),
+			// Radar chart + description
+			h.Div(
+				h.Style("display:grid;grid-template-columns:auto 1fr;gap:var(--sp-8);align-items:center;margin-bottom:var(--sp-8)"),
+				uidata.RadarChart(uidata.RadarChartProps{
+					Axes:       radarAxes,
+					ShowGrid:   true,
+					GridLevels: 4,
+					Size:       240,
+					Max:        100,
+				},
+					uidata.RadarSeries{Label: "Breadth", Values: radarValues},
+				),
+				h.Div(
+					h.Style("display:flex;flex-direction:column;gap:var(--sp-3)"),
+					g.Group(func() []g.Node {
+						nodes := make([]g.Node, len(groups))
+						for i, sg := range groups {
+							nodes[i] = h.Div(
+								h.Style("display:flex;align-items:center;gap:var(--sp-3)"),
+								h.Div(h.Style("width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--ink);flex-shrink:0")),
+								h.Span(h.Style("font-weight:800;font-size:var(--t-sm)"), g.Text(sg.Label)),
+								h.Span(h.Style("font-size:var(--t-xs);color:var(--muted);margin-left:auto"), g.Textf("%d skills", len(sg.Skills))),
+							)
+						}
+						return nodes
+					}()),
+				),
+			),
 		),
 		// Marquee rows (outside container for full width)
 		h.Div(
@@ -85,11 +128,16 @@ func skillPill(label, ic string, idx int) g.Node {
 	)
 }
 
-// sectionHeader renders a section heading with a tone tag badge.
-func sectionHeader(heading, sub string, tone token.Tone) g.Node {
+// sectionHeader renders a Swiss-editorial section heading: a large outlined
+// index number, the heading, and a tone tag badge on the right.
+func sectionHeader(num, heading, sub string, tone token.Tone) g.Node {
 	return h.Div(
 		h.Style("display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-3);margin-bottom:var(--sp-8)"),
-		primitive.Heading(primitive.HeadingProps{Level: 2}, g.Text(heading)),
+		h.Div(
+			h.Style("display:flex;align-items:baseline;gap:var(--sp-4)"),
+			g.If(num != "", h.Span(h.Class("section-num"), g.Text(num))),
+			primitive.Heading(primitive.HeadingProps{Level: 2}, g.Text(heading)),
+		),
 		g.If(sub != "", primitive.Tag(primitive.TagProps{Tone: tone}, g.Text(sub))),
 	)
 }

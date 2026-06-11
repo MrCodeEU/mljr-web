@@ -13,3 +13,4 @@ projects/homepage/assets/static/img/
 projects/homepage/data/seed-cache.json
 .DS_Store
 .playwright-mcp/
+.env

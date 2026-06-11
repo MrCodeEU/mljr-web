@@ -48,7 +48,7 @@ func projectsSection(projects []hpdata.Project) g.Node {
 		h.Style("padding:var(--sp-12) 0"),
 		uidata.PaginationSignals("pg", perPage),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("Projects", fmt.Sprintf("%d projects", total), token.ToneLime),
+			sectionHeader("03", "Projects", fmt.Sprintf("%d projects", total), token.ToneLime),
 			// top pagination
 			h.Div(h.Style("margin-bottom:var(--sp-5);display:flex;justify-content:center"),
 				uidata.Pagination(uidata.PaginationProps{ID: "pg", Total: total, PerPage: perPage}),

@@ -66,14 +66,14 @@ func experienceSection(li hpdata.LinkedInData) g.Node {
 		h.ID("experience"),
 		h.Style("padding:var(--sp-12) 0"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("Experience", fmt.Sprintf("%d positions", len(jobs)), token.ToneCyan),
+			sectionHeader("01", "Experience", fmt.Sprintf("%d positions", len(jobs)), token.ToneCyan),
 			// Snake timeline spans full width
 			h.Div(h.Class("experience-snake"), uidata.SnakeTimeline(uidata.SnakeTimelineProps{Cols: 3}, snakeItems...)),
 			h.Div(h.Class("experience-mobile-timeline"), uidata.Timeline(uidata.TimelineProps{}, mobileItems...)),
 			// Education row below
 			h.Div(
 				h.Style("margin-top:var(--sp-12)"),
-				sectionHeader("Education", fmt.Sprintf("%d degrees", len(li.Education)), token.ToneSky),
+				sectionHeader("", "Education", fmt.Sprintf("%d degrees", len(li.Education)), token.ToneSky),
 				h.Div(
 					h.Style("display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--sp-4)"),
 					g.Group(func() []g.Node {

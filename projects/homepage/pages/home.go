@@ -5,7 +5,7 @@ import (
 	h "maragu.dev/gomponents/html"
 
 	hpdata "mljr-web/projects/homepage/data"
-	"mljr-web/ui/icon"
+	"mljr-web/projects/homepage/homelab"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/overlay"
 	"mljr-web/ui/primitive"
@@ -15,58 +15,34 @@ import (
 
 const perPage = 6
 
-func Home(d hpdata.SiteData) g.Node {
+func Home(d hpdata.SiteData, a AnalyticsConfig, hl homelab.Snapshot) g.Node {
 	li := d.LinkedIn
 	featured := d.FeaturedProjects()
 	rest := d.AllProjects()
-	allNonMeta := append(featured, rest...)
+	// Featured projects get their own spotlight section; the grid shows the rest.
+	gridProjects := rest
+	if len(featured) == 0 {
+		gridProjects = append(featured, rest...)
+	}
 	totalProjects := len(d.GitHub)
+	headExtra := append([]g.Node{
+		h.Script(h.Src("/static/motion.min.js")),
+		g.El("style", g.Raw(homepageCSS)),
+	}, AnalyticsHead(a)...)
 
 	return layout.PageShell(
 		layout.PageProps{
 			Title:       "Michael Reinegger — Portfolio",
-			Description: "Networks & IT Security · Go · self-hosted — no JS framework, no CDN, no trackers.",
+			Description: "Networks & IT Security · Go · self-hosted — no JS framework, no CDN, no adtech tracking.",
 			Theme:       token.ThemeSwissBrut,
 			Mode:        token.ModeLight,
-			HeadExtra: []g.Node{
-				h.Script(h.Src("/static/motion.min.js")),
-				g.El("style", g.Raw(homepageCSS)),
-			},
+			HeadExtra:   headExtra,
 		},
 		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
 
 		primitive.ReadProgress(primitive.ReadProgressProps{Height: "8px", Color: "var(--accent)", ZIndex: 100}),
 
-		layout.Navbar(layout.NavbarProps{},
-			h.A(h.Href("/"),
-				h.Img(
-					h.Src("/static/img/logo/Logo-h.png"),
-					h.Alt("mljr.eu"),
-					h.Style("height:32px;width:auto"),
-				),
-			),
-			g.Group{
-				h.A(h.Href("#experience"), h.Class("nav-link-hide"), g.Text("Experience")),
-				h.A(h.Href("#projects"), g.Text("Projects")),
-				h.A(h.Href("#activity"), h.Class("nav-link-hide"), g.Text("Activity")),
-				h.A(h.Href("#skills"), h.Class("nav-link-hide"), g.Text("Skills")),
-				h.A(h.Href("#contact"), g.Text("Contact")),
-			},
-			g.Group{
-				special.ThemeToggle(),
-				special.ModeToggle(),
-				h.A(
-					h.Href("https://github.com/MrCodeEU"),
-					g.Attr("target", "_blank"),
-					g.Attr("rel", "noopener noreferrer"),
-					g.Attr("aria-label", "GitHub"),
-					primitive.Button(
-						primitive.ButtonProps{Variant: token.Outline, Size: token.SizeIcon},
-						icon.Icon("lucide:github"),
-					),
-				),
-			},
-		),
+		siteNavbar(),
 
 		h.Main(
 			h.Style("position:relative"),
@@ -74,29 +50,24 @@ func Home(d hpdata.SiteData) g.Node {
 			heroSection(li, totalProjects),
 			statsSection(d),
 			experienceSection(li),
-			projectsSection(allNonMeta),
+			featuredSection(featured),
+			projectsSection(gridProjects),
+			githubSection(d),
+			homelabSection(hl),
 			stravaSection(d),
 			skillsSection(),
+			codeShowcaseSection(),
 			contactSection(),
 		),
 
-		layout.Footer(layout.FooterProps{},
-			h.Div(
-				h.Img(h.Src("/static/img/logo/Logo-h.png"), h.Alt("mljr.eu"), h.Style("height:24px;width:auto;opacity:.6")),
-			),
-			h.Div(h.Style("text-align:right"),
-				h.Span(g.Text("mljr.eu · built with Go · gomponents · Datastar · Tailwind v4")),
-				h.Br(),
-				h.Span(h.Style("opacity:.5;font-size:var(--t-xs)"), g.Text("no JS framework · no CDN · no trackers")),
-			),
-		),
+		siteFooter(),
 
 		overlay.Toaster(overlay.ToasterProps{}),
 		overlay.Portal("portal"),
 
 		h.Script(g.Raw(`(function(){
   if(typeof Motion==='undefined') return;
-  var sections=['#experience','#projects','#activity','#skills','#contact'];
+  var sections=['#experience','#featured','#projects','#opensource','#homelab','#activity','#skills','#under-the-hood','#contact'];
   sections.forEach(function(sel){
     var el=document.querySelector(sel);
     if(!el) return;
@@ -129,6 +100,31 @@ main > div:not(#logo-svg-hp-bg) {
   overflow-x: hidden;
 }
 .experience-mobile-timeline { display: none; }
+.hero-stat-tile:last-child { border-right: none; }
+
+/* Swiss-editorial section index numbers */
+.section-num {
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  font-weight: 900;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--ink);
+  paint-order: stroke;
+  opacity: .35;
+  letter-spacing: -.02em;
+  user-select: none;
+}
+
+/* heatmap SVG should shrink-wrap and scroll on small screens */
+#opensource [data-component="heatmap-wrap"] svg { max-width: 100%; height: auto; }
+
+@media (max-width: 900px) {
+  .featured-grid { grid-template-columns: 1fr !important; }
+  .oss-grid { grid-template-columns: 1fr !important; }
+  .hood-grid { grid-template-columns: 1fr !important; }
+  .hood-grid > div:first-child { position: static !important; }
+  .homelab-grid { grid-template-columns: 1fr !important; }
+}
 
 /* ── Tablet (≤900px) ──────────────────────────────────────────── */
 @media (max-width: 900px) {

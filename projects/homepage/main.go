@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"log"
+	"time"
 
 	"mljr-web/internal/config"
 	"mljr-web/internal/mail"
 	"mljr-web/internal/web"
 	hpdata "mljr-web/projects/homepage/data"
+	"mljr-web/projects/homepage/homelab"
 	"mljr-web/projects/homepage/pages"
 
 	"github.com/labstack/echo/v4"
@@ -20,11 +23,37 @@ func main() {
 	cfg := config.Load()
 	e := web.NewEcho()
 
+	if err := registerAnalyticsProxy(e, cfg.Analytics); err != nil {
+		log.Fatal(err)
+	}
 	web.MountStatic(e, assets, "projects/homepage/assets/static", web.IsDev())
 
 	d := hpdata.Load()
+	analytics := pages.AnalyticsConfig{
+		UmamiScriptSrc: cfg.Analytics.UmamiScriptSrc,
+		UmamiWebsiteID: cfg.Analytics.UmamiWebsiteID,
+		UmamiHostURL:   cfg.Analytics.UmamiHostURL,
+		UmamiDomains:   cfg.Analytics.UmamiDomains,
+	}
+	// Live homelab panel: background poller, 60s cadence.
+	hlPoller := homelab.New(cfg.Homelab.KumaURL, cfg.Homelab.KumaSlug, cfg.Homelab.PromURL)
+	hlPoller.Start(context.Background(), 60*time.Second)
+	hlSnapshot := func() homelab.Snapshot {
+		snap := hlPoller.Snapshot()
+		if !snap.KumaOK && web.IsDev() {
+			return homelab.Sample()
+		}
+		return snap
+	}
+
 	e.GET("/", func(c echo.Context) error {
-		return web.Render(c, 200, pages.Home(d))
+		return web.Render(c, 200, pages.Home(d, analytics, hlSnapshot()))
+	})
+	e.GET("/impressum", func(c echo.Context) error {
+		return web.Render(c, 200, pages.Impressum(analytics))
+	})
+	e.GET("/datenschutz", func(c echo.Context) error {
+		return web.Render(c, 200, pages.Datenschutz(analytics))
 	})
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "ok") })
 	e.GET("/favicon.ico", func(c echo.Context) error { return c.NoContent(204) })
@@ -50,6 +79,7 @@ func main() {
 	}
 
 	registerHandlers(e, cfg.AltchaKey, contactMailer)
+	registerHomelabHandler(e, hlSnapshot)
 
 	log.Printf("homepage listening on :%s (env=%s)", cfg.Port, cfg.Env)
 	if err := e.Start(":" + cfg.Port); err != nil {

@@ -84,6 +84,7 @@ dev: $(TAILWIND) $(AIR) ## hot-reload a project:  make dev PROJECT=homepage
 	@$(URL_LINE) $(PORT)
 	@$(TAILWIND) -i $(CSS_IN) -o $(CSS_OUT) --watch & TW=$$!; \
 	  trap "kill $$TW 2>/dev/null" EXIT INT TERM; \
+	  if [ -f projects/$(PROJECT)/.env ]; then set -a; . projects/$(PROJECT)/.env; set +a; fi; \
 	  MLJR_ENV=dev PORT=$(PORT) AIR_MAIN_PKG=$(PKG) AIR_BUILD_TAGS= \
 	    $(AIR) -c .air.toml
 
@@ -92,6 +93,7 @@ dev-showcase: $(TAILWIND) $(AIR) ## run the catalogue (build tag: showcase)
 	@$(URL_LINE) 8091
 	@$(TAILWIND) -i projects/showcase/assets/css/input.css -o projects/showcase/assets/static/app.css --watch & TW=$$!; \
 	  trap "kill $$TW 2>/dev/null" EXIT INT TERM; \
+	  if [ -f projects/showcase/.env ]; then set -a; . projects/showcase/.env; set +a; fi; \
 	  MLJR_ENV=dev PORT=8091 AIR_MAIN_PKG=./projects/showcase AIR_BUILD_TAGS=showcase \
 	    $(AIR) -c .air.toml
 
