@@ -9,7 +9,7 @@ This file tells future Claude/agent runs **how to extend this repo without break
 3. **gomponents v1 has no `svg` package.** Use `g.Raw(svgString)` only. Generator at `tools/icongen` is the single source of SVG strings.
 4. **One Go module.** Do not add nested modules unless `tools/` grows heavy deps — then split via `go.work`.
 5. **No `class=` even via `g.Attr("class", ...)` in `ui/`.** The grep guard catches both.
-6. **Datastar SDK is `github.com/starfederation/datastar-go/datastar`** (v1.0.x). API: `NewSSE`, `PatchElements`, `PatchSignals`, `RemoveElements`, `ExecuteScript`, `Redirect`, `ReadSignals`, `MarshalAndPatchSignals`.
+6. **Datastar SDK is `github.com/starfederation/datastar-go/datastar`** (v1.2.x). API: `NewSSE`, `PatchElements`, `PatchSignals`, `RemoveElements`, `ExecuteScript`, `Redirect`, `ReadSignals`, `MarshalAndPatchSignals`.
 
 ## Module path
 
@@ -58,7 +58,8 @@ func X(p XProps, children ...g.Node) g.Node {
 ### CSS rules
 
 - Add new rules to the appropriate `ui/css/_*.css` partial under `@layer components` keyed off `[data-component="X"]` + `[data-variant=…]`.
-- The partials are: `_base.css`, `_layout.css`, `_primitive.css`, `_overlay.css`, `_form.css`, `_data.css`, `_feedback.css`.
+- The partials are: `_base.css`, `_layout.css`, `_primitive.css`, `_overlay.css`, `_form.css`, `_data.css`, `_feedback.css`, `_special.css`.
+- **CSS slot names are a contract.** Every `[data-slot="X"]` selector in CSS must match a `data-slot` attribute the Go component actually emits (and vice versa). Mismatched slot names fail silently — the component renders unstyled. When adding/renaming slots, grep both sides.
 - `core.css` imports all partials. `projects/*/assets/css/input.css` imports them directly (nested imports may not propagate in Tailwind v4).
 - Tokens (palette, semantic, scale) live in `_base.css`. Themes are role-assignment blocks there.
 - Theme blocks: `[data-theme="swissbrut"][data-mode="light"] { … }` etc. Four blocks total.
@@ -87,20 +88,42 @@ In dev mode (`MLJR_ENV != "prod"`), the server reads CSS from disk — no server
 [data-component="alert"][data-variant="info"] [data-slot="icon"] { color: var(--info); }
 ```
 
+### Inline JS / SVG in Go — pitfalls (each one shipped a real bug)
+
+- **Every literal `%` inside a `fmt.Sprintf` format string must be `%%`** — including CSS (`width:100%%`) and JS (`s%%60`) embedded in the format. `go vet` catches bad verbs and arg-count mismatches; run it after touching any component with an embedded script. Prefer building JS without Sprintf (string concat or `strings.Replacer`) when it contains many `%`.
+- **Canvas 2D cannot resolve CSS custom properties.** `ctx.fillStyle='var(--accent)'` silently fails. Resolve first: `getComputedStyle(el).getPropertyValue('--accent').trim()`.
+- **CSS `calc()` requires spaces around `+` and `-`**: `calc(var(--x) + var(--w))`, never `calc(var(--x)+var(--w))`. Invalid calc kills the whole declaration (e.g. a clip-path) with no console error.
+- **Unique IDs/signal prefixes per instance.** Components defaulting to fixed prefixes (`_vp`, `_ap`, `map`) collide silently when used twice on one page. Always expose a `Signal`/`ID` prop and document "must be unique per page".
+- **Escape user-ish strings in `g.Raw` SVG** via `stdhtml.EscapeString` (`html` stdlib). gomponents only auto-escapes `g.Text`.
+
 ### Datastar helpers
 
 Use `ui/datastar.go` wrappers:
-- `ui.On(event, expr)` → `data-on-EVENT`
-- `ui.Bind(signal)` → `data-bind-SIGNAL`
+- `ui.On(event, expr)` → `data-on:EVENT` (modifiers via `__`, e.g. `ui.On("click__prevent", …)`)
+- `ui.Bind(signal)` → `data-bind:SIGNAL`
 - `ui.Text(expr)` → `data-text`
 - `ui.Show(expr)` → `data-show`
 - `ui.Signals(json)` → `data-signals`
+- `ui.Signal(name, value)` → `data-signals-NAME`
+- `ui.DSAttr(obj)` → `data-attr`
+- `ui.Indicator(signal)` → `data-indicator:SIGNAL` (true while a fetch is in flight)
+
+Plugin-named events also work written directly, e.g. `g.Attr("data-on-interval__duration.60s", "@get('/api/x')")` for polling fragments.
 
 Add new wrappers there if Datastar attribute spelling shifts.
 
 ### SSE fragments
 
 Fragments for `PatchElements` are **the same component called directly** — render to a `bytes.Buffer` via `internal/web.RenderToString(node)`. Always include a stable `id` on the root element so Datastar morphs by id.
+
+### Live data panels (poller + fragment pattern)
+
+Reference implementation: the homepage homelab panel (`projects/homepage/homelab/` + `pages/homelab.go` + `/api/homelab` in `handlers.go`).
+
+- A background goroutine polls upstream sources (Uptime Kuma status-page JSON, PromQL `/api/v1/query`) on a fixed cadence and stores one in-memory snapshot behind a `sync.RWMutex`. Visitors never trigger upstream calls.
+- The section markup carries `data-on-interval__duration.60s="@get('/api/…')"`; the handler re-renders the exported panel component with a fresh snapshot and patches it by id.
+- Degrade per source: keep last-good data through transient failures, render `—` for unavailable stats, and fall back to a labeled `Sample()` snapshot in dev when sources are unreachable.
+- Config via `internal/config` (`HOMELAB_KUMA_URL`, `HOMELAB_PROM_URL`); empty URL disables a source.
 
 ### Registry (showcase metadata)
 
@@ -470,7 +493,7 @@ Or use `internal/web.RenderToString(n)` which does the same via `bytes.Buffer`.
 
 The full inventory lives there. Don't duplicate it here. When asked "what components exist?" or "what's missing?", read `COMPONENTS.md` first.
 
-Current count (as of last update): **85 components** across primitive, layout, form, data, overlay, feedback, special, datastar, animation.
+Current count (as of last update): **160 components** across primitive, layout, form, data, overlay, feedback, special, datastar, animation. See `COMPONENTS.md` for full inventory.
 
 ---
 
@@ -571,3 +594,226 @@ type LogoScatterProps struct {
 ```
 
 SVG gradient IDs are namespaced as `{ID}-lgN` to prevent collisions when multiple instances appear on one page.
+
+**CRITICAL: Background wrapper must use `overflow:hidden` not `overflow:visible`.** Using `overflow:visible` on the `position:absolute;inset:0` wrapper causes the SVG to spill below the containing `<main>`, adding ~1.5× screen height of blank space after the footer. Always set `overflow:hidden` on the background div.
+
+**Two-instance pattern for page coverage** (homepage):
+```go
+// Primary: centered slightly left, scroll-triggered scatter
+primary := special.LogoScatter(special.LogoScatterProps{
+    ID: "logo-svg-hp", SVGStyle: "position:absolute;top:6vh;left:50%;transform:translateX(-55%);overflow:visible;width:540px;height:540px;opacity:0.38",
+    Mode: "scroll", TriggerID: "hero", WithBackground: true, WrapInLoad: true,
+})
+// Secondary: lower-right, continuous loop
+secondary := special.LogoScatter(special.LogoScatterProps{
+    ID: "logo-svg-hp2", SVGStyle: "position:absolute;top:55vh;right:5%;overflow:visible;width:380px;height:380px;opacity:0.18",
+    Mode: "loop", WithBackground: false, WrapInLoad: true,
+})
+// Wrap secondary in its own overflow:hidden container
+h.Div(h.Style("position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0"), secondary)
+```
+
+---
+
+## Homepage architecture (projects/homepage)
+
+### Page assembly — `pages/home.go`
+
+`Home(d SiteData, a AnalyticsConfig, hl homelab.Snapshot) g.Node` — main entry point.
+- Takes `AnalyticsConfig` (Umami) and a `homelab.Snapshot` (live panel data, fetched per request from the poller).
+- Calls `siteNavbar()` and `siteFooter()` (extracted to `pages/legal.go`).
+- Uses `primitive.ReadProgress(ReadProgressProps{Height:"8px", Color:"var(--accent)"})` at top.
+- Logo scatter background via `AnimatedLogoBackground()`.
+- All `<section>` and non-background divs in `<main>` need `position:relative;z-index:1` to sit above the logo animation layer — this is set via the `homepageCSS` const.
+- **Sections must not set `background:`** — it blocks the logo-scatter layer (user preference).
+- Section order with Swiss-editorial numbered headers (`sectionHeader(num, heading, sub, tone)` in `pages/skills.go`): 01 Experience · 02 Featured (`featured.go`) · 03 Projects · 04 Open Source (`github.go`) · 05 Homelab (`homelab.go`) · 06 Activity · 07 Skills · 08 Under the hood (`codeshowcase.go`) · 09 Contact. When inserting a section, renumber the following ones and extend the Motion reveal list in `home.go`.
+
+### Analytics — Umami (privacy-first, self-hosted)
+
+`pages/legal.go` contains:
+```go
+type AnalyticsConfig struct {
+    UmamiScriptSrc string  // e.g. "/umami/script.js"
+    UmamiWebsiteID string  // Umami website UUID
+    UmamiHostURL   string  // Umami server URL (for data-host-url attribute)
+    UmamiDomains   string  // comma-separated allowed domains
+}
+
+func AnalyticsHead(a AnalyticsConfig) []g.Node
+// Returns nil if either UmamiScriptSrc or UmamiWebsiteID is empty.
+// Emits: <script defer src="..." data-website-id="..." data-host-url="..." data-domains="...">
+```
+
+`analytics_proxy.go` — `registerAnalyticsProxy(e, cfg)`:
+- If `cfg.UmamiProxyTarget` is non-empty, mounts a reverse proxy at `/umami` and `/umami/*`.
+- Proxies `script.js` and event collection to the upstream Umami server.
+- On proxy failure: returns stub JS (`console.warn(...)`) for the script, 502 for data endpoints.
+- No-ops silently when `UmamiProxyTarget` is empty — safe in dev.
+
+Config loaded from `internal/config/config.go` via env vars:
+- `UMAMI_PROXY_TARGET` → `config.Analytics.UmamiProxyTarget`
+- `UMAMI_SCRIPT_SRC` → `config.Analytics.UmamiScriptSrc`
+- `UMAMI_WEBSITE_ID` → `config.Analytics.UmamiWebsiteID`
+- `UMAMI_HOST_URL` / `UMAMI_DOMAINS` → remaining analytics fields
+- `HOMELAB_KUMA_URL` / `HOMELAB_KUMA_SLUG` / `HOMELAB_PROM_URL` → `config.Homelab` (live panel sources)
+
+### Homelab live panel — `homelab/` + `pages/homelab.go`
+
+- `homelab.New(kumaURL, slug, promURL)` + `Start(ctx, 60*time.Second)` from `main.go`; `Snapshot()` is lock-protected and cheap per request.
+- Sources: Uptime Kuma public status-page API (`/api/status-page/{slug}` + `/heartbeat/{slug}`, no auth) and PromQL instant queries against VictoriaMetrics over Tailscale (CrowdSec `cs_*` metrics, `up`).
+- `pages.HomelabPanel(snap)` is exported — `/api/homelab` re-renders it and patches `#homelab-panel` by id; the section polls via `data-on-interval__duration.60s`.
+- Dev fallback: `homelab.Sample()` when Kuma is unreachable and `web.IsDev()`.
+
+### Strava integration — `pages/strava.go`
+
+`stravaSection(d SiteData) g.Node` — renders only when `d.HasStrava()` returns true (Strava data present in seed-cache.json).
+
+Displays:
+- Year-to-date stats: run count, distance, moving time, elevation (in `activityMetric` tiles).
+- Discipline tags (Run, Ride, etc.) with counts.
+- Recent public activities list (last 5).
+
+Data model lives in `data/types.go`: `StravaData`, `StravaYearStats`, `StravaActivity`, `StravaDiscipine`.
+Helper functions in `data/types.go`: `DistanceKM`, `DurationHours`, `PaceLabel`.
+
+### Legal pages — `pages/legal.go`
+
+`Impressum(a AnalyticsConfig)` and `Datenschutz(a AnalyticsConfig)` — Austrian legal requirements.
+Shared `siteNavbar()` and `siteFooter()` used by all homepage pages (home, impressum, datenschutz).
+
+Routes in `main.go`:
+```
+GET /            → pages.Home(data, analytics, hlSnapshot())
+GET /impressum   → pages.Impressum(analytics)
+GET /datenschutz → pages.Datenschutz(analytics)
+GET /api/homelab → SSE fragment: pages.HomelabPanel(hlSnapshot())  (handlers.go)
+```
+
+### Homepage responsive — `homepageCSS` const
+
+Responsive rules live as a Go string const in `pages/home.go` and injected via `HeadExtra`:
+- `≤900px`: hero 2-col → 1-col
+- `≤768px`: bento photo hidden, bento → 2-col; snake timeline hidden, mobile vertical timeline shown; logo scatter hidden
+- `≤480px`: CTAs stack full-width
+
+**Mobile experience fallback pattern:**
+```go
+// In experience.go: render both, CSS toggles which is visible
+h.Div(h.Class("experience-snake"), uidata.SnakeTimeline(...snakeItems...))
+h.Div(h.Class("experience-mobile-timeline"), uidata.Timeline(...mobileItems...))
+```
+```css
+/* In homepageCSS: */
+.experience-mobile-timeline { display: none; }
+@media (max-width: 768px) {
+  .experience-snake { display: none !important; }
+  .experience-mobile-timeline { display: block !important; }
+}
+```
+
+---
+
+## Snake Timeline component — `ui/data/snaketimeline.go`
+
+Serpentine layout: items flow left→right in odd rows, right→left in even rows.
+
+### HTML structure
+```
+[data-component="snake-timeline"][data-cols="3"]
+  [data-slot="row"][data-dir="ltr"][style="--snake-cols:3"]
+    [data-slot="path"]
+      [data-slot="rail"]          ← full-width horizontal line
+      [data-slot="dots"]          ← grid of dot-cells (same cols as items)
+        [data-slot="dot-cell"]
+          [data-slot="dot"]  "1"  ← numbered circle
+    [data-slot="items"]           ← card grid (same cols as dots)
+      [data-slot="item"] [data-component="card"] ...
+    [data-slot="turn"][data-side="right"]  ← vertical connector at row end
+  [data-slot="row"][data-dir="rtl"][style="--snake-cols:3"]
+    ...
+```
+
+### CSS critical points
+- `--snake-cols` CSS variable set inline on each row — drives `grid-template-columns:repeat(var(--snake-cols),minmax(0,1fr))` on both `[data-slot="dots"]` and `[data-slot="items"]`.
+- `[data-dir="rtl"]` rows: both `[data-slot="dots"]` AND `[data-slot="items"]` get `direction:rtl` so they visually reverse in sync.
+- `[data-slot="item"]` always gets `direction:ltr` to keep card text readable.
+- `[data-slot="rail"]`: `position:absolute;left:0;right:0;top:50%;height:var(--snake-line)` — spans full row width, centered vertically in the path.
+- `[data-slot="turn"]`: `position:absolute;top:26px;bottom:-26px;width:var(--snake-line)` — vertical connector from rail center down to next row rail.
+- `[data-slot="turn"][data-side="right"]` → `right:0`; `[data-side="left"]` → `left:0`.
+- Min-width per col count prevents unreadable narrow cards: `data-cols="2"` → `min-width:640px`, `data-cols="3"` → `min-width:960px`, etc. The container has `overflow-x:auto` so it scrolls horizontally rather than wrapping.
+
+### Usage
+```go
+uidata.SnakeTimeline(uidata.SnakeTimelineProps{Cols: 3},
+    uidata.SnakeTimelineItem{Period: "2025", Title: "Job", Org: "Company", Tone: token.ToneCyan},
+    ...
+)
+```
+
+---
+
+## Showcase patterns page
+
+`/patterns` — listing with iframe previews.
+`/patterns/{slug}` — full detail with theme/mode controls.
+`/patterns/{slug}/preview` — pure full-page pattern for iframes.
+
+Pattern registry: `ui/registry/patterns.go` — `RegisterPattern`, `GetPattern`, `AllPatterns`.
+
+Pattern implementations: `projects/showcase/patterns/` (build tag `showcase`):
+- `auth.go` — Login + Register pages
+- `dashboard.go` — App dashboard with sidebar + stats + table
+- `marketing.go` — Pricing page with hero + cards + FAQ
+- `settings.go` — Settings page with sidebar nav + form sections
+- `util.go` — shared `fullPage(theme, mode, content)` helper
+
+Pattern `Render` func signature: `func(theme, mode string) g.Node` — must return a complete HTML document (calls `fullPage` which includes `PageShell`-equivalent).
+
+Routes in `main.go` (showcase):
+```
+GET /patterns                  → pages.PatternsListing()
+GET /patterns/:slug            → pages.PatternDetail(p, theme, mode)
+GET /patterns/:slug/preview    → pages.PatternPreview(p, theme, mode)
+```
+
+---
+
+## New UI components added since initial commit
+
+**`ui/primitive/`** additions:
+- `marquee.go` — CSS `@keyframes` infinite scroll, `MarqueeProps{Speed,Direction,PauseOnHover,Gap}`
+- `wordrotate.go` — setInterval cycling words with CSS fade+slide, `WordRotateProps{Words,Interval,ID}`
+- `typewriter.go` — type+delete loop, `TypewriterProps{Lines,Speed,DeleteSpeed,Pause,NoCursor,ID}`
+- `mediacard.go` — image-top card, `MediaCardProps{ImageSrc,AspectRatio,Badge,BadgeTone,Title,Description,Href,Lazy}`
+- `flipcard.go` — CSS 3D `rotateY`, `FlipCardProps{Height,Trigger,Signal}`, hover or Datastar click
+- `gradienttext.go` — `background-clip:text` gradient, `GradientTextProps{From,To,Via,Angle,Tag}`
+- `scrolltotop.go` — fixed button, threshold show/hide, `ScrollToTopProps{Threshold,Position}`
+- `readprogress.go` — fixed top bar fills on scroll, `ReadProgressProps{Height,Color,ZIndex,Target}`
+- `sharebutton.go` — Web Share API + clipboard fallback
+- `numberticker.go` — requestAnimationFrame counter, IntersectionObserver trigger
+- `scrollarea.go` — thin themed scrollbars, vertical/horizontal/both
+- `splitbutton.go` — primary action + chevron dropdown, Datastar signal
+- `numberticker.go` — animated counter, `NumberTickerProps{Value,From,Duration,Decimals,Prefix,Suffix,Locale,TriggerOnView,ID}`
+
+**`ui/layout/`** additions:
+- `bentogrid.go` — mosaic CSS grid, `BentoGrid(BentoGridProps{Cols,Gap}, items...)` + `BentoItem(BentoItemProps{ColSpan,RowSpan})`
+
+**`ui/data/`** additions:
+- `virtuallist.go` — `content-visibility:auto` viewport culling, zero JS
+- `sortable.go` — HTML5 drag-to-reorder, `SortableProps{ID,Handle,OnChange}`
+- `snaketimeline.go` — serpentine timeline (see section above)
+
+**`ui/form/`** additions:
+- `multiselect.go` — chip multi-value, dropdown, max selection, hidden inputs as `name[]`
+
+**`ui/feedback/`** additions:
+- `shimmer.go` — animated gradient loading placeholder, `ShimmerProps{Width,Height,Radius,Lines,Circle}`
+
+**`ui/special/`** additions:
+- `usermenu.go` — composite Avatar + Datastar dropdown with identity header
+- `loginform.go` — composite sign-in form (email + PasswordInput + Checkbox + Button)
+- `cookiebanner.go` — GDPR localStorage consent banner, pure JS
+- `util.go` — shared `jsStr(s string) string` helper for safe JS string quoting
+
+**`ui/overlay/`** additions:
+- `hovercard.go` — pure CSS `:hover` rich info card, `HoverCardProps{Placement,Width,Delay}`, 4 placements

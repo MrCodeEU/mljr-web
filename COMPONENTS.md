@@ -57,6 +57,9 @@ Tech stack: Go + gomponents · Datastar 1.0.2 · Tailwind v4 · Motion v10
 | ✅ | Gradient Text | `gradient-text` | CSS background-clip:text, any tag, from/via/to, theme-aware |
 | ✅ | Scroll To Top | `scroll-to-top` | fixed button, IntersectionObserver threshold, smooth scroll |
 | ✅ | Read Progress | `read-progress` | fixed top bar, fills on scroll, window or custom container target |
+| ✅ | Video Player | `video-player` | native `<video>` + custom controls (play, scrub, volume, speed, fullscreen); zero external library |
+| ✅ | Audio Player | `audio-player` | native `<audio>` + Canvas waveform animation (40 bars); Web Audio API analyser |
+| ✅ | Tilt Card | `tilt-card` | pointer-driven 3D perspective tilt + optional shine gradient; zero JS libs |
 
 ---
 
@@ -81,6 +84,8 @@ Tech stack: Go + gomponents · Datastar 1.0.2 · Tailwind v4 · Motion v10
 | ✅ | Background | `background` | dots/grid/lines/diagonal/cross/gradient CSS patterns |
 | ✅ | Resizable Panels | `resizable-panels` | pointer+touch drag handle, horizontal/vertical |
 | ✅ | Bento Grid | `bento-grid` | mosaic CSS grid, BentoItem with col/row span, landing pages/dashboards |
+| ✅ | Masonry Grid | `masonry` | CSS `column-count` masonry layout; zero JS; `MasonryItem` prevents column breaks |
+| ✅ | Table of Contents | `table-of-contents` | IntersectionObserver scroll-spy; auto-detects h2/h3/h4 or accepts explicit items; sticky option |
 
 ---
 
@@ -111,6 +116,7 @@ Tech stack: Go + gomponents · Datastar 1.0.2 · Tailwind v4 · Motion v10
 | ✅ | Search Input | `search-input` | debounced @get, clear button, Datastar |
 | ✅ | Time Input | `time-input` | native time picker, step support |
 | ✅ | Multi Select | `multi-select` | chip-based multi-value, dropdown, max selection, hidden inputs |
+| ✅ | Calendar Picker | `calendar-picker` | custom month-grid date picker; ISO 8601 hidden input; min/max restriction; zero external library |
 
 ---
 
@@ -137,6 +143,12 @@ Tech stack: Go + gomponents · Datastar 1.0.2 · Tailwind v4 · Motion v10
 | ✅ | Virtual List | `virtual-list` | CSS content-visibility:auto viewport culling, zero JS |
 | ✅ | Sortable List | `sortable` | HTML5 drag-and-drop reorder, optional grab handle, onChange callback |
 | ✅ | Snake Timeline | `snake-timeline` | serpentine layout, alternating LTR/RTL rows, curved connectors, 2–4 cols |
+| ✅ | GitHub Heatmap | `heatmap` | contribution grid SVG, server-side, color-mix intensity, month/day labels |
+| ✅ | Radar Chart | `radar-chart` | multi-series spider chart SVG, concentric grid, server-side Go math |
+| ✅ | Gauge / Meter | `gauge` | 270° SVG arc, tick marks, center value+label, server-side |
+| ✅ | Syntax Highlighter | `syntax-highlighter` | server-side chroma v2, 300+ languages, 40+ themes, optional line numbers |
+| ✅ | Horizontal Timeline | `horizontal-timeline` | CSS scroll-snap strip, dot+card per item, zero JS |
+| ✅ | Infinite Scroll | `infinite-scroll` | sentinel `data-on:intersect__once` triggers Datastar `@get`; server appends HTML |
 
 ---
 
@@ -183,7 +195,9 @@ Tech stack: Go + gomponents · Datastar 1.0.2 · Tailwind v4 · Motion v10
 | ✅ | User Menu | `user-menu` | composite Avatar + Datastar dropdown with identity header + actions |
 | ✅ | Login Form | `login-form` | composite: email + password (show/hide) + remember me + submit |
 | ✅ | Cookie Banner | `cookie-banner` | GDPR consent banner, localStorage persist, position top/bottom |
-| ☐ | OpenMap | — | Leaflet/OpenStreetMap embed |
+| ✅ | OpenMap | `open-map` | Leaflet 1.9 self-hosted (148KB), OSM tiles, drop pins with popups |
+| ✅ | Confetti | `confetti` | Canvas particle burst, rAF animated, trigger: click/load/manual |
+| ✅ | Onboarding Tour | `onboarding-tour` | clip-path spotlight overlay, floating tooltip, step navigation, zero library |
 
 ---
 
@@ -230,13 +244,39 @@ Tech stack: Go + gomponents · Datastar 1.0.2 · Tailwind v4 · Motion v10
 | ✅ | Detail page: responsive (single-col on ≤768px) |
 | ✅ | Preview iframe: Motion v10 + Datastar loaded |
 | ✅ | Icon showcase: searchable grid, grouped by set, click to copy |
-| ✅ | 160 components registered |
-| ✅ | Prev/next keyboard navigation (←/→) | ArrowLeft/Right navigate between components in detail.go |
+| ✅ | 160 showcase entries registered (recount: `grep -rc "registry.Register" --include="*.go" ui/ projects/`) |
+| ✅ | Prev/next keyboard navigation (←/→) via ArrowLeft/ArrowRight in detail.go |
 | ✅ | Patterns page: `/patterns` listing with iframe previews + theme sync |
-| ✅ | Pattern detail page: `/patterns/{slug}` with controls + full iframe |
+| ✅ | Pattern detail: `/patterns/{slug}` with controls + full iframe |
 | ✅ | Pattern: Login Page (auth-login) |
 | ✅ | Pattern: Register Page (auth-register) |
 | ✅ | Pattern: App Dashboard (app-dashboard) |
 | ✅ | Pattern: Pricing Page (marketing-pricing) |
 | ✅ | Pattern: Settings Page (app-settings) |
 | ☐ | Markdown export report |
+
+---
+
+## Homepage project (`projects/homepage`)
+
+| Status | Feature | Notes |
+|--------|---------|-------|
+| ✅ | Umami analytics | Self-hosted, proxied via `/umami/*`. `AnalyticsConfig{UmamiScriptSrc,UmamiWebsiteID,UmamiHostURL,UmamiDomains}`. Both fields required or `AnalyticsHead()` returns nil. |
+| ✅ | Analytics reverse proxy | `analytics_proxy.go` — proxies to upstream Umami; stub JS on failure |
+| ✅ | Strava integration | `pages/strava.go` — YTD stats + recent activities; only renders when `d.HasStrava()` is true |
+| ✅ | Legal pages | `/impressum` + `/datenschutz` (Austrian ECG / DSGVO requirements) in `pages/legal.go` |
+| ✅ | Shared navbar/footer | `siteNavbar()` + `siteFooter()` extracted to `pages/legal.go` — used by home + legal pages |
+| ✅ | Hero section | Typewriter tagline + GradientText headline + Bento Grid (photo, year ticker, project ticker, MSc, Dynatrace) |
+| ✅ | Stats strip | 4× NumberTicker + Marquee of colorful tech-stack pills |
+| ✅ | Snake timeline | Experience in serpentine layout (3 cols desktop) + vertical fallback on mobile |
+| ✅ | Skills marquee | 3 rows, alternating direction, colored pills (8-tone cycle) |
+| ✅ | Read progress bar | 8px accent bar at top via `primitive.ReadProgress` |
+| ✅ | Logo scatter (dual) | Primary scroll-triggered (540px, left of center) + secondary loop (380px, lower-right) |
+| ✅ | Page animations | Motion.inView stagger entrance per section; hero entrance stagger on load; project pagination fade-slide via MutationObserver |
+| ✅ | Mobile responsive | `homepageCSS` const: ≤900px hero stack + new-section single-col, ≤768px bento collapse + snake→vertical timeline, ≤480px CTA full-width |
+| ✅ | Numbered section headers | Swiss-editorial outlined index (`.section-num`), `sectionHeader(num, heading, sub, tone)` in `pages/skills.go`. Order: 01 Experience · 02 Featured · 03 Projects · 04 Open Source · 05 Homelab · 06 Activity · 07 Skills · 08 Under the hood · 09 Contact |
+| ✅ | Featured work section | `pages/featured.go` — asymmetric spotlight grid, TiltCard + shine, first project double-height; main projects grid then shows non-featured only |
+| ✅ | Open Source section | `pages/github.go` — contribution Heatmap + 3 language Gauges + 4 NumberTicker counters. Repos/stars real; heatmap/commits/streak are deterministic placeholder data (labeled) until a GitHub stats pipeline lands |
+| ✅ | Homelab live panel | `homelab/` poller (60s) → Uptime Kuma public status-page API + PromQL (CrowdSec bans/attacks, hosts online). `data-on-interval` refresh via `/api/homelab` SSE fragment. Env: `HOMELAB_KUMA_URL`, `HOMELAB_PROM_URL`; dev fallback `homelab.Sample()` |
+| ✅ | Under the hood section | `pages/codeshowcase.go` — chroma-highlighted `gaugeExcerpt` (keep in sync with `ui/data/gauge.go`) + fact chips |
+| ✅ | No section backgrounds | Sections must not set `background:` — it blocks the logo-scatter page background |

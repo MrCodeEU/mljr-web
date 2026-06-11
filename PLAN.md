@@ -29,16 +29,16 @@ mljr-web/
 │   ├── form/                    # field, input, select…
 │   ├── layout/                  # Container, Stack, Grid, Navbar, Footer, PageShell
 │   ├── overlay/                 # Modal, Toast, Portal
-│   ├── data/                    # tables, lists, stats
+│   ├── data/                    # tables, lists, stats, server-SVG charts (line/bar/radar/gauge/heatmap)
 │   ├── feedback/                # alert, spinner, skeleton
-│   ├── special/                 # ThemeToggle, ModeToggle, Captcha
+│   ├── special/                 # ThemeToggle, ModeToggle, Captcha, Tour, Confetti, OpenMap
 │   └── registry/                # showcase metadata (build tag: showcase)
 ├── internal/
 │   ├── web/                     # Echo bootstrap, render, sse, security, assets
-│   ├── config/                  # typed env config
+│   ├── config/                  # typed env config (incl. HOMELAB_* panel sources)
 │   └── version/                 # ldflags-injected build info
 ├── projects/
-│   ├── homepage/                # portfolio binary
+│   ├── homepage/                # portfolio binary (homelab/ = live-panel poller)
 │   └── showcase/                # component catalogue binary
 └── tools/icongen/               # Iconify → Go SVG generator
 ```
@@ -124,3 +124,20 @@ CONTACT_TO="Michael Reinegger <reinemic2.0@gmail.com>"
 
 The sender is always `SMTP_FROM`; the visitor email is set as `Reply-To` to
 avoid SPF/DMARC failures.
+
+## Homepage Homelab Live Panel
+
+A background poller (60s) aggregates Uptime Kuma's public status-page JSON and
+PromQL stats (CrowdSec, hosts) into an in-memory snapshot; the section
+re-fetches `/api/homelab` via `data-on-interval` and patches by id. Visitors
+never hit upstream sources.
+
+```bash
+HOMELAB_KUMA_URL="https://uptime.mljr.eu"   # default; public, no auth
+HOMELAB_KUMA_SLUG="all"                     # default
+HOMELAB_PROM_URL="http://nuc.tail33930.ts.net:19090"  # Tailscale-only; empty disables PromQL stats
+```
+
+The metrics backend is VictoriaMetrics (PromQL-compatible; deployed via the
+homelab-automation repo). Dev without reachable sources renders
+`homelab.Sample()`.
