@@ -558,3 +558,99 @@
   height: 3px; background: var(--accent); width: 0;
   transition: width 0.1s linear;
 }
+
+/* ── video-player ────────────────────────────────────────────── */
+[data-component="video-player"] {
+  display: flex; flex-direction: column;
+  background: #000; border: var(--bw-2) solid var(--ink);
+  border-radius: var(--radius); overflow: hidden;
+}
+[data-component="video-player"] video { width: 100%; display: block; }
+[data-component="video-player"] [data-slot="controls"] {
+  display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface); border-top: var(--bw-1) solid var(--line);
+}
+[data-component="video-player"] [data-slot="progress"] {
+  flex: 1; min-width: 80px; height: 6px;
+  background: var(--line); border-radius: 0; cursor: pointer;
+  -webkit-appearance: none; appearance: none; outline: none;
+}
+[data-component="video-player"] [data-slot="progress"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px;
+  border-radius: 50%; background: var(--accent);
+  border: 2px solid var(--ink); cursor: pointer;
+}
+[data-component="video-player"] [data-slot="volume"] {
+  width: 70px; height: 4px;
+  background: var(--line); border-radius: 0; cursor: pointer;
+  -webkit-appearance: none; appearance: none; outline: none;
+}
+[data-component="video-player"] [data-slot="volume"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px;
+  border-radius: 50%; background: var(--ink);
+  border: 1px solid var(--line); cursor: pointer;
+}
+[data-component="video-player"] button {
+  background: none; border: none; cursor: pointer;
+  color: var(--ink); padding: var(--sp-1); display: flex;
+  align-items: center; justify-content: center;
+}
+[data-component="video-player"] button:hover { color: var(--accent); }
+[data-component="video-player"] [data-slot="time"] {
+  font-size: var(--t-xs); font-weight: 700; font-family: var(--font-mono, monospace);
+  color: var(--muted); white-space: nowrap;
+}
+[data-component="video-player"] [data-slot="speed"] {
+  font-size: var(--t-xs); font-weight: 700;
+  background: none; border: var(--bw-1) solid var(--line);
+  padding: 2px 4px; cursor: pointer; color: var(--ink);
+}
+
+/* ── audio-player ────────────────────────────────────────────── */
+[data-component="audio-player"] {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  padding: var(--sp-4); background: var(--surface);
+  border: var(--bw-2) solid var(--ink); border-radius: var(--radius);
+}
+[data-component="audio-player"] [data-slot="waveform"] {
+  width: 100%; height: 60px; border-radius: var(--radius);
+  cursor: pointer;
+}
+[data-component="audio-player"] [data-slot="controls"] {
+  display: flex; align-items: center; gap: var(--sp-3);
+}
+[data-component="audio-player"] [data-slot="time"] {
+  font-size: var(--t-xs); font-family: var(--font-mono, monospace);
+  font-weight: 700; color: var(--muted); white-space: nowrap;
+}
+[data-component="audio-player"] button {
+  background: none; border: none; cursor: pointer;
+  color: var(--ink); display: flex; align-items: center;
+}
+[data-component="audio-player"] button:hover { color: var(--accent); }
+[data-component="audio-player"] [data-slot="progress"] {
+  flex: 1; height: 4px; background: var(--line); border-radius: 0;
+  cursor: pointer; -webkit-appearance: none; appearance: none; outline: none;
+}
+[data-component="audio-player"] [data-slot="progress"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px;
+  border-radius: 50%; background: var(--accent);
+  border: 2px solid var(--ink); cursor: pointer;
+}
+
+/* ── tilt-card ────────────────────────────────────────────────── */
+[data-component="tilt-card"] {
+  display: block; position: relative; transform-style: preserve-3d;
+  will-change: transform; cursor: pointer;
+}
+[data-component="tilt-card"] [data-slot="inner"] {
+  transform-style: preserve-3d; pointer-events: none;
+}
+[data-component="tilt-card"] [data-slot="shine"] {
+  position: absolute; inset: 0; border-radius: inherit;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.18) 0%, transparent 70%);
+  pointer-events: none; opacity: 0;
+  transition: opacity 0.2s;
+}
+[data-component="tilt-card"]:hover [data-slot="shine"] { opacity: 1; }

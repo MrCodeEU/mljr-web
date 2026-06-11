@@ -15,11 +15,11 @@ type BarDatum struct {
 }
 
 type BarChartProps struct {
-	Data        []BarDatum
-	Height      int    // px height of chart area (default 160)
-	ShowValues  bool   // render value labels above bars
-	ShowGrid    bool   // render horizontal grid lines
-	Caption     string // optional <figcaption>
+	Data       []BarDatum
+	Height     int    // px height of chart area (default 160)
+	ShowValues bool   // render value labels above bars
+	ShowGrid   bool   // render horizontal grid lines
+	Caption    string // optional <figcaption>
 }
 
 // BarChart renders a pure-SVG bar chart. No JS required.
@@ -31,7 +31,7 @@ func BarChart(p BarChartProps) g.Node {
 		return h.Div(g.Attr("data-component", "bar-chart"), g.Text("no data"))
 	}
 
-	const labelH = 24  // px reserved for x-axis labels
+	const labelH = 24 // px reserved for x-axis labels
 	const padL = 8
 	const padR = 8
 	const barGapRatio = 0.3 // gap as fraction of bar+gap width

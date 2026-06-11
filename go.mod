@@ -9,8 +9,10 @@ require (
 
 require (
 	github.com/CAFxX/httpcompression v0.0.9 // indirect
+	github.com/alecthomas/chroma/v2 v2.26.1 // indirect
 	github.com/altcha-org/altcha-lib-go v1.0.0 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
+	github.com/dlclark/regexp2/v2 v2.1.1 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/labstack/gommon v0.5.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect

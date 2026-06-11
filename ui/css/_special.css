@@ -1,0 +1,22 @@
+/* mljr-ui — special components: tour, confetti, open-map */
+
+/* ── tour ────────────────────────────────────────────────────── */
+[data-component="tour-tooltip"] {
+  position: absolute; z-index: 1001;
+  width: 280px; max-width: 90vw;
+}
+[data-component="tour-tooltip"] > div {
+  background: var(--surface); border: var(--bw-2) solid var(--ink);
+  border-radius: var(--radius); box-shadow: var(--shadow-lg);
+  padding: var(--sp-4);
+}
+
+/* ── open-map ────────────────────────────────────────────────── */
+[data-component="open-map"] { position: relative; }
+[data-component="open-map"] [data-slot="map"] {
+  z-index: 0; border: var(--bw-2) solid var(--ink);
+  border-radius: var(--radius);
+}
+/* leaflet link/script tags are inline — no extra CSS needed */
+
+/* ── confetti (no structural CSS needed — canvas is fixed/fullscreen) */

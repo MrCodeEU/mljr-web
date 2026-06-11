@@ -12,7 +12,7 @@ func init() {
 	registry.Register(&registry.Component{
 		Slug: "data-grid", Name: "Data Grid", Category: "data",
 		PreviewHeight: "520px",
-		Summary: "Sortable, filterable, paginated data table. All logic client-side — no server roundtrip for sort/filter.",
+		Summary:       "Sortable, filterable, paginated data table. All logic client-side — no server roundtrip for sort/filter.",
 		Code: `data.DataGrid(data.DataGridProps{
     ID:       "users",
     Search:   true,

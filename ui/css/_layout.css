@@ -390,3 +390,34 @@
     height: 180px !important;
   }
 }
+
+/* ── masonry ─────────────────────────────────────────────────── */
+[data-component="masonry"] {
+  column-gap: var(--sp-4);
+}
+[data-component="masonry-item"] {
+  break-inside: avoid; display: block;
+  margin-bottom: var(--sp-4);
+}
+
+/* ── table-of-contents ──────────────────────────────────────── */
+[data-component="toc"] {
+  font-size: var(--t-sm); border-left: var(--bw-3) solid var(--line);
+}
+[data-component="toc"] [data-slot="title"] {
+  font-size: var(--t-xs); font-weight: 700;
+  text-transform: uppercase; letter-spacing: var(--tracking-wide);
+  color: var(--muted); padding: 0 var(--sp-3) var(--sp-2); display: block;
+}
+[data-component="toc"] [data-slot="item"] {
+  display: block; padding: var(--sp-1) var(--sp-3);
+  text-decoration: none; color: var(--muted);
+  font-weight: 600; transition: color var(--fade), border-color var(--fade);
+  border-left: 3px solid transparent; margin-left: -3px;
+}
+[data-component="toc"] [data-slot="item"]:hover { color: var(--fg); }
+[data-component="toc"] [data-slot="item"][data-state="active"] {
+  color: var(--accent); border-left-color: var(--accent);
+}
+[data-component="toc"] [data-slot="item"][data-depth="3"] { padding-left: calc(var(--sp-3) + 0.75rem); font-size: var(--t-xs); }
+[data-component="toc"] [data-slot="item"][data-depth="4"] { padding-left: calc(var(--sp-3) + 1.5rem); font-size: var(--t-xs); opacity: .8; }

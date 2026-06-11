@@ -295,3 +295,61 @@
 [data-component="sortable"] [data-slot="sortable-item"].drag-over {
   outline: 2px solid var(--accent); border-radius: var(--radius);
 }
+
+/* ── heatmap ─────────────────────────────────────────────────── */
+[data-component="heatmap"] {
+  display: block; overflow-x: auto;
+  scrollbar-width: thin; scrollbar-color: var(--muted) transparent;
+}
+[data-component="heatmap"] svg { display: block; }
+
+/* ── radar-chart ─────────────────────────────────────────────── */
+[data-component="radar-chart"] {
+  display: block; overflow: visible;
+}
+[data-component="radar-chart"] svg { display: block; margin: 0 auto; }
+
+/* ── gauge ───────────────────────────────────────────────────── */
+[data-component="gauge"] {
+  display: block;
+}
+[data-component="gauge"] svg { display: block; margin: 0 auto; }
+
+/* ── syntax-highlighter ──────────────────────────────────────── */
+[data-component="syntax-highlighter"] {
+  position: relative; border: var(--bw-2) solid var(--ink);
+  border-radius: var(--radius); overflow: hidden;
+}
+[data-component="syntax-highlighter"] [data-slot="header"] {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-2); border-bottom: var(--bw-1) solid var(--line);
+}
+[data-component="syntax-highlighter"] [data-slot="filename"] {
+  font-size: var(--t-xs); font-weight: 700;
+  font-family: var(--font-mono, monospace); color: var(--ink);
+}
+[data-component="syntax-highlighter"] [data-slot="lang"] {
+  font-size: var(--t-xs); font-weight: 700; font-family: var(--font-mono, monospace);
+  text-transform: uppercase; letter-spacing: var(--tracking-wide); color: var(--muted);
+}
+[data-component="syntax-highlighter"] pre {
+  margin: 0; overflow-x: auto; font-family: var(--font-mono, monospace);
+  font-size: var(--t-sm); line-height: 1.6; padding: var(--sp-4);
+}
+[data-component="syntax-highlighter"] pre code { font-family: inherit; }
+
+/* ── horizontal-timeline ─────────────────────────────────────── */
+/* layout is inline on the component; ScrollSnap prop controls snapping */
+[data-component="horizontal-timeline"] {
+  scrollbar-width: thin; scrollbar-color: var(--muted) transparent;
+}
+
+/* ── infinite-scroll ─────────────────────────────────────────── */
+[data-component="infinite-scroll"] [data-slot="container"] {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+}
+[data-component="infinite-scroll"] [data-slot="loading"] {
+  text-align: center; padding: var(--sp-4);
+  color: var(--muted); font-size: var(--t-sm);
+}

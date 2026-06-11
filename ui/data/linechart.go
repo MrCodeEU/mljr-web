@@ -15,9 +15,9 @@ type LineChartSeries struct {
 }
 
 type LineChartProps struct {
-	Series  []LineChartSeries
-	Labels  []string // x-axis labels; len should match Points
-	Height  int      // px (default 160)
+	Series   []LineChartSeries
+	Labels   []string // x-axis labels; len should match Points
+	Height   int      // px (default 160)
 	ShowDots bool
 	ShowGrid bool
 	Caption  string
