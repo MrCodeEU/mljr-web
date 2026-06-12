@@ -84,7 +84,7 @@ Motion.animate(el, {}, {duration:1.5,
 					primitive.Card(primitive.CardProps{},
 						h.P(h.Style("font-size:var(--t-xs);text-transform:uppercase;font-weight:700;letter-spacing:.06em;opacity:.5;margin-bottom:var(--sp-3)"), g.Text("stagger() — offset each item")),
 						primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
-							g.Attr("data-on:click", `Motion.animate('.stagger-item',{opacity:[0,1],x:[-16,0]},{duration:0.4,delay:Motion.stagger(0.07)})`),
+							g.Attr("data-on:click", `Motion.animate('[data-slot="stagger-item"]',{opacity:[0,1],x:[-16,0]},{duration:0.4,delay:Motion.stagger(0.07)})`),
 							g.Text("Animate list"),
 						),
 						h.Div(h.Style("margin-top:var(--sp-3);display:flex;flex-direction:column;gap:var(--sp-2)"),
@@ -93,7 +93,7 @@ Motion.animate(el, {}, {duration:1.5,
 								nodes := make([]g.Node, len(items))
 								for i, item := range items {
 									nodes[i] = h.Div(
-										h.Class("stagger-item"),
+										g.Attr("data-slot", "stagger-item"),
 										h.Style("padding:var(--sp-2) var(--sp-3);background:var(--surface-2);border-radius:var(--radius);font-size:var(--t-sm);opacity:0"),
 										g.Text(item),
 									)
@@ -109,18 +109,18 @@ Motion.animate(el, {}, {duration:1.5,
 						primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
 							g.Attr("data-on:click", `
 Motion.timeline([
-  ['.tl-a',{opacity:[0,1],y:[12,0]},{duration:.25}],
-  ['.tl-b',{opacity:[0,1],y:[12,0]},{duration:.25,at:'-0.1'}],
-  ['.tl-c',{opacity:[0,1],y:[12,0]},{duration:.25,at:'-0.1'}],
-  ['.tl-d',{opacity:[0,1],scale:[0.8,1]},{duration:.3,at:'-0.05'}]
+  ['[data-slot="tl-a"]',{opacity:[0,1],y:[12,0]},{duration:.25}],
+  ['[data-slot="tl-b"]',{opacity:[0,1],y:[12,0]},{duration:.25,at:'-0.1'}],
+  ['[data-slot="tl-c"]',{opacity:[0,1],y:[12,0]},{duration:.25,at:'-0.1'}],
+  ['[data-slot="tl-d"]',{opacity:[0,1],scale:[0.8,1]},{duration:.3,at:'-0.05'}]
 ]).play()`),
 							g.Text("Play sequence"),
 						),
 						h.Div(h.Style("margin-top:var(--sp-3);display:flex;gap:var(--sp-3);align-items:flex-end"),
-							h.Div(h.Class("tl-a"), h.Style("opacity:0;width:50px;height:80px;background:var(--accent);border-radius:var(--radius)")),
-							h.Div(h.Class("tl-b"), h.Style("opacity:0;width:50px;height:60px;background:var(--accent-2);border-radius:var(--radius)")),
-							h.Div(h.Class("tl-c"), h.Style("opacity:0;width:50px;height:100px;background:var(--success);border-radius:var(--radius)")),
-							h.Div(h.Class("tl-d"), h.Style("opacity:0;width:50px;height:40px;background:var(--warning);border-radius:var(--radius)")),
+							h.Div(g.Attr("data-slot", "tl-a"), h.Style("opacity:0;width:50px;height:80px;background:var(--accent);border-radius:var(--radius)")),
+							h.Div(g.Attr("data-slot", "tl-b"), h.Style("opacity:0;width:50px;height:60px;background:var(--accent-2);border-radius:var(--radius)")),
+							h.Div(g.Attr("data-slot", "tl-c"), h.Style("opacity:0;width:50px;height:100px;background:var(--success);border-radius:var(--radius)")),
+							h.Div(g.Attr("data-slot", "tl-d"), h.Style("opacity:0;width:50px;height:40px;background:var(--warning);border-radius:var(--radius)")),
 						),
 					),
 

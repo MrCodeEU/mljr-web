@@ -16,7 +16,7 @@ import (
 
 const (
 	defaultStravaAPIBase  = "https://www.strava.com/api/v3"
-	defaultStravaTokenURL = "https://www.strava.com/oauth/token"
+	defaultStravaTokenURL = "https://www.strava.com/oauth/token" //nolint:gosec // not a credential, just an OAuth endpoint URL
 )
 
 type StravaConfig struct {
@@ -223,7 +223,7 @@ func (s *StravaScraper) doJSON(req *http.Request, target any) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 		return fmt.Errorf("status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))

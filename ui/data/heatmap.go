@@ -50,7 +50,7 @@ func Heatmap(p HeatmapProps, cells []HeatmapCell) g.Node {
 	for _, c := range cells {
 		key := c.Date.Format("2006-01-02")
 		lookup[key] = c
-		if c.Value > maxVal {
+		if p.MaxValue == 0 && c.Value > maxVal {
 			maxVal = c.Value
 		}
 	}
@@ -80,16 +80,16 @@ func Heatmap(p HeatmapProps, cells []HeatmapCell) g.Node {
 	svgH := 7*step + topPad
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d" data-component="heatmap">`,
-		svgW, svgH, svgW, svgH))
+	fmt.Fprintf(&sb, `<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d" data-component="heatmap">`,
+		svgW, svgH, svgW, svgH)
 
 	// Day labels
 	if p.ShowDayLabels {
 		days := []struct{ d, row int }{{1, 1}, {3, 3}, {5, 5}} // Mon, Wed, Fri
 		for _, dl := range days {
 			y := topPad + dl.row*step + p.CellSize/2 + 4
-			sb.WriteString(fmt.Sprintf(`<text x="0" y="%d" fill="var(--muted)" font-size="9" font-family="var(--font-mono)">%s</text>`,
-				y, time.Weekday(dl.d).String()[:3]))
+			fmt.Fprintf(&sb, `<text x="0" y="%d" fill="var(--muted)" font-size="9" font-family="var(--font-mono)">%s</text>`,
+				y, time.Weekday(dl.d).String()[:3])
 		}
 	}
 
@@ -107,8 +107,8 @@ func Heatmap(p HeatmapProps, cells []HeatmapCell) g.Node {
 			// Month label
 			if p.ShowMonthLabels && date.Day() <= 7 && date.Month() != time.Month(lastMonth) {
 				lastMonth = int(date.Month())
-				sb.WriteString(fmt.Sprintf(`<text x="%d" y="%d" fill="var(--muted)" font-size="10" font-family="var(--font-mono)">%s</text>`,
-					x, topPad-6, date.Month().String()[:3]))
+				fmt.Fprintf(&sb, `<text x="%d" y="%d" fill="var(--muted)" font-size="10" font-family="var(--font-mono)">%s</text>`,
+					x, topPad-6, date.Month().String()[:3])
 			}
 
 			intensity := 0.0
@@ -122,10 +122,10 @@ func Heatmap(p HeatmapProps, cells []HeatmapCell) g.Node {
 				label = fmt.Sprintf("%d on %s", cell.Value, key)
 			}
 
-			sb.WriteString(fmt.Sprintf(`<rect x="%d" y="%d" width="%d" height="%d" rx="2" fill="%s">`,
-				x, y, p.CellSize, p.CellSize, color))
+			fmt.Fprintf(&sb, `<rect x="%d" y="%d" width="%d" height="%d" rx="2" fill="%s">`,
+				x, y, p.CellSize, p.CellSize, color)
 			if label != "" {
-				sb.WriteString(fmt.Sprintf(`<title>%s</title>`, stdhtml.EscapeString(label)))
+				fmt.Fprintf(&sb, `<title>%s</title>`, stdhtml.EscapeString(label))
 			}
 			sb.WriteString(`</rect>`)
 		}

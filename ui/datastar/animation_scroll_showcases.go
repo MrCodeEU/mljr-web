@@ -64,7 +64,7 @@ window.addEventListener('scroll', () => {
 						nodes := make([]g.Node, len(sections))
 						for i, s := range sections {
 							nodes[i] = h.Div(
-								h.Class("scroll-section"),
+								g.Attr("data-slot", "scroll-section"),
 								h.Style("padding:var(--sp-5);border-left:4px solid "+s.color+";background:var(--surface-2);border-radius:0 var(--radius) var(--radius) 0;opacity:0"),
 								h.P(h.Style("margin:0;font-size:var(--t-sm)"), g.Text(s.text)),
 							)
@@ -88,7 +88,7 @@ window.addEventListener('scroll', () => {
   });
 
   // inView reveals inside scroll container
-  document.querySelectorAll('.scroll-section').forEach(function(el,i){
+  document.querySelectorAll('[data-slot="scroll-section"]').forEach(function(el,i){
     var anims=[
       function(t){ Motion.animate(t,{opacity:[0,1],x:[-30,0]},{duration:0.5}); },
       function(t){ Motion.animate(t,{opacity:[0,1],y:[20,0]},{duration:0.5}); },
@@ -133,7 +133,7 @@ Motion.timeline([
 						func() g.Node {
 							skels := make([]g.Node, 4)
 							for i := range skels {
-								skels[i] = h.Div(h.Class("morph-skel"),
+								skels[i] = h.Div(g.Attr("data-slot", "morph-skel"),
 									h.Style("height:52px;background:var(--surface-2);border-radius:var(--radius);animation:mljr-pulse 1.5s ease infinite"))
 							}
 							return g.Group(skels)
@@ -149,7 +149,7 @@ Motion.timeline([
 							nodes := make([]g.Node, len(items))
 							for i, item := range items {
 								nodes[i] = h.Div(
-									h.Class("morph-item"),
+									g.Attr("data-slot", "morph-item"),
 									h.Style("display:flex;align-items:center;gap:var(--sp-3);opacity:0;padding:var(--sp-2);border-radius:var(--radius);background:var(--surface-2)"),
 									h.Div(h.Style("width:36px;height:36px;border-radius:50%;background:"+item.color+";flex-shrink:0")),
 									h.Div(
@@ -175,8 +175,8 @@ Motion.timeline([
 
 				h.Script(g.Raw(`(function(){
   if(typeof Motion==='undefined') return;
-  var skels=document.querySelectorAll('.morph-skel');
-  var items=document.querySelectorAll('.morph-item');
+  var skels=document.querySelectorAll('[data-slot="morph-skel"]');
+  var items=document.querySelectorAll('[data-slot="morph-item"]');
   var loaded=false;
 
   document.getElementById('morph-load').addEventListener('click',function(){

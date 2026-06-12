@@ -147,7 +147,7 @@ Motion.inView(el, callback, {
 			cardNodes := make([]g.Node, len(cards))
 			for i, c := range cards {
 				cardNodes[i] = h.Div(
-					h.Class("iv-item"),
+					g.Attr("data-slot", "iv-item"),
 					h.Style("padding:var(--sp-4);border-left:4px solid "+c.color+";background:var(--surface-2);border-radius:0 var(--radius) var(--radius) 0;opacity:0"),
 					h.P(h.Style("font-weight:700;margin:0 0 var(--sp-1)"), g.Text(c.title)),
 					h.Code(h.Style("font-size:var(--t-xs);opacity:.6"), g.Text(c.body)),
@@ -176,7 +176,7 @@ Motion.inView(el, callback, {
     function(el){ Motion.animate(el,{opacity:[0,1],filter:['blur(12px)','blur(0px)']},{duration:0.6}); },
     function(el){ Motion.animate(el,{opacity:[0,1],transform:['perspective(400px) rotateX(60deg)','perspective(400px) rotateX(0deg)']},{duration:0.5,easing:'ease-out'}); }
   ];
-  document.querySelectorAll('.iv-item').forEach(function(el,i){
+  document.querySelectorAll('[data-slot="iv-item"]').forEach(function(el,i){
     Motion.inView(el,function(){fns[i%fns.length](el);},{root:root,margin:'0px 0px -20px 0px'});
   });
 })()`)),
@@ -229,7 +229,7 @@ Motion.animate(chars, { opacity:[0,1], rotateZ:[-25,0], y:[12,0] },
 						g.Attr("data-phrase", e.phrase),
 					),
 					h.Button(
-						h.Class("tr-play"),
+						g.Attr("data-slot", "tr-play"),
 						g.Attr("data-component", "button"),
 						g.Attr("data-variant", string(token.Outline)),
 						g.Attr("data-size", string(token.SizeSM)),
@@ -282,7 +282,7 @@ Motion.animate(chars, { opacity:[0,1], rotateZ:[-25,0], y:[12,0] },
     }
   };
 
-  document.querySelectorAll('.tr-play').forEach(function(btn){
+  document.querySelectorAll('[data-slot="tr-play"]').forEach(function(btn){
     var effectId=btn.dataset.anim;
     var stage=document.getElementById(effectId);
     var chars=buildChars(stage);
@@ -343,7 +343,7 @@ el.addEventListener('click', e => {
 						nodes := make([]g.Node, 3)
 						for i := range nodes {
 							nodes[i] = h.Div(
-								h.Class("gest-card"),
+								g.Attr("data-slot", "gest-card"),
 								h.Style("padding:var(--sp-4);border:var(--bw-2) solid var(--line);border-radius:var(--radius);background:var(--surface-2);cursor:pointer;text-align:center;font-weight:700;border-top:4px solid "+colors[i]),
 								g.Text(labels[i]),
 							)
@@ -381,7 +381,7 @@ el.addEventListener('click', e => {
   if(typeof Motion==='undefined') return;
 
   // Hover lift
-  document.querySelectorAll('.gest-card').forEach(function(el){
+  document.querySelectorAll('[data-slot="gest-card"]').forEach(function(el){
     el.addEventListener('mouseenter',function(){
       Motion.animate(el,{y:-6,scale:1.03},{duration:0.25,easing:'ease-out'});
     });

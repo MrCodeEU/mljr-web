@@ -45,7 +45,7 @@ icon.All()             // []string — all registered names`,
 				for i, name := range names {
 					short := strings.SplitN(name, ":", 2)[1]
 					cells[i] = h.Div(
-						h.Class("ic-cell"),
+						g.Attr("data-slot", "ic-cell"),
 						g.Attr("data-name", name),
 						h.Style("display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border:1px solid transparent;border-radius:var(--radius);cursor:pointer;transition:border-color .15s,background .15s"),
 						h.Title(name),
@@ -58,14 +58,14 @@ icon.All()             // []string — all registered names`,
 				}
 				sections = append(sections,
 					h.Div(
-						h.Class("ic-section"),
+						g.Attr("data-slot", "ic-section"),
 						g.Attr("data-set", set),
 						h.H3(
 							h.Style("font-size:var(--t-xs);text-transform:uppercase;letter-spacing:.08em;font-weight:700;opacity:.45;margin:var(--sp-4) 0 var(--sp-2)"),
 							g.Text(set),
 						),
 						h.Div(
-							h.Class("ic-grid"),
+							g.Attr("data-slot", "ic-grid"),
 							h.Style("display:flex;flex-wrap:wrap;gap:4px"),
 							g.Group(cells),
 						),
@@ -109,7 +109,7 @@ icon.All()             // []string — all registered names`,
   var toastTimer;
 
   // Copy on click
-  document.querySelectorAll('.ic-cell').forEach(function(cell){
+  document.querySelectorAll('[data-slot="ic-cell"]').forEach(function(cell){
     cell.addEventListener('mouseenter',function(){
       cell.style.borderColor='var(--line)';
       cell.style.background='var(--surface-2)';
@@ -132,14 +132,14 @@ icon.All()             // []string — all registered names`,
   function filter(){
     var q=search.value.toLowerCase().trim();
     var visible=0;
-    document.querySelectorAll('.ic-cell').forEach(function(cell){
+    document.querySelectorAll('[data-slot="ic-cell"]').forEach(function(cell){
       var match=!q||cell.dataset.name.includes(q);
       cell.style.display=match?'':'none';
       if(match) visible++;
     });
     // Hide section headers with no visible children
-    document.querySelectorAll('.ic-section').forEach(function(sec){
-      var any=Array.from(sec.querySelectorAll('.ic-cell')).some(function(c){return c.style.display!=='none';});
+    document.querySelectorAll('[data-slot="ic-section"]').forEach(function(sec){
+      var any=Array.from(sec.querySelectorAll('[data-slot="ic-cell"]')).some(function(c){return c.style.display!=='none';});
       sec.style.display=any?'':'none';
     });
     countEl.textContent=visible+' icons';

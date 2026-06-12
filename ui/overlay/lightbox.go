@@ -64,7 +64,7 @@ func Lightbox(p LightboxProps) g.Node {
 
 		// Thumbnail grid
 		h.Div(
-			h.Style(fmt.Sprintf("display:flex;flex-wrap:wrap;gap:var(--sp-2)")),
+			h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-2)"),
 			g.Group(thumbs),
 		),
 

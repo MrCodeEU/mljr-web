@@ -78,8 +78,8 @@ func Gauge(p GaugeProps) g.Node {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d" data-component="gauge">`,
-		p.Size, p.Size, p.Size, p.Size))
+	fmt.Fprintf(&sb, `<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d" data-component="gauge">`,
+		p.Size, p.Size, p.Size, p.Size)
 
 	// Track (full arc)
 	sb.WriteString(arcPath(startAngle, startAngle+totalAngle, p.TrackColor))
@@ -100,17 +100,17 @@ func Gauge(p GaugeProps) g.Node {
 			y1 := cy + inner*math.Sin(a)
 			x2 := cx + outer*math.Cos(a)
 			y2 := cy + outer*math.Sin(a)
-			sb.WriteString(fmt.Sprintf(`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="var(--bg)" stroke-width="2"/>`, x1, y1, x2, y2))
+			fmt.Fprintf(&sb, `<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="var(--bg)" stroke-width="2"/>`, x1, y1, x2, y2)
 		}
 	}
 
 	// Center value text
 	valueStr := fmt.Sprintf("%.0f%s", p.Value, stdhtml.EscapeString(p.Unit))
-	sb.WriteString(fmt.Sprintf(`<text x="%.1f" y="%.1f" text-anchor="middle" dominant-baseline="middle" fill="var(--ink)" font-size="%d" font-family="var(--font-display)" font-weight="900">%s</text>`,
-		cx, cy-float64(p.Size)*0.04, p.Size/6, valueStr))
+	fmt.Fprintf(&sb, `<text x="%.1f" y="%.1f" text-anchor="middle" dominant-baseline="middle" fill="var(--ink)" font-size="%d" font-family="var(--font-display)" font-weight="900">%s</text>`,
+		cx, cy-float64(p.Size)*0.04, p.Size/6, valueStr)
 	if p.Label != "" {
-		sb.WriteString(fmt.Sprintf(`<text x="%.1f" y="%.1f" text-anchor="middle" fill="var(--muted)" font-size="%d" font-family="var(--font-display)" font-weight="700" letter-spacing="1">%s</text>`,
-			cx, cy+float64(p.Size)*0.12, p.Size/14, stdhtml.EscapeString(strings.ToUpper(p.Label))))
+		fmt.Fprintf(&sb, `<text x="%.1f" y="%.1f" text-anchor="middle" fill="var(--muted)" font-size="%d" font-family="var(--font-display)" font-weight="700" letter-spacing="1">%s</text>`,
+			cx, cy+float64(p.Size)*0.12, p.Size/14, stdhtml.EscapeString(strings.ToUpper(p.Label)))
 	}
 
 	sb.WriteString(`</svg>`)

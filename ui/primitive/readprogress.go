@@ -38,14 +38,14 @@ func ReadProgress(p ReadProgressProps) g.Node {
 		p.Top = "0"
 	}
 
-	targetExpr := ""
+	var targetExpr string
 	if p.Target != "" {
 		targetExpr = fmt.Sprintf(`var sc=document.querySelector('%s')||window;`, p.Target)
 	} else {
 		targetExpr = "var sc=window;"
 	}
 
-	scrollExpr := ""
+	var scrollExpr string
 	if p.Target != "" {
 		scrollExpr = `var el=document.querySelector('` + p.Target + `');if(!el)return;var pct=el.scrollTop/(el.scrollHeight-el.clientHeight)||0;`
 	} else {

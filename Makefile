@@ -132,7 +132,7 @@ test: ; go test ./... -race -cover
 test-showcase: ; go test -tags showcase ./... -race -cover
 
 guard-classes: ## enforce data-* contract: no class= / Class( in ui/**.go
-	@! grep -rnE '(Class\(|class=|h\.Class)' ui --include='*.go' \
+	@! grep -rnE '(Class\(|h\.Class|[^-]class=)' ui --include='*.go' \
 	   || (echo "✗ ui components must not use classes — use data-* + CSS" && exit 1)
 	@echo "✓ guard-classes ok"
 

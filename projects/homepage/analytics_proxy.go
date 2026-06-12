@@ -24,21 +24,19 @@ func registerAnalyticsProxyWithTransport(e *echo.Echo, cfg config.AnalyticsConfi
 	if err != nil {
 		return err
 	}
-	proxy := httputil.NewSingleHostReverseProxy(target)
+	proxy := &httputil.ReverseProxy{}
 	if transport != nil {
 		proxy.Transport = transport
 	}
-	originalDirector := proxy.Director
-	proxy.Director = func(req *http.Request) {
-		originalDirector(req)
-		req.Host = target.Host
-		req.URL.Scheme = target.Scheme
-		req.URL.Host = target.Host
-		req.URL.Path = joinURLPath(target.Path, strings.TrimPrefix(req.URL.Path, "/umami"))
-		if req.URL.Path == "" {
-			req.URL.Path = "/"
+	proxy.Rewrite = func(r *httputil.ProxyRequest) {
+		r.Out.Host = target.Host
+		r.Out.URL.Scheme = target.Scheme
+		r.Out.URL.Host = target.Host
+		r.Out.URL.Path = joinURLPath(target.Path, strings.TrimPrefix(r.In.URL.Path, "/umami"))
+		if r.Out.URL.Path == "" {
+			r.Out.URL.Path = "/"
 		}
-		req.Header.Del("Accept-Encoding")
+		r.Out.Header.Del("Accept-Encoding")
 	}
 	proxy.ModifyResponse = func(res *http.Response) error {
 		if strings.HasSuffix(res.Request.URL.Path, "/script.js") {

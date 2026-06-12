@@ -63,7 +63,7 @@ func Datenschutz(a AnalyticsConfig) g.Node {
 			h.P(g.Text("Diese Website setzt keine Tracking-Cookies. Fuer die Darstellung koennen technisch notwendige lokale Einstellungen wie Theme oder Farbmodus im Browser gespeichert werden. Diese Einstellungen bleiben auf deinem Geraet und werden nicht zu Werbe- oder Profilingzwecken verwendet.")),
 		),
 		legalSection("Externe Inhalte",
-			h.P(g.Text("Die produktive Website laedt Schriftarten, Skripte und Stylesheets nach aktuellem Stand selbst gehostet aus. Es werden keine Google Fonts oder CDN-Schriften eingebunden.")),
+			h.P(g.Text("Die Website laedt Schriftarten, Skripte und Stylesheets nach aktuellem Stand selbst gehostet aus. Es werden keine Google Fonts oder CDN-Schriften eingebunden.")),
 			h.P(g.Text("Externe Links, zum Beispiel zu GitHub, LinkedIn oder Strava, fuehren zu Angeboten anderer Anbieter. Fuer deren Inhalte und Datenverarbeitung gelten die jeweiligen Datenschutzhinweise dieser Anbieter.")),
 		),
 		legalSection("Rechtsgrundlagen",
@@ -183,6 +183,7 @@ func siteNavbar() g.Node {
 
 func siteFooter() g.Node {
 	return layout.Footer(layout.FooterProps{
+		Attrs: []g.Node{g.Attr("data-homepage-footer", "true")},
 		Brand: h.Div(
 			h.Img(h.Src("/static/img/logo/Logo-h.png"), h.Alt("mljr.eu"), h.Style("height:32px;width:auto")),
 		),

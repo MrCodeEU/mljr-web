@@ -27,7 +27,7 @@ func OTPInput(p OTPInputProps) g.Node {
 	boxes := make([]g.Node, p.Length)
 	for i := range boxes {
 		boxes[i] = h.Input(
-			h.Class("otp-box"),
+			g.Attr("data-slot", "otp-box"),
 			h.Type("text"),
 			g.Attr("inputmode", "numeric"),
 			g.Attr("maxlength", "1"),
@@ -62,7 +62,7 @@ func OTPInput(p OTPInputProps) g.Node {
 
 const otpScript = `(function(){
   document.querySelectorAll('[data-component="otp-input"]').forEach(function(root){
-    var boxes=Array.from(root.querySelectorAll('.otp-box'));
+    var boxes=Array.from(root.querySelectorAll('[data-slot="otp-box"]'));
     var hidden=root.querySelector('[data-slot="value"]');
     function sync(){ hidden.value=boxes.map(function(b){return b.value;}).join(''); }
 

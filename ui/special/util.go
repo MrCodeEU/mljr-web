@@ -9,11 +9,12 @@ func jsStr(s string) string {
 	out = append(out, '\'')
 	for i := 0; i < len(s); i++ {
 		c := s[i]
-		if c == '\'' {
+		switch c {
+		case '\'':
 			out = append(out, '\\', '\'')
-		} else if c == '\\' {
+		case '\\':
 			out = append(out, '\\', '\\')
-		} else {
+		default:
 			out = append(out, c)
 		}
 	}

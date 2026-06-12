@@ -74,22 +74,22 @@ func RadarChart(p RadarChartProps, series ...RadarSeries) g.Node {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d" data-component="radar-chart">`,
-		p.Size, p.Size, p.Size, p.Size))
+	fmt.Fprintf(&sb, `<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d" data-component="radar-chart">`,
+		p.Size, p.Size, p.Size, p.Size)
 
 	// Grid polygons
 	if p.ShowGrid {
 		for level := 1; level <= p.GridLevels; level++ {
 			lvlR := r * float64(level) / float64(p.GridLevels)
-			sb.WriteString(fmt.Sprintf(`<polygon points="%s" fill="none" stroke="var(--line)" stroke-width="1" opacity="0.5"/>`, poly(lvlR)))
+			fmt.Fprintf(&sb, `<polygon points="%s" fill="none" stroke="var(--line)" stroke-width="1" opacity="0.5"/>`, poly(lvlR))
 		}
 	}
 
 	// Axis lines + labels
 	for i, axis := range p.Axes {
 		x, y := pt(r, i)
-		sb.WriteString(fmt.Sprintf(`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="var(--line)" stroke-width="1"/>`,
-			cx, cy, x, y))
+		fmt.Fprintf(&sb, `<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="var(--line)" stroke-width="1"/>`,
+			cx, cy, x, y)
 		lx, ly := pt(labelR, i)
 		anchor := "middle"
 		if lx < cx-1 {
@@ -97,8 +97,8 @@ func RadarChart(p RadarChartProps, series ...RadarSeries) g.Node {
 		} else if lx > cx+1 {
 			anchor = "start"
 		}
-		sb.WriteString(fmt.Sprintf(`<text x="%.1f" y="%.1f" text-anchor="%s" dominant-baseline="middle" fill="var(--muted)" font-size="11" font-family="var(--font-display)" font-weight="700">%s</text>`,
-			lx, ly, anchor, stdhtml.EscapeString(axis)))
+		fmt.Fprintf(&sb, `<text x="%.1f" y="%.1f" text-anchor="%s" dominant-baseline="middle" fill="var(--muted)" font-size="11" font-family="var(--font-display)" font-weight="700">%s</text>`,
+			lx, ly, anchor, stdhtml.EscapeString(axis))
 	}
 
 	// Data series
@@ -117,8 +117,8 @@ func RadarChart(p RadarChartProps, series ...RadarSeries) g.Node {
 			x, y := pt(scaled, i)
 			pts[i] = fmt.Sprintf("%.1f,%.1f", x, y)
 		}
-		sb.WriteString(fmt.Sprintf(`<polygon points="%s" fill="%s" fill-opacity="0.18" stroke="%s" stroke-width="2"/>`,
-			strings.Join(pts, " "), color, color))
+		fmt.Fprintf(&sb, `<polygon points="%s" fill="%s" fill-opacity="0.18" stroke="%s" stroke-width="2"/>`,
+			strings.Join(pts, " "), color, color)
 		// Dots at each vertex — per-axis colors override the series color
 		for i := range p.Axes {
 			val := 0.0
@@ -135,7 +135,7 @@ func RadarChart(p RadarChartProps, series ...RadarSeries) g.Node {
 				dotR = 5.5
 				stroke = `stroke="var(--ink)" stroke-width="2"`
 			}
-			sb.WriteString(fmt.Sprintf(`<circle cx="%.1f" cy="%.1f" r="%.1f" fill="%s" %s/>`, x, y, dotR, dotColor, stroke))
+			fmt.Fprintf(&sb, `<circle cx="%.1f" cy="%.1f" r="%.1f" fill="%s" %s/>`, x, y, dotR, dotColor, stroke)
 		}
 	}
 
@@ -148,9 +148,9 @@ func RadarChart(p RadarChartProps, series ...RadarSeries) g.Node {
 			}
 			lx := 8.0
 			ly := float64(p.Size) - float64((len(series)-si)*18) - 4
-			sb.WriteString(fmt.Sprintf(`<rect x="%.0f" y="%.0f" width="10" height="10" fill="%s" rx="2"/>`, lx, ly, color))
-			sb.WriteString(fmt.Sprintf(`<text x="%.0f" y="%.0f" fill="var(--muted)" font-size="10" font-family="var(--font-display)">%s</text>`,
-				lx+14, ly+9, stdhtml.EscapeString(s.Label)))
+			fmt.Fprintf(&sb, `<rect x="%.0f" y="%.0f" width="10" height="10" fill="%s" rx="2"/>`, lx, ly, color)
+			fmt.Fprintf(&sb, `<text x="%.0f" y="%.0f" fill="var(--muted)" font-size="10" font-family="var(--font-display)">%s</text>`,
+				lx+14, ly+9, stdhtml.EscapeString(s.Label))
 		}
 	}
 

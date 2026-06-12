@@ -37,7 +37,7 @@ func MultiSelect(p MultiSelectProps) g.Node {
 	for i, opt := range p.Options {
 		selected := defaultSet[opt.Value]
 		optNodes[i] = h.Div(
-			h.Class("ms-option"),
+			g.Attr("data-slot", "ms-option"),
 			g.Attr("data-value", opt.Value),
 			g.Attr("data-selected", func() string {
 				if selected {
@@ -53,7 +53,7 @@ func MultiSelect(p MultiSelectProps) g.Node {
 	for _, v := range p.Default {
 		hiddenInputs = append(hiddenInputs, h.Input(
 			h.Type("hidden"),
-			h.Class("ms-hidden"),
+			g.Attr("data-slot", "ms-hidden"),
 			h.Name(p.Name+"[]"),
 			h.Value(v),
 		))
@@ -92,9 +92,9 @@ const multiSelectScript = `(function(){
     var chipsSlot=root.querySelector('[data-slot="chips"]');
     var placeholder=root.querySelector('[data-slot="placeholder"]');
     var dropdown=root.querySelector('[data-slot="dropdown"]');
-    var options=Array.from(root.querySelectorAll('.ms-option'));
+    var options=Array.from(root.querySelectorAll('[data-slot="ms-option"]'));
     var max=parseInt(root.dataset.max)||0;
-    var name=root.querySelector('.ms-hidden');
+    var name=root.querySelector('[data-slot="ms-hidden"]');
     var baseName=name?name.name.replace('[]',''):'';
 
     function selected(){ return options.filter(function(o){ return o.dataset.selected==='true'; }); }
@@ -114,7 +114,7 @@ const multiSelectScript = `(function(){
       });
       placeholder.style.display=sel.length?'none':'';
       // Sync hidden inputs
-      root.querySelectorAll('.ms-hidden').forEach(function(i){ i.remove(); });
+      root.querySelectorAll('[data-slot="ms-hidden"]').forEach(function(i){ i.remove(); });
       sel.forEach(function(o){
         var inp=document.createElement('input');
         inp.type='hidden'; inp.className='ms-hidden';
