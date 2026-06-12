@@ -60,7 +60,10 @@ func ModeToggle() g.Node {
 				g.Attr("data-on:click", `$mode = $mode === 'light' ? 'dark' : 'light'`),
 			},
 		},
-		h.Span(g.Attr("data-show", "$mode === 'light'"), icon.Icon("lucide:moon")),
-		h.Span(g.Attr("data-show", "$mode === 'dark'"), icon.Icon("lucide:sun")),
+		// line-height:0 — the wrapping spans (needed for data-show) must not add
+		// inline line-box height on top of the icon, or the button grows taller
+		// than its SizeIcon siblings.
+		h.Span(h.Style("line-height:0"), g.Attr("data-show", "$mode === 'light'"), icon.Icon("lucide:moon")),
+		h.Span(h.Style("line-height:0"), g.Attr("data-show", "$mode === 'dark'"), icon.Icon("lucide:sun")),
 	)
 }

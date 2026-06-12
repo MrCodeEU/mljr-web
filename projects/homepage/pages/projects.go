@@ -7,7 +7,6 @@ import (
 	h "maragu.dev/gomponents/html"
 
 	hpdata "mljr-web/projects/homepage/data"
-	"mljr-web/ui"
 	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
@@ -19,7 +18,7 @@ func projectsSection(projects []hpdata.Project) g.Node {
 	total := len(projects)
 	pages := (total + perPage - 1) / perPage
 
-	// Build all project cards — each set of perPage wrapped in a page div
+	// Build all project cards — one Grid per page, animated by PaginatedPages
 	var pageNodes []g.Node
 	for p := 0; p < pages; p++ {
 		start := p * perPage
@@ -35,12 +34,7 @@ func projectsSection(projects []hpdata.Project) g.Node {
 			cols = append(cols, projectCard(proj, tones[i%len(tones)]))
 		}
 
-		pageNodes = append(pageNodes,
-			h.Div(
-				ui.Show(fmt.Sprintf("$pgPage === %d", p)),
-				layout.Grid(layout.GridProps{}, g.Group(cols)),
-			),
-		)
+		pageNodes = append(pageNodes, layout.Grid(layout.GridProps{}, g.Group(cols)))
 	}
 
 	return h.Section(
@@ -53,31 +47,12 @@ func projectsSection(projects []hpdata.Project) g.Node {
 			h.Div(h.Style("margin-bottom:var(--sp-5);display:flex;justify-content:center"),
 				uidata.Pagination(uidata.PaginationProps{ID: "pg", Total: total, PerPage: perPage}),
 			),
-			h.Div(h.ID("projects-pages"), g.Group(pageNodes)),
+			uidata.PaginatedPages(uidata.PaginatedPagesProps{ID: "pg", Animation: uidata.PageAnimSlideUp}, pageNodes...),
 			// bottom pagination
 			h.Div(h.Style("margin-top:var(--sp-6);display:flex;justify-content:center"),
 				uidata.Pagination(uidata.PaginationProps{ID: "pg", Total: total, PerPage: perPage}),
 			),
 		),
-		// Animate page transitions via MutationObserver watching display changes
-		h.Script(g.Raw(`(function(){
-  if(typeof Motion==='undefined') return;
-  var container=document.getElementById('projects-pages');
-  if(!container) return;
-  var obs=new MutationObserver(function(muts){
-    muts.forEach(function(m){
-      if(m.type==='attributes'&&m.attributeName==='style'){
-        var el=m.target;
-        if(el.style.display!=='none'){
-          Motion.animate(el,{opacity:[0,1],y:[16,0]},{duration:0.35,easing:[0.25,0.46,0.45,0.94]});
-        }
-      }
-    });
-  });
-  Array.from(container.children).forEach(function(el){
-    obs.observe(el,{attributes:true,attributeFilter:['style']});
-  });
-})();`)),
 	)
 }
 

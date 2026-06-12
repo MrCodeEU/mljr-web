@@ -2,6 +2,7 @@ package pages
 
 import (
 	"strings"
+	"time"
 
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
@@ -181,20 +182,38 @@ func siteNavbar() g.Node {
 }
 
 func siteFooter() g.Node {
-	return layout.Footer(layout.FooterProps{},
-		h.Div(
-			h.Img(h.Src("/static/img/logo/Logo-h.png"), h.Alt("mljr.eu"), h.Style("height:24px;width:auto;opacity:.6")),
+	return layout.Footer(layout.FooterProps{
+		Brand: h.Div(
+			h.Img(h.Src("/static/img/logo/Logo-h.png"), h.Alt("mljr.eu"), h.Style("height:32px;width:auto")),
 		),
-		h.Div(h.Style("text-align:right"),
-			h.Span(g.Text("mljr.eu · built with Go · gomponents · Datastar · Tailwind v4")),
-			h.Br(),
-			h.Span(h.Style("opacity:.5;font-size:var(--t-xs)"), g.Text("no JS framework · no CDN · no adtech tracking")),
-			h.Br(),
-			h.A(h.Href("/impressum"), h.Style("opacity:.7;font-size:var(--t-xs)"), g.Text("Impressum")),
-			g.Text(" · "),
-			h.A(h.Href("/datenschutz"), h.Style("opacity:.7;font-size:var(--t-xs)"), g.Text("Datenschutz")),
+		Tagline: "Go, security and self-hosted infrastructure. Every component on this site is a Go function — no JS framework, no CDN, no adtech tracking.",
+		Columns: []layout.FooterColumn{
+			{Title: "Site", Links: []layout.FooterLink{
+				{Label: "Experience", Href: "/#experience"},
+				{Label: "Projects", Href: "/#projects"},
+				{Label: "Open source", Href: "/#opensource"},
+				{Label: "Homelab", Href: "/#homelab"},
+				{Label: "Activity", Href: "/#activity"},
+				{Label: "Skills", Href: "/#skills"},
+			}},
+			{Title: "Elsewhere", Links: []layout.FooterLink{
+				{Label: "GitHub", Href: "https://github.com/MrCodeEU", External: true},
+				{Label: "LinkedIn", Href: "https://www.linkedin.com/in/michael-reinegger", External: true},
+				{Label: "Strava", Href: "https://www.strava.com/athletes/mrcode", External: true},
+				{Label: "Status page", Href: "https://uptime.mljr.eu/status/all", External: true},
+			}},
+			{Title: "Legal", Links: []layout.FooterLink{
+				{Label: "Impressum", Href: "/impressum"},
+				{Label: "Datenschutz", Href: "/datenschutz"},
+				{Label: "Contact", Href: "/#contact"},
+			}},
+		},
+		Bottom: h.Div(
+			h.Style("display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:var(--sp-3);width:100%"),
+			h.Span(g.Text("© "+time.Now().Format("2006")+" Michael Reinegger · mljr.eu")),
+			h.Span(g.Text("built with Go · gomponents · Datastar · Tailwind v4")),
 		),
-	)
+	})
 }
 
 const legalCSS = `

@@ -48,62 +48,99 @@ func skillsSection() g.Node {
 		}
 	}
 
-	// Build radar chart data: normalize skill counts to 0–100
-	maxSkills := 1
-	for _, sg := range groups {
-		if len(sg.Skills) > maxSkills {
-			maxSkills = len(sg.Skills)
-		}
-	}
+	// Radar: self-assessed depth per area, vertex dots color-coded to the
+	// group cards on the right.
 	radarAxes := make([]string, len(groups))
 	radarValues := make([]float64, len(groups))
+	axisColors := make([]string, len(groups))
 	for i, sg := range groups {
-		radarAxes[i] = sg.Label
-		radarValues[i] = float64(len(sg.Skills)) / float64(maxSkills) * 100
+		radarAxes[i] = sg.Short
+		radarValues[i] = float64(sg.Level)
+		axisColors[i] = toneBG(sg.Tone)
+	}
+
+	groupCards := make([]g.Node, len(groups))
+	for i, sg := range groups {
+		chips := make([]g.Node, 0, len(sg.Skills))
+		for _, s := range sg.Skills {
+			ic := hpdata.TechIcon(s)
+			chips = append(chips, h.Span(
+				h.Style("display:inline-flex;align-items:center;gap:4px;border:var(--bw-1) solid var(--ink);background:var(--bg);padding:2px var(--sp-2);font-size:var(--t-xs);font-weight:700;white-space:nowrap"),
+				g.If(ic != "", icon.Icon(ic, icon.Props{Size: ".85rem"})),
+				g.Text(s),
+			))
+		}
+		groupCards[i] = primitive.Card(primitive.CardProps{Tone: token.Tone(sg.Tone)},
+			h.Div(
+				h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3)"),
+				icon.Icon(sg.Icon, icon.Props{Size: "1.2rem"}),
+				h.H3(h.Style("font-size:var(--t-base);font-weight:900;margin:0;flex:1;min-width:0"), g.Text(sg.Label)),
+				h.Span(h.Style("font-size:var(--t-xs);font-weight:900;font-family:var(--font-mono,monospace);border:var(--bw-1) solid var(--ink);background:var(--bg);padding:1px var(--sp-2)"), g.Textf("%d", len(sg.Skills))),
+			),
+			h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-1)"), g.Group(chips)),
+		)
 	}
 
 	return h.Section(
 		h.ID("skills"),
 		h.Style("padding:var(--sp-12) 0"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("07", "Skills", "My tech stack", token.ToneViolet),
-			// Radar chart + description
+			sectionHeader("07", "Skills", "depth × breadth", token.ToneViolet),
 			h.Div(
-				h.Style("display:grid;grid-template-columns:auto 1fr;gap:var(--sp-8);align-items:center;margin-bottom:var(--sp-8)"),
-				uidata.RadarChart(uidata.RadarChartProps{
-					Axes:       radarAxes,
-					ShowGrid:   true,
-					GridLevels: 4,
-					Size:       240,
-					Max:        100,
-				},
-					uidata.RadarSeries{Label: "Breadth", Values: radarValues},
+				h.Class("skills-grid"),
+				h.Style("display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:var(--sp-5);align-items:stretch"),
+				// Left: radar card
+				primitive.Card(primitive.CardProps{Tone: token.ToneNone},
+					h.Div(h.Style("display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:var(--sp-3)"),
+						uidata.RadarChart(uidata.RadarChartProps{
+							Axes:       radarAxes,
+							ShowGrid:   true,
+							GridLevels: 4,
+							Size:       300,
+							Max:        100,
+							AxisColors: axisColors,
+						},
+							uidata.RadarSeries{Label: "Depth", Values: radarValues, Color: "var(--accent)"},
+						),
+						h.Div(h.Style("font-size:var(--t-xs);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;text-align:center"),
+							g.Text("self-assessed depth per area · dots match the cards"),
+						),
+					),
 				),
+				// Right: one toned card per skill group
 				h.Div(
-					h.Style("display:flex;flex-direction:column;gap:var(--sp-3)"),
-					g.Group(func() []g.Node {
-						nodes := make([]g.Node, len(groups))
-						for i, sg := range groups {
-							nodes[i] = h.Div(
-								h.Style("display:flex;align-items:center;gap:var(--sp-3)"),
-								h.Div(h.Style("width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--ink);flex-shrink:0")),
-								h.Span(h.Style("font-weight:800;font-size:var(--t-sm)"), g.Text(sg.Label)),
-								h.Span(h.Style("font-size:var(--t-xs);color:var(--muted);margin-left:auto"), g.Textf("%d skills", len(sg.Skills))),
-							)
-						}
-						return nodes
-					}()),
+					h.Style("display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-4);align-content:stretch"),
+					g.Group(groupCards),
 				),
 			),
 		),
 		// Marquee rows (outside container for full width)
 		h.Div(
-			h.Style("display:flex;flex-direction:column;gap:var(--sp-3);padding:var(--sp-4) 0"),
+			h.Style("display:flex;flex-direction:column;gap:var(--sp-3);padding:var(--sp-6) 0 0"),
 			row(langWeb, "left", "28s"),
 			row(infra, "right", "22s"),
 			row(secOther, "left", "25s"),
 		),
 	)
+}
+
+// toneBG maps a tone name to its pastel background CSS variable (with
+// fallback), used to color radar vertex dots to match the group cards.
+func toneBG(tone string) string {
+	m := map[string]string{
+		"yellow": "var(--yellow-bg,#fef08a)",
+		"cyan":   "var(--cyan-bg,#a5f3fc)",
+		"violet": "var(--violet-bg,#ddd6fe)",
+		"lime":   "var(--lime-bg,#d9f99d)",
+		"pink":   "var(--pink-bg,#fbcfe8)",
+		"sky":    "var(--sky-bg,#bae6fd)",
+		"mint":   "var(--mint-bg,#d1fae5)",
+		"blush":  "var(--blush-bg,#fde8e8)",
+	}
+	if v, ok := m[tone]; ok {
+		return v
+	}
+	return "var(--accent)"
 }
 
 // toneVars maps tone names to their CSS background + text variables for inline use.

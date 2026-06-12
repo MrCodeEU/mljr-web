@@ -47,11 +47,15 @@ func stravaSection(d hpdata.SiteData) g.Node {
 						),
 					),
 					h.Div(
-						h.Style("display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-3)"),
-						activityMetric("Runs", fmt.Sprintf("%d", s.YearToDateStats.Count), "year to date", "lucide:activity"),
-						activityMetric("Distance", fmt.Sprintf("%.1f km", hpdata.DistanceKM(s.YearToDateStats.Distance)), "year to date", "lucide:arrow-right"),
-						activityMetric("Moving time", fmt.Sprintf("%.1f h", hpdata.DurationHours(s.YearToDateStats.MovingTime)), "logged effort", "lucide:calendar"),
-						activityMetric("Elevation", fmt.Sprintf("%.0f m", s.YearToDateStats.ElevationGain), "climbed", "lucide:bar-chart-2"),
+						h.Style("display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-3)"),
+						activityMetric("Sessions", fmt.Sprintf("%d", s.YearToDateStats.Count), "year to date", "lucide:flame"),
+						activityMetric("Distance", fmt.Sprintf("%.1f km", hpdata.DistanceKM(s.YearToDateStats.Distance)), "run · hike · ski", "lucide:route"),
+						activityMetric("Moving time", hpdata.DurationHM(s.YearToDateStats.MovingTime), "logged effort", "lucide:timer"),
+						activityMetric("Elevation", fmt.Sprintf("%.0f m", s.YearToDateStats.ElevationGain), "climbed", "lucide:mountain"),
+						g.If(s.AvgHeartrate() > 0,
+							activityMetric("Avg HR", fmt.Sprintf("%.0f bpm", s.AvgHeartrate()), "session-weighted", "lucide:heart-pulse")),
+						g.If(s.YTDCalories > 0,
+							activityMetric("Calories", fmt.Sprintf("%.1fk", s.YTDCalories/1000), "burned (est.)", "lucide:zap")),
 					),
 					g.If(len(s.Disciplines) > 0,
 						h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-5)"),
@@ -116,11 +120,26 @@ func activityRow(a hpdata.StravaActivity) g.Node {
 	if strings.TrimSpace(title) == "" {
 		title = friendlyName(a.Type)
 	}
-	meta := []string{a.DisplayDate(), fmt.Sprintf("%.1f km", hpdata.DistanceKM(a.Distance))}
-	if a.AveragePace > 0 {
+	// Per-type metadata: distance/pace only where it means something —
+	// workouts and weight sessions show duration, HR and calories instead.
+	meta := []string{a.DisplayDate()}
+	if a.MovingTime > 0 {
+		meta = append(meta, hpdata.DurationClock(a.MovingTime))
+	}
+	if showsDistance(a.Type) && a.Distance > 0 {
+		meta = append(meta, fmt.Sprintf("%.1f km", hpdata.DistanceKM(a.Distance)))
+	}
+	if isRun(a.Type) && a.AveragePace > 0 {
 		meta = append(meta, hpdata.PaceLabel(a.AveragePace))
-	} else if a.MovingTime > 0 {
-		meta = append(meta, fmt.Sprintf("%.1f h", hpdata.DurationHours(a.MovingTime)))
+	}
+	if a.TotalElevationGain > 0 {
+		meta = append(meta, fmt.Sprintf("↑ %.0f m", a.TotalElevationGain))
+	}
+	if a.AverageHeartrate > 0 {
+		meta = append(meta, fmt.Sprintf("♥ %.0f bpm", a.AverageHeartrate))
+	}
+	if a.Calories > 0 {
+		meta = append(meta, fmt.Sprintf("%.0f kcal", a.Calories))
 	}
 
 	return h.Div(
@@ -137,14 +156,40 @@ func activityRow(a hpdata.StravaActivity) g.Node {
 	)
 }
 
+func isRun(kind string) bool {
+	switch strings.ToLower(kind) {
+	case "run", "running", "trailrun", "virtualrun":
+		return true
+	}
+	return false
+}
+
+// showsDistance reports whether distance is meaningful for the activity type
+// (stationary workouts and weight sessions have none worth showing).
+func showsDistance(kind string) bool {
+	switch strings.ToLower(kind) {
+	case "workout", "training", "crossfit", "weighttraining", "yoga":
+		return false
+	}
+	return true
+}
+
 func disciplineIcon(kind string) string {
 	switch strings.ToLower(kind) {
 	case "run", "running", "trailrun", "virtualrun":
-		return "lucide:activity"
-	case "ride", "cycling", "virtualride", "mountainbikeride", "gravelride":
-		return "lucide:zap"
-	case "workout", "training", "weighttraining":
-		return "lucide:heart"
+		return "lucide:footprints"
+	case "ride", "cycling", "spinning", "virtualride", "mountainbikeride", "gravelride", "ebikeride":
+		return "lucide:bike"
+	case "hike", "hiking", "walk", "snowshoe":
+		return "lucide:mountain"
+	case "weighttraining", "strength":
+		return "lucide:dumbbell"
+	case "workout", "training", "crossfit":
+		return "lucide:heart-pulse"
+	case "alpineski", "backcountryski", "nordicski", "snowboard", "ski", "skiing":
+		return "lucide:mountain-snow"
+	case "swim", "swimming":
+		return "lucide:waves"
 	default:
 		return "lucide:activity"
 	}

@@ -627,6 +627,9 @@ h.Div(h.Style("position:absolute;inset:0;pointer-events:none;overflow:hidden;z-i
 - All `<section>` and non-background divs in `<main>` need `position:relative;z-index:1` to sit above the logo animation layer — this is set via the `homepageCSS` const.
 - **Sections must not set `background:`** — it blocks the logo-scatter layer (user preference).
 - Section order with Swiss-editorial numbered headers (`sectionHeader(num, heading, sub, tone)` in `pages/skills.go`): 01 Experience · 02 Featured (`featured.go`) · 03 Projects · 04 Open Source (`github.go`) · 05 Homelab (`homelab.go`) · 06 Activity · 07 Skills · 08 Under the hood (`codeshowcase.go`) · 09 Contact. When inserting a section, renumber the following ones and extend the Motion reveal list in `home.go`.
+- Projects (03) and Under the hood (08) page their content with `uidata.PaginatedPages` + `uidata.Pagination` sharing one signal — do NOT re-add Motion-based MutationObserver page animations (they loop: Motion's style writes re-trigger the observer).
+- Under the hood (08) shows five real source excerpts as `const *Excerpt` strings in `codeshowcase.go` — keep them in sync when the originals change; backticks are swapped for quotes.
+- The site footer (`siteFooter()` in `pages/legal.go`) uses the structured `layout.Footer` variant (Brand/Tagline/Columns/Bottom).
 
 ### Analytics — Umami (privacy-first, self-hosted)
 
@@ -663,18 +666,22 @@ Config loaded from `internal/config/config.go` via env vars:
 - Sources: Uptime Kuma public status-page API (`/api/status-page/{slug}` + `/heartbeat/{slug}`, no auth) and PromQL instant queries against VictoriaMetrics over Tailscale (CrowdSec `cs_*` metrics, `up`).
 - `pages.HomelabPanel(snap)` is exported — `/api/homelab` re-renders it and patches `#homelab-panel` by id; the section polls via `data-on-interval__duration.60s`.
 - Dev fallback: `homelab.Sample()` when Kuma is unreachable and `web.IsDev()`.
+- CrowdSec detail: `promQueryVector(query, label)` powers `TopThreats` (`topk by (reason)`) and the `BansCommunity`/`BansLocal` origin split (`sum by (origin)`; CAPI/lists = community, rest = local). `threatLabel()` in `pages/homelab.go` prettifies reason names.
+- `archCard()` (static, no live data) draws the infra diagram: Internet → Caddy ingress on the VPS, a dashed Tailscale-mesh box with the three devices (mljr VPS / nuc home server / nas Unraid), and an Ansible IaC bar. Update it when the fleet changes.
 
 ### Strava integration — `pages/strava.go`
 
 `stravaSection(d SiteData) g.Node` — renders only when `d.HasStrava()` returns true (Strava data present in seed-cache.json).
 
 Displays:
-- Year-to-date stats: run count, distance, moving time, elevation (in `activityMetric` tiles).
+- Year-to-date tiles: sessions, distance, exact moving time (`DurationHM`), elevation, session-weighted avg HR (`StravaData.AvgHeartrate()`), calories (`ytd_calories`).
 - Discipline tags (Run, Ride, etc.) with counts.
-- Recent public activities list (last 5).
+- Recent public activities (last 5) with per-type metadata: exact duration (`DurationClock`), distance/pace only where meaningful (`showsDistance()` hides it for workouts/weights), HR, elevation, calories.
+- `disciplineIcon()` maps types to icons: run→footprints, ride→bike, hike→mountain, weighttraining→dumbbell, workout→heart-pulse, ski→mountain-snow.
 
-Data model lives in `data/types.go`: `StravaData`, `StravaYearStats`, `StravaActivity`, `StravaDiscipine`.
-Helper functions in `data/types.go`: `DistanceKM`, `DurationHours`, `PaceLabel`.
+Data model lives in `data/types.go`: `StravaData`, `StravaStats`, `StravaActivity`, `StravaDiscipline`.
+Helper functions in `data/types.go`: `DistanceKM`, `DurationHours`, `DurationClock`, `DurationHM`, `PaceLabel`.
+`data/README.md` documents the seed-cache shape and the automation plan (separate data repo, scheduled Strava scraper, GitHub GraphQL stats).
 
 ### Legal pages — `pages/legal.go`
 

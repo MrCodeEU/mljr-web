@@ -87,3 +87,84 @@ func Pagination(p PaginationProps) g.Node {
 		g.Group(btns),
 	)
 }
+
+// PageAnimation selects the entrance animation PaginatedPages plays when a
+// page becomes visible.
+type PageAnimation string
+
+const (
+	PageAnimSlideUp   PageAnimation = "slide-up"
+	PageAnimSlideLeft PageAnimation = "slide-left"
+	PageAnimFade      PageAnimation = "fade"
+	PageAnimScale     PageAnimation = "scale"
+	PageAnimFlip      PageAnimation = "flip"
+	PageAnimNone      PageAnimation = "none"
+)
+
+type PaginatedPagesProps struct {
+	// ID is the signal prefix shared with Pagination/PaginationSignals
+	// (default "pg"): page i is shown while $<ID>Page === i.
+	ID string
+	// Animation played when a page becomes visible (default PageAnimSlideUp).
+	Animation PageAnimation
+	Attrs     []g.Node
+}
+
+// PaginatedPages wraps one node per page and shows only the active one,
+// driven by the same $<ID>Page signal Pagination writes. On every
+// hidden→visible transition the entrance animation replays exactly once:
+// the observer reacts only to style mutations whose old value was
+// display:none, so the CSS animation itself can never re-trigger it.
+func PaginatedPages(p PaginatedPagesProps, pages ...g.Node) g.Node {
+	id := p.ID
+	if id == "" {
+		id = "pg"
+	}
+	anim := p.Animation
+	if anim == "" {
+		anim = PageAnimSlideUp
+	}
+	sig := id + "Page"
+	containerID := "pp-" + id
+
+	wrapped := make([]g.Node, len(pages))
+	for i, page := range pages {
+		wrapped[i] = h.Div(
+			g.Attr("data-slot", "page"),
+			ui.Show(fmt.Sprintf("$%s === %d", sig, i)),
+			page,
+		)
+	}
+
+	var script g.Node
+	if anim != PageAnimNone {
+		script = h.Script(g.Raw(fmt.Sprintf(`(function(){
+  var c=document.getElementById('%s');
+  if(!c)return;
+  var obs=new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      var el=m.target;
+      var was=(m.oldValue||'');
+      var wasHidden=was.indexOf('display:none')>-1||was.indexOf('display: none')>-1;
+      if(wasHidden&&el.style.display!=='none'){
+        el.removeAttribute('data-anim');
+        void el.offsetWidth;
+        el.setAttribute('data-anim','');
+      }
+    });
+  });
+  Array.prototype.forEach.call(c.children,function(el){
+    obs.observe(el,{attributes:true,attributeFilter:['style'],attributeOldValue:true});
+  });
+})();`, containerID)))
+	}
+
+	return h.Div(
+		h.ID(containerID),
+		g.Attr("data-component", "paginated-pages"),
+		g.Attr("data-animation", string(anim)),
+		g.Group(p.Attrs),
+		g.Group(wrapped),
+		script,
+	)
+}

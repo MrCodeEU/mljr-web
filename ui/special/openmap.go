@@ -70,17 +70,21 @@ func OpenMap(p OpenMapProps, pins ...MapPin) g.Node {
 			popup = fmt.Sprintf(`.bindPopup(%s)`, jsStr(pin.Label))
 		}
 		pinParts = append(pinParts, fmt.Sprintf(
-			`L.marker([%v,%v]).addTo(map)%s;`,
+			`L.marker([%v,%v],{icon:pin}).addTo(map)%s;`,
 			pin.Lat, pin.Lng, popup,
 		))
 	}
 
+	// Default Leaflet markers reference PNGs relative to the CSS file, which
+	// are not shipped. Use a self-contained neo-brutalist divIcon pin instead.
 	script := fmt.Sprintf(`(function(){
   if(typeof L==='undefined'){ console.warn('Leaflet not loaded'); return; }
   var m=document.getElementById('%s');
   if(!m||m._leaflet_id) return;
   var map=L.map('%s').setView([%v,%v],%d);
   L.tileLayer(%s,{attribution:%s,maxZoom:19}).addTo(map);
+  var pin=L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,22],popupAnchor:[0,-24],
+    html:'<div style="width:22px;height:22px;border-radius:50%% 50%% 50%% 0;transform:rotate(-45deg);background:var(--accent,#ff5941);border:3px solid var(--ink,#1a1a1a);box-shadow:2px 2px 0 rgba(0,0,0,.35);box-sizing:border-box"></div>'});
   %s
 })();`,
 		p.ID, p.ID, centerLat, centerLng, p.Zoom,

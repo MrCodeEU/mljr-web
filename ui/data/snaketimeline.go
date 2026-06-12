@@ -114,16 +114,20 @@ func snakeDot(num int) g.Node {
 	)
 }
 
-func snakeCard(item SnakeTimelineItem) g.Node {
-	var logoNode g.Node
-	if item.OrgLogo != "" {
-		logoNode = h.Img(
-			h.Src(item.OrgLogo),
-			h.Alt(item.Org),
-			h.Style("width:52px;height:52px;object-fit:contain;border-radius:var(--radius);border:var(--bw-2) solid var(--line);flex-shrink:0"),
-		)
+// OrgLogoChip renders an org/school logo in a consistent bordered chip so
+// timeline and card layouts share the same logo treatment.
+func OrgLogoChip(src, alt string) g.Node {
+	if src == "" {
+		return nil
 	}
+	return h.Img(
+		h.Src(src),
+		h.Alt(alt),
+		h.Style("width:54px;height:54px;object-fit:contain;background:#fff;padding:5px;border:var(--bw-2) solid var(--ink);border-radius:var(--radius);box-shadow:var(--shadow-sm);flex-shrink:0;box-sizing:border-box"),
+	)
+}
 
+func snakeCard(item SnakeTimelineItem) g.Node {
 	tagNodes := make([]g.Node, 0, len(item.Tags))
 	for _, t := range item.Tags {
 		if t != "" {
@@ -135,16 +139,19 @@ func snakeCard(item SnakeTimelineItem) g.Node {
 		g.Attr("data-slot", "item"),
 		h.Style("direction:ltr"), // ensure LTR even in RTL rows
 		primitive.Card(primitive.CardProps{Tone: item.Tone},
+			// Header: logo chip + org/period — org first and bold so cards
+			// scan as "where, when" before the role title.
 			h.Div(
-				h.Style("display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-3)"),
+				h.Style("display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-3)"),
+				OrgLogoChip(item.OrgLogo, item.Org),
 				h.Div(
-					h.Div(h.Style("font-size:var(--t-xs);font-weight:800;opacity:.6;text-transform:uppercase;letter-spacing:.06em"), g.Text(item.Period)),
-					g.If(item.Org != "", h.Div(h.Style("font-size:var(--t-xs);opacity:.65;margin-top:2px"), g.Text(item.Org))),
+					h.Style("min-width:0"),
+					g.If(item.Org != "", h.Div(h.Style("font-size:var(--t-sm);font-weight:800;line-height:1.25"), g.Text(item.Org))),
+					h.Div(h.Style("font-size:var(--t-xs);font-family:var(--font-mono,monospace);font-weight:600;opacity:.65;margin-top:2px"), g.Text(item.Period)),
 				),
-				logoNode,
 			),
-			h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0 0 var(--sp-2);line-height:1.3"), g.Text(item.Title)),
-			g.If(item.Desc != "", h.P(h.Style("font-size:var(--t-sm);opacity:.8;margin:0 0 var(--sp-2);line-height:1.5"), g.Text(item.Desc))),
+			h.H4(h.Style("font-weight:900;font-size:var(--t-md);margin:0 0 var(--sp-2);line-height:1.3"), g.Text(item.Title)),
+			g.If(item.Desc != "", h.P(h.Style("font-size:var(--t-sm);opacity:.85;margin:0 0 var(--sp-2);line-height:1.55"), g.Text(item.Desc))),
 			g.If(len(tagNodes) > 0, h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-1)"), g.Group(tagNodes))),
 		),
 	)

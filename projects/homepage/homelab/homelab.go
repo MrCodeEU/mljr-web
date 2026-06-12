@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -41,10 +42,21 @@ type Snapshot struct {
 	HostsOnline    int
 	SecurityEvents int // total alert scenarios triggered since CrowdSec start
 
+	// CrowdSec detail; -1 = unavailable
+	BansCommunity int         // active bans from the community blocklist (CAPI/lists)
+	BansLocal     int         // active bans detected by local scenarios
+	TopThreats    []NameValue // top categories by active decisions, desc
+
 	// PromQL range data
 	AttackDays []DayValue // attacks blocked per day, oldest→newest (≤365)
 	CPUUtil    []float64  // avg CPU % across hosts, last 24h, oldest→newest
 	CPULabels  []string   // hour labels aligned to CPUUtil
+}
+
+// NameValue is a labeled counter (e.g. threat category → active bans).
+type NameValue struct {
+	Name  string
+	Value int
 }
 
 // DayValue is one day of an aggregated counter (for heatmaps).
@@ -75,9 +87,18 @@ func Sample() Snapshot {
 		Attacks24h:     37,
 		HostsOnline:    3,
 		SecurityEvents: 2841,
-		AttackDays:     sampleAttackDays(),
-		CPUUtil:        []float64{12, 14, 11, 18, 22, 19, 15, 13, 24, 31, 28, 21, 17, 14, 16, 19, 23, 26, 20, 15, 13, 12, 14, 17},
-		CPULabels:      sampleHourLabels(24),
+		BansCommunity:  128,
+		BansLocal:      14,
+		TopThreats: []NameValue{
+			{Name: "http:scan", Value: 78},
+			{Name: "ssh:bruteforce", Value: 31},
+			{Name: "http:bruteforce", Value: 17},
+			{Name: "http:exploit", Value: 9},
+			{Name: "http:crawl", Value: 7},
+		},
+		AttackDays: sampleAttackDays(),
+		CPUUtil:    []float64{12, 14, 11, 18, 22, 19, 15, 13, 24, 31, 28, 21, 17, 14, 16, 19, 23, 26, 20, 15, 13, 12, 14, 17},
+		CPULabels:  sampleHourLabels(24),
 	}
 }
 
@@ -163,6 +184,8 @@ func (p *Poller) poll(ctx context.Context) {
 		Attacks24h:     -1,
 		HostsOnline:    -1,
 		SecurityEvents: -1,
+		BansCommunity:  -1,
+		BansLocal:      -1,
 	}
 
 	if p.kumaURL != "" {
@@ -298,6 +321,35 @@ func (p *Poller) fetchProm(ctx context.Context, s *Snapshot) {
 		*q.dst = int(v)
 	}
 
+	// Top threat categories by currently active decisions.
+	if vec, err := p.promQueryVector(ctx, `topk(6, sum by (reason) (cs_active_decisions))`, "reason"); err != nil {
+		log.Printf("homelab: promql top threats failed: %v", err)
+	} else {
+		s.TopThreats = vec
+	}
+
+	// Ban origin split: community blocklist (CAPI/lists) vs local detections.
+	if vec, err := p.promQueryVector(ctx, `sum by (origin) (cs_active_decisions)`, "origin"); err != nil {
+		log.Printf("homelab: promql ban origins failed: %v", err)
+	} else {
+		comm, local := -1, -1
+		for _, nv := range vec {
+			switch strings.ToLower(nv.Name) {
+			case "capi", "lists":
+				if comm < 0 {
+					comm = 0
+				}
+				comm += nv.Value
+			default:
+				if local < 0 {
+					local = 0
+				}
+				local += nv.Value
+			}
+		}
+		s.BansCommunity, s.BansLocal = comm, local
+	}
+
 	now := time.Now()
 
 	// Attacks blocked per day, last ~12 months (heatmap fills as data accrues).
@@ -375,6 +427,41 @@ func (p *Poller) promQueryRange(ctx context.Context, query string, start, end ti
 		}
 		out = append(out, [2]float64{ts, f})
 	}
+	return out, nil
+}
+
+// promQueryVector runs an instant PromQL query and returns one NameValue per
+// result series, named by the given label, sorted by value descending.
+func (p *Poller) promQueryVector(ctx context.Context, query, label string) ([]NameValue, error) {
+	var res struct {
+		Status string `json:"status"`
+		Data   struct {
+			Result []struct {
+				Metric map[string]string `json:"metric"`
+				Value  [2]any            `json:"value"`
+			} `json:"result"`
+		} `json:"data"`
+	}
+	u := p.promURL + "/api/v1/query?query=" + url.QueryEscape(query)
+	if err := p.getJSON(ctx, u, &res); err != nil {
+		return nil, err
+	}
+	if res.Status != "success" || len(res.Data.Result) == 0 {
+		return nil, fmt.Errorf("no data")
+	}
+	out := make([]NameValue, 0, len(res.Data.Result))
+	for _, r := range res.Data.Result {
+		str, ok := r.Value[1].(string)
+		if !ok {
+			continue
+		}
+		f, err := strconv.ParseFloat(str, 64)
+		if err != nil {
+			continue
+		}
+		out = append(out, NameValue{Name: r.Metric[label], Value: int(f)})
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].Value > out[b].Value })
 	return out, nil
 }
 

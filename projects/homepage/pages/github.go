@@ -54,15 +54,16 @@ func githubSection(d hpdata.SiteData) g.Node {
 					}, placeholderContributions()),
 					// Language share gauges below the heatmap
 					h.Div(
-						h.Style("display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-top:var(--sp-4);justify-items:center"),
+						h.Style("display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-2);margin-top:var(--sp-4);justify-items:center"),
 						uidata.Gauge(uidata.GaugeProps{Value: 58, Label: "Go", Unit: "%", Size: 130}),
 						uidata.Gauge(uidata.GaugeProps{Value: 22, Label: "TS / Svelte", Unit: "%", Size: 130, Color: "var(--info)"}),
 						uidata.Gauge(uidata.GaugeProps{Value: 20, Label: "Other", Unit: "%", Size: 130, Color: "var(--warning)"}),
 					),
 				),
-				// Right: counters
+				// Right: counters — same gap as the outer grid so card edges align
+				// with the heatmap card across both columns.
 				h.Div(
-					h.Style("display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:var(--sp-4)"),
+					h.Style("display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:1fr 1fr;gap:var(--sp-5)"),
 					ossStat("nt-oss-repos", float64(repoCount), "", "Public repos", token.ToneCyan, "lucide:folder-git-2"),
 					ossStat("nt-oss-stars", float64(stars), "", "GitHub stars", token.ToneYellow, "lucide:star"),
 					ossStat("nt-oss-commits", 1200, "+", "Commits / year*", token.ToneViolet, "lucide:git-commit-horizontal"),

@@ -112,23 +112,60 @@ func init() {
 
 	registry.Register(&registry.Component{
 		Slug: "footer", Name: "Footer", Category: "layout",
-		Summary: "Page footer container. Add columns, links, copyright via children.",
-		Code: `layout.Footer(layout.FooterProps{},
-    h.Div(g.Text("© 2025 MyApp")),
-)`,
+		Summary: "Page footer. Structured neo-brutalist variant with brand cell, titled link columns and bottom bar — or a simple flex row via children.",
+		Code: `layout.Footer(layout.FooterProps{
+    Brand:   h.Strong(g.Text("MyApp")),
+    Tagline: "Short product tagline.",
+    Columns: []layout.FooterColumn{
+        {Title: "Product", Links: []layout.FooterLink{
+            {Label: "Features", Href: "#"},
+            {Label: "Pricing", Href: "#"},
+        }},
+        {Title: "Company", Links: []layout.FooterLink{
+            {Label: "About", Href: "#"},
+            {Label: "GitHub", Href: "https://github.com", External: true},
+        }},
+    },
+    Bottom: h.Span(g.Text("© 2026 MyApp")),
+})`,
+		Controls: []registry.Control{
+			{Name: "variant", Type: registry.ControlEnum, Options: []string{"structured", "simple"}, Default: "structured"},
+		},
 		Render: func(p map[string]string) g.Node {
-			return Footer(FooterProps{},
-				h.Div(
-					g.Attr("style", "display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-3)"),
-					h.Div(g.Text("© 2025 mljr-web")),
+			if p["variant"] == "simple" {
+				return Footer(FooterProps{},
 					h.Div(
-						g.Attr("style", "display:flex;gap:var(--sp-4)"),
-						h.A(h.Href("#"), g.Text("Privacy")),
-						h.A(h.Href("#"), g.Text("Terms")),
-						h.A(h.Href("#"), g.Text("Contact")),
+						g.Attr("style", "display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-3)"),
+						h.Div(g.Text("© 2026 mljr-web")),
+						h.Div(
+							g.Attr("style", "display:flex;gap:var(--sp-4)"),
+							h.A(h.Href("#"), g.Text("Privacy")),
+							h.A(h.Href("#"), g.Text("Terms")),
+							h.A(h.Href("#"), g.Text("Contact")),
+						),
 					),
-				),
-			)
+				)
+			}
+			return Footer(FooterProps{
+				Brand:   h.Strong(g.Attr("style", "font-size:var(--t-xl);font-weight:900"), g.Text("mljr-web")),
+				Tagline: "Server-rendered components in pure Go — no JS framework, no build pipeline.",
+				Columns: []FooterColumn{
+					{Title: "Library", Links: []FooterLink{
+						{Label: "Components", Href: "#"},
+						{Label: "Patterns", Href: "#"},
+						{Label: "Themes", Href: "#"},
+					}},
+					{Title: "Project", Links: []FooterLink{
+						{Label: "GitHub", Href: "https://github.com", External: true},
+						{Label: "Changelog", Href: "#"},
+					}},
+					{Title: "Legal", Links: []FooterLink{
+						{Label: "Privacy", Href: "#"},
+						{Label: "Terms", Href: "#"},
+					}},
+				},
+				Bottom: h.Span(g.Text("© 2026 mljr-web · built with Go")),
+			})
 		},
 	})
 }

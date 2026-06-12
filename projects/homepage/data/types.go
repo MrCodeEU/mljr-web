@@ -74,6 +74,7 @@ type ProjectLink struct {
 // source precise; display helpers convert them at render time.
 type StravaData struct {
 	GeneratedAt       string              `json:"generated_at,omitempty"`
+	YTDCalories       float64             `json:"ytd_calories,omitempty"`
 	TotalStats        StravaStats         `json:"total_stats"`
 	YearToDateStats   StravaStats         `json:"year_to_date_stats"`
 	RecentActivities  []StravaActivity    `json:"recent_activities"`
@@ -146,17 +147,20 @@ type StravaMonthBucket struct {
 // extra skills not exported by LinkedIn.
 type SkillGroup struct {
 	Label  string
+	Short  string // short label for chart axes
 	Tone   string
+	Icon   string // Iconify icon for the group
+	Level  int    // self-assessed depth 0–100, drives the radar chart
 	Skills []string
 }
 
 var skillGroups = []SkillGroup{
-	{"Languages", "violet", []string{"Go", "Rust", "TypeScript", "JavaScript", "Python", "Kotlin", "Java", "C#"}},
-	{"Web", "sky", []string{"HTML", "CSS", "Svelte", "SvelteKit", "AngularJS", "Angular", "ASP.NET", ".NET"}},
-	{"Infra / Homelab", "lime", []string{"Docker", "Ansible", "Linux", "Unraid", "Tailscale", "Caddy", "CI/CD"}},
-	{"Security", "yellow", []string{"Cybersecurity", "Network Security", "IAM", "Prolog", "PAM"}},
-	{"Embedded / BLE", "pink", []string{"ESP32", "BLE", "Dexcom G7", "Nightscout", "Kotlin Multiplatform"}},
-	{"Ops / Data", "mint", []string{"SQLite", "VictoriaMetrics", "Grafana", "slog", "WebGL"}},
+	{"Languages", "Languages", "violet", "lucide:code-2", 85, []string{"Go", "Rust", "TypeScript", "JavaScript", "Python", "Kotlin", "Java", "C#"}},
+	{"Web", "Web", "sky", "lucide:globe", 75, []string{"HTML", "CSS", "Svelte", "SvelteKit", "AngularJS", "Angular", "ASP.NET", ".NET"}},
+	{"Infra / Homelab", "Infra", "lime", "lucide:server", 82, []string{"Docker", "Ansible", "Linux", "Unraid", "Tailscale", "Caddy", "CI/CD"}},
+	{"Security", "Security", "yellow", "lucide:shield", 78, []string{"Cybersecurity", "Network Security", "IAM", "Prolog", "PAM"}},
+	{"Embedded / BLE", "Embedded", "pink", "lucide:cpu", 60, []string{"ESP32", "BLE", "Dexcom G7", "Nightscout", "Kotlin Multiplatform"}},
+	{"Ops / Data", "Ops/Data", "mint", "lucide:database", 70, []string{"SQLite", "VictoriaMetrics", "Grafana", "slog", "WebGL"}},
 }
 
 // Load parses and returns the embedded site data. Panics on bad JSON (should not happen in prod).
@@ -304,6 +308,44 @@ func DurationHours(seconds int) float64 {
 	return math.Round(float64(seconds)/36) / 100
 }
 
+// DurationClock renders seconds as "37:26" or "2:51:00" — exact, not decimal.
+func DurationClock(seconds int) string {
+	hours := seconds / 3600
+	mins := (seconds % 3600) / 60
+	secs := seconds % 60
+	if hours > 0 {
+		return fmt.Sprintf("%d:%02d:%02d", hours, mins, secs)
+	}
+	return fmt.Sprintf("%d:%02d", mins, secs)
+}
+
+// DurationHM renders seconds as "27 h 39 m" for aggregate tiles.
+func DurationHM(seconds int) string {
+	hours := seconds / 3600
+	mins := (seconds % 3600) / 60
+	if hours == 0 {
+		return fmt.Sprintf("%d m", mins)
+	}
+	return fmt.Sprintf("%d h %02d m", hours, mins)
+}
+
+// AvgHeartrate returns the session-weighted average heartrate across
+// disciplines, or 0 if no discipline reports one.
+func (s StravaData) AvgHeartrate() float64 {
+	var sum float64
+	var n int
+	for _, d := range s.Disciplines {
+		if d.AvgHeartrate > 0 && d.Count > 0 {
+			sum += d.AvgHeartrate * float64(d.Count)
+			n += d.Count
+		}
+	}
+	if n == 0 {
+		return 0
+	}
+	return sum / float64(n)
+}
+
 func PaceLabel(minutesPerKM float64) string {
 	if minutesPerKM <= 0 {
 		return "n/a"
@@ -335,6 +377,7 @@ func LogoForCompany(company string) string {
 func LogoForSchool(school string) string {
 	m := map[string]string{
 		"Johannes Kepler Universität Linz": "/static/logos/jku.jpg",
+		"HTL Steyr":                        "/static/logos/htl-steyr.png",
 	}
 	return m[school]
 }

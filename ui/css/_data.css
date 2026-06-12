@@ -17,9 +17,10 @@
   [data-component="timeline-item"] [data-slot="card"] > [data-component="card"] { position:relative; overflow:visible; }
   [data-component="timeline-item"] [data-slot="logo"] {
     position:absolute; top:-10px; right:-10px;
-    width:52px; height:52px; object-fit:contain;
-    background:#fff; border:var(--bw-2) solid var(--line);
-    box-shadow:var(--shadow-xs); padding:4px; z-index:2;
+    width:54px; height:54px; object-fit:contain;
+    background:#fff; border:var(--bw-2) solid var(--ink);
+    border-radius:var(--radius); box-sizing:border-box;
+    box-shadow:var(--shadow-sm); padding:5px; z-index:2;
   }
   [data-component="timeline-item"] [data-slot="period"] {
     display:block; font-size:var(--t-xs); font-family:var(--font-display);
@@ -182,6 +183,23 @@
   [data-component="pagination"] [data-slot="next"][data-state="disabled"] {
     opacity:.35; cursor:not-allowed; transform:none; box-shadow:var(--shadow-xs);
   }
+
+  /* data: paginated-pages — entrance animation replayed via [data-anim] toggle */
+  [data-component="paginated-pages"] [data-slot="page"][data-anim] {
+    animation-duration:.35s;
+    animation-timing-function:cubic-bezier(.25,.46,.45,.94);
+    animation-fill-mode:both;
+  }
+  [data-component="paginated-pages"][data-animation="slide-up"]   [data-slot="page"][data-anim] { animation-name:pp-slide-up; }
+  [data-component="paginated-pages"][data-animation="slide-left"] [data-slot="page"][data-anim] { animation-name:pp-slide-left; }
+  [data-component="paginated-pages"][data-animation="fade"]       [data-slot="page"][data-anim] { animation-name:pp-fade; }
+  [data-component="paginated-pages"][data-animation="scale"]      [data-slot="page"][data-anim] { animation-name:pp-scale; }
+  [data-component="paginated-pages"][data-animation="flip"]       [data-slot="page"][data-anim] { animation-name:pp-flip; animation-duration:.45s; }
+  @keyframes pp-slide-up   { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
+  @keyframes pp-slide-left { from { opacity:0; transform:translateX(28px); } to { opacity:1; transform:none; } }
+  @keyframes pp-fade       { from { opacity:0; } to { opacity:1; } }
+  @keyframes pp-scale      { from { opacity:0; transform:scale(.95); } to { opacity:1; transform:none; } }
+  @keyframes pp-flip       { from { opacity:0; transform:perspective(900px) rotateX(10deg) translateY(12px); } to { opacity:1; transform:none; } }
 
   /* data: stat-card */
   [data-component="stat-card"] {

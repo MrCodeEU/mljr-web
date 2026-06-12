@@ -27,6 +27,9 @@ type RadarChartProps struct {
 	ShowGrid bool
 	// GridLevels is number of concentric rings (default 5).
 	GridLevels int
+	// AxisColors override the vertex-dot color per axis (cycled). Useful to
+	// color-code each axis to a legend; applies to every series.
+	AxisColors []string
 }
 
 var radarColors = []string{"var(--accent)", "var(--success)", "var(--warning)", "var(--danger)", "var(--info)"}
@@ -116,7 +119,7 @@ func RadarChart(p RadarChartProps, series ...RadarSeries) g.Node {
 		}
 		sb.WriteString(fmt.Sprintf(`<polygon points="%s" fill="%s" fill-opacity="0.18" stroke="%s" stroke-width="2"/>`,
 			strings.Join(pts, " "), color, color))
-		// Dots at each vertex
+		// Dots at each vertex — per-axis colors override the series color
 		for i := range p.Axes {
 			val := 0.0
 			if i < len(s.Values) {
@@ -124,7 +127,15 @@ func RadarChart(p RadarChartProps, series ...RadarSeries) g.Node {
 			}
 			scaled := (val / p.Max) * r
 			x, y := pt(scaled, i)
-			sb.WriteString(fmt.Sprintf(`<circle cx="%.1f" cy="%.1f" r="4" fill="%s" stroke="var(--bg)" stroke-width="2"/>`, x, y, color))
+			dotColor := color
+			dotR := 4.0
+			stroke := `stroke="var(--bg)" stroke-width="2"`
+			if len(p.AxisColors) > 0 {
+				dotColor = p.AxisColors[i%len(p.AxisColors)]
+				dotR = 5.5
+				stroke = `stroke="var(--ink)" stroke-width="2"`
+			}
+			sb.WriteString(fmt.Sprintf(`<circle cx="%.1f" cy="%.1f" r="%.1f" fill="%s" %s/>`, x, y, dotR, dotColor, stroke))
 		}
 	}
 

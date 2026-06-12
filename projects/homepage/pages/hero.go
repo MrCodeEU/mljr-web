@@ -61,7 +61,7 @@ func heroSection(li hpdata.LinkedInData, projectCount int) g.Node {
 					// Description
 					h.P(
 						h.Style("font-size:var(--t-base);color:var(--muted);max-width:46ch;margin:0;line-height:1.6"),
-						g.Text("MSc Networks & IT Security student at JKU Linz, writing my thesis on permission metamodels at Dynatrace. I care about correctness, performance, and shipping things that actually work."),
+						g.Text("Master's student (Dipl.-Ing.) in Networks & IT Security at JKU Linz, writing my thesis on permission metamodels at Dynatrace. I care about correctness, performance, and shipping things that actually work."),
 					),
 					// CTA buttons
 					h.Div(
@@ -142,7 +142,7 @@ func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
 			),
 		),
 	)
-	yearsCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 1;grid-row:span 1"),
+	yearsCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 1;grid-row:span 1;min-width:0"),
 		card(token.ToneYellow,
 			h.Div(h.Style(numStyle),
 				primitive.NumberTicker(primitive.NumberTickerProps{
@@ -152,7 +152,7 @@ func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
 			h.Div(h.Style(labelStyle), g.Text("Years coding")),
 		),
 	)
-	projCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 1;grid-row:span 1"),
+	projCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 1;grid-row:span 1;min-width:0"),
 		card(token.ToneViolet,
 			h.Div(h.Style(numStyle),
 				primitive.NumberTicker(primitive.NumberTickerProps{
@@ -162,14 +162,14 @@ func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
 			h.Div(h.Style(labelStyle), g.Text("Projects")),
 		),
 	)
-	mscCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 1;grid-row:span 1"),
+	mscCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 1;grid-row:span 1;min-width:0"),
 		card(token.ToneCyan,
-			icon.Icon("lucide:graduation-cap", icon.Props{Size: "2rem"}),
-			h.Div(h.Style("font-size:var(--t-xl);font-weight:900;line-height:1.1;margin-top:var(--sp-2)"), g.Text("MSc")),
-			h.Div(h.Style(labelStyle+"margin-top:var(--sp-1)"), g.Text("Networks & IT Sec.")),
+			icon.Icon("lucide:graduation-cap", icon.Props{Size: "1.8rem"}),
+			h.Div(h.Style("font-size:clamp(1.1rem,1.8vw,1.5rem);font-weight:900;line-height:1.1;margin-top:var(--sp-2);white-space:nowrap"), g.Text("Dipl.-Ing.")),
+			h.Div(h.Style(labelStyle+";margin-top:var(--sp-1);overflow-wrap:anywhere"), g.Text("Networks & IT Security · 2026")),
 		),
 	)
-	dtCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 2;grid-row:span 1"),
+	dtCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 2;grid-row:span 1;min-width:0"),
 		card(token.ToneLime,
 			h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-3)"),
 				icon.Icon("lucide:building-2", icon.Props{Size: "2.5rem"}),
@@ -183,7 +183,7 @@ func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
 
 	return h.Div(
 		g.Attr("data-component", "bento-grid"),
-		h.Style("display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:minmax(150px,1fr);gap:var(--sp-3);height:100%"),
+		h.Style("display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(140px,auto);gap:var(--sp-3);height:100%"),
 		photoCell, yearsCell, projCell, mscCell, dtCell,
 	)
 }

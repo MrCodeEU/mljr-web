@@ -72,7 +72,7 @@ Tech stack: Go + gomponents · Datastar 1.0.2 · Tailwind v4 · Motion v10
 | ✅ | Breadcrumb | `breadcrumb` | hierarchical path, separator |
 | ✅ | Container | `container` | max-width centering wrapper |
 | ✅ | Divider | `divider` | horizontal/vertical rule, optional label |
-| ✅ | Footer | `footer` | page footer |
+| ✅ | Footer | `footer` | page footer — structured neo-brutalist variant (brand + titled link columns + bottom bar) or simple flex row |
 | ✅ | Grid / Col | `grid` | 12-column grid system |
 | ✅ | Navbar | `navbar` | top bar with brand + nav + actions slots |
 | ✅ | Sidebar | `sidebar` | collapsible left nav, Datastar signal driven |
@@ -131,6 +131,7 @@ Tech stack: Go + gomponents · Datastar 1.0.2 · Tailwind v4 · Motion v10
 | ✅ | Line Chart | `line-chart` | multi-series, bezier, area fill, grid |
 | ✅ | List | `list` | ordered/divided variants |
 | ✅ | Pagination | `pagination` | page controls |
+| ✅ | Paginated Pages | `paginated-pages` | animated page container driven by the Pagination signal (slide-up/left, fade, scale, flip) |
 | ✅ | Sparkline | `sparkline` | tiny inline trend line |
 | ✅ | Stat Card | `stat-card` | number + label + delta trend |
 | ✅ | Table | `table` | responsive data table, striped |
@@ -244,7 +245,7 @@ Tech stack: Go + gomponents · Datastar 1.0.2 · Tailwind v4 · Motion v10
 | ✅ | Detail page: responsive (single-col on ≤768px) |
 | ✅ | Preview iframe: Motion v10 + Datastar loaded |
 | ✅ | Icon showcase: searchable grid, grouped by set, click to copy |
-| ✅ | 160 showcase entries registered (recount: `grep -rc "registry.Register" --include="*.go" ui/ projects/`) |
+| ✅ | 161 showcase entries registered (recount: `grep -rc "registry.Register" --include="*.go" ui/ projects/`) |
 | ✅ | Prev/next keyboard navigation (←/→) via ArrowLeft/ArrowRight in detail.go |
 | ✅ | Patterns page: `/patterns` listing with iframe previews + theme sync |
 | ✅ | Pattern detail: `/patterns/{slug}` with controls + full iframe |

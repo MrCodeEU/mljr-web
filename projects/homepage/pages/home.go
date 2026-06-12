@@ -124,6 +124,11 @@ main > div:not(#logo-svg-hp-bg) {
   .hood-grid { grid-template-columns: 1fr !important; }
   .hood-grid > div:first-child { position: static !important; }
   .homelab-grid { grid-template-columns: 1fr !important; }
+  .skills-grid { grid-template-columns: 1fr !important; }
+  .homelab-arch-grid { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 560px) {
+  .skills-grid > div:last-child { grid-template-columns: 1fr !important; }
 }
 
 /* ── Tablet (≤900px) ──────────────────────────────────────────── */

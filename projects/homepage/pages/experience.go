@@ -80,13 +80,17 @@ func experienceSection(li hpdata.LinkedInData) g.Node {
 						nodes := make([]g.Node, len(eduItems))
 						for i, edu := range eduItems {
 							nodes[i] = primitive.Card(primitive.CardProps{Tone: edu.Tone},
+								// Same logo-chip header as the experience snake cards
 								h.Div(
-									h.Style("display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-2)"),
-									h.Span(h.Style("font-size:var(--t-xs);font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.06em"), g.Text(edu.Period)),
-									g.If(edu.OrgLogo != "", h.Img(h.Src(edu.OrgLogo), h.Alt(edu.Org), h.Style("width:32px;height:32px;object-fit:contain;border-radius:4px"))),
+									h.Style("display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-3)"),
+									uidata.OrgLogoChip(edu.OrgLogo, edu.Org),
+									h.Div(
+										h.Style("min-width:0"),
+										h.Div(h.Style("font-size:var(--t-sm);font-weight:800;line-height:1.25"), g.Text(edu.Org)),
+										h.Div(h.Style("font-size:var(--t-xs);font-family:var(--font-mono,monospace);font-weight:600;opacity:.65;margin-top:2px"), g.Text(edu.Period)),
+									),
 								),
-								h.H4(h.Style("font-weight:800;font-size:var(--t-base);margin:0 0 var(--sp-1)"), g.Text(edu.Title)),
-								h.Div(h.Style("font-size:var(--t-sm);opacity:.7"), g.Text(edu.Org)),
+								h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35"), g.Text(edu.Title)),
 							)
 						}
 						return nodes

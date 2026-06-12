@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"strings"
 
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
@@ -37,6 +38,7 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 			primitive.Callout(primitive.CalloutProps{Variant: primitive.CalloutInfo},
 				g.Text("Telemetry warming up — live homelab data appears here once the first poll lands."),
 			),
+			archCard(),
 		)
 	}
 
@@ -50,16 +52,22 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 			servicesCard(snap, total),
 			h.Div(
 				h.Style("display:flex;flex-direction:column;gap:var(--sp-4)"),
-				crowdsecCard(snap),
 				pingCard(snap),
 				cpuCard(snap),
 			),
 		),
+		h.Div(
+			h.Class("homelab-grid"),
+			h.Style("display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-5);align-items:stretch;margin-top:var(--sp-5)"),
+			crowdsecCard(snap),
+			threatsCard(snap),
+		),
 		attacksHeatmapCard(snap),
+		archCard(),
 		h.Div(
 			h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-3);font-size:var(--t-xs);color:var(--muted);font-weight:700"),
 			h.Span(h.Style("width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse-dot 2s ease infinite;flex-shrink:0")),
-			g.Text("live — uptime kuma + prometheus over tailscale · updated "+snap.FetchedAt.Format("15:04:05")),
+			g.Text("live — uptime kuma + victoriametrics over tailscale · updated "+snap.FetchedAt.Format("15:04:05")),
 		),
 	)
 }
@@ -116,18 +124,92 @@ func crowdsecCard(snap homelab.Snapshot) g.Node {
 			h.Div(h.Style("font-size:var(--t-xs);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:var(--sp-1)"), g.Text(label)),
 		)
 	}
+
+	// Community vs local origin split as a stacked bar.
+	var originSplit g.Node
+	if snap.BansCommunity >= 0 && snap.BansLocal >= 0 && snap.BansCommunity+snap.BansLocal > 0 {
+		totalBans := snap.BansCommunity + snap.BansLocal
+		commPct := float64(snap.BansCommunity) / float64(totalBans) * 100
+		originSplit = h.Div(
+			h.Style("margin-top:var(--sp-3)"),
+			h.Div(h.Style("display:flex;justify-content:space-between;gap:var(--sp-2);font-size:var(--t-xs);font-weight:800;margin-bottom:var(--sp-1)"),
+				h.Span(g.Textf("Community blocklist · %d", snap.BansCommunity)),
+				h.Span(h.Style("color:var(--muted)"), g.Textf("caught here · %d", snap.BansLocal)),
+			),
+			h.Div(
+				h.Style("display:flex;height:14px;border:var(--bw-2) solid var(--ink);background:var(--bg);overflow:hidden"),
+				h.Div(h.Style(fmt.Sprintf("width:%.1f%%;background:var(--violet-bg,#ddd6fe);border-right:var(--bw-1) solid var(--ink)", commPct))),
+				h.Div(h.Style("flex:1;background:var(--accent)")),
+			),
+		)
+	}
+
 	return primitive.Card(primitive.CardProps{Tone: token.ToneViolet},
 		h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3)"),
 			icon.Icon("lucide:shield-check", icon.Props{Size: "1.3rem"}),
 			h.H3(h.Style("font-size:var(--t-base);font-weight:900;margin:0"), g.Text("CrowdSec perimeter")),
 		),
 		h.Div(
-			h.Style("display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2)"),
+			h.Style("display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-2)"),
 			stat(snap.ActiveBans, "Active bans"),
 			stat(snap.Attacks24h, "Blocked · 24h"),
+			stat(snap.SecurityEvents, "Alerts · total"),
 			stat(snap.HostsOnline, "Hosts online"),
 		),
+		originSplit,
 	)
+}
+
+// threatsCard ranks what the perimeter is actually blocking right now.
+func threatsCard(snap homelab.Snapshot) g.Node {
+	if len(snap.TopThreats) == 0 {
+		return nil
+	}
+	maxVal := snap.TopThreats[0].Value
+	if maxVal < 1 {
+		maxVal = 1
+	}
+	rows := make([]g.Node, 0, len(snap.TopThreats))
+	for _, t := range snap.TopThreats {
+		pct := float64(t.Value) / float64(maxVal) * 100
+		if pct < 2 {
+			pct = 2
+		}
+		rows = append(rows, h.Div(
+			h.Div(h.Style("display:flex;justify-content:space-between;gap:var(--sp-2);font-size:var(--t-xs);font-weight:800;margin-bottom:2px"),
+				h.Span(g.Text(threatLabel(t.Name))),
+				h.Span(h.Style("font-family:var(--font-mono,monospace);color:var(--muted)"), g.Textf("%d", t.Value)),
+			),
+			h.Div(h.Style("height:12px;border:var(--bw-1) solid var(--ink);background:var(--bg)"),
+				h.Div(h.Style(fmt.Sprintf("width:%.1f%%;height:100%%;background:var(--accent)", pct))),
+			),
+		))
+	}
+	return primitive.Card(primitive.CardProps{Tone: token.ToneYellow},
+		h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3)"),
+			icon.Icon("lucide:radar", icon.Props{Size: "1.3rem"}),
+			h.H3(h.Style("font-size:var(--t-base);font-weight:900;margin:0"), g.Text("Top threats · active bans")),
+		),
+		h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2)"), g.Group(rows)),
+	)
+}
+
+// threatLabel maps CrowdSec decision reasons to readable names.
+func threatLabel(raw string) string {
+	m := map[string]string{
+		"http:scan":       "HTTP scanning",
+		"http:bruteforce": "HTTP brute force",
+		"http:exploit":    "HTTP exploits",
+		"http:crawl":      "Aggressive crawling",
+		"http:dos":        "HTTP DoS attempts",
+		"ssh:bruteforce":  "SSH brute force",
+	}
+	if v, ok := m[raw]; ok {
+		return v
+	}
+	s := strings.TrimPrefix(raw, "crowdsecurity/")
+	s = strings.TrimPrefix(s, "LePresidente/")
+	return strings.ReplaceAll(s, "-", " ")
 }
 
 func cpuCard(snap homelab.Snapshot) g.Node {
@@ -167,7 +249,7 @@ func attacksHeatmapCard(snap homelab.Snapshot) g.Node {
 		}
 		total += d.Count
 	}
-	return h.Div(h.Style("margin-top:var(--sp-4)"),
+	return h.Div(h.Style("margin-top:var(--sp-5)"),
 		primitive.Card(primitive.CardProps{Tone: token.ToneNone},
 			h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3);flex-wrap:wrap"),
 				h.Div(
@@ -204,5 +286,77 @@ func pingCard(snap homelab.Snapshot) g.Node {
 				Fill:   true,
 			}},
 		}),
+	)
+}
+
+// archCard explains how the homelab hangs together: three devices on a
+// Tailscale mesh, one public Caddy ingress, everything provisioned by
+// Ansible. Static content — no live data needed.
+func archCard() g.Node {
+	deviceBox := func(ic, name, role string, items []string) g.Node {
+		tags := make([]g.Node, len(items))
+		for i, it := range items {
+			tags[i] = h.Span(
+				h.Style("border:var(--bw-1) solid var(--ink);background:var(--bg);padding:1px var(--sp-2);font-size:var(--t-xs);font-weight:700;white-space:nowrap"),
+				g.Text(it),
+			)
+		}
+		return h.Div(
+			h.Style("border:var(--bw-2) solid var(--ink);background:var(--surface);box-shadow:var(--shadow-sm);padding:var(--sp-4);min-width:0"),
+			h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-1)"),
+				icon.Icon(ic, icon.Props{Size: "1.3rem"}),
+				h.Div(h.Style("font-weight:900;font-size:var(--t-base);line-height:1.2"), g.Text(name)),
+			),
+			h.Div(h.Style("font-size:var(--t-xs);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--sp-2)"), g.Text(role)),
+			h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-1)"), g.Group(tags)),
+		)
+	}
+
+	return h.Div(h.Style("margin-top:var(--sp-5)"),
+		primitive.Card(primitive.CardProps{Tone: token.ToneNone},
+			h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3);flex-wrap:wrap"),
+				h.Div(
+					h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("Architecture")),
+					h.H3(h.Style("font-size:var(--t-xl);font-weight:900;margin:var(--sp-1) 0 0"), g.Text("How it hangs together")),
+				),
+				primitive.Tag(primitive.TagProps{Tone: token.ToneLime, Icon: "simple-icons:ansible"}, g.Text("100% IaC")),
+			),
+			h.P(h.Style("font-size:var(--t-sm);color:var(--muted);line-height:1.6;margin:0 0 var(--sp-4);max-width:78ch"),
+				g.Text("All public traffic enters through Caddy on the VPS, with CrowdSec banning attackers at the edge and Authelia guarding private apps. Behind that, three machines talk over an encrypted Tailscale mesh — no open ports at home. Every host, container and config file is declared in one Ansible repo: a single make deploy converges the whole fleet."),
+			),
+			// Internet → ingress
+			h.Div(
+				h.Style("display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap;margin-bottom:var(--sp-2)"),
+				h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-2);border:var(--bw-2) solid var(--ink);background:var(--bg);padding:var(--sp-2) var(--sp-3);font-weight:900;font-size:var(--t-sm)"),
+					icon.Icon("lucide:globe", icon.Props{Size: "1.1rem"}),
+					g.Text("Internet"),
+				),
+				h.Span(h.Style("font-family:var(--font-mono,monospace);font-size:var(--t-xs);font-weight:700;color:var(--muted)"), g.Text("→ HTTPS :443 · Caddy ingress · CrowdSec at the edge →")),
+			),
+			// Tailscale mesh containing the three devices
+			h.Div(
+				h.Style("border:var(--bw-2) dashed var(--ink);padding:var(--sp-4);position:relative;background:color-mix(in srgb,var(--surface) 60%,transparent)"),
+				h.Div(h.Style("position:absolute;top:-11px;left:var(--sp-4);background:var(--surface);padding:0 var(--sp-2);font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:var(--sp-1)"),
+					icon.Icon("simple-icons:tailscale", icon.Props{Size: ".9rem"}),
+					g.Text("Tailscale mesh · WireGuard"),
+				),
+				h.Div(
+					h.Class("homelab-arch-grid"),
+					h.Style("display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-3)"),
+					deviceBox("lucide:cloud", "mljr", "VPS · public entry",
+						[]string{"Caddy", "CrowdSec", "Authelia", "public apps"}),
+					deviceBox("lucide:server", "nuc", "home server",
+						[]string{"VictoriaMetrics", "Grafana", "Loki", "internal services"}),
+					deviceBox("lucide:hard-drive", "nas", "Unraid NAS",
+						[]string{"storage", "backups", "media"}),
+				),
+			),
+			// Ansible bar
+			h.Div(
+				h.Style("display:flex;align-items:center;gap:var(--sp-2);border:var(--bw-2) solid var(--ink);background:var(--lime-bg,#d9f99d);padding:var(--sp-2) var(--sp-3);margin-top:var(--sp-2);font-size:var(--t-xs);font-weight:800"),
+				icon.Icon("simple-icons:ansible", icon.Props{Size: "1rem"}),
+				g.Text("Ansible provisions all three hosts — inventory, hardening, Docker Compose services, deploy hooks. No snowflakes."),
+			),
+		),
 	)
 }
