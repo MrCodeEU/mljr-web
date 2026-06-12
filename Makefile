@@ -104,6 +104,17 @@ build: $(TAILWIND) ## static binary -> bin/$(PROJECT)
 docker: ## per-project image:  make docker PROJECT=homepage TAG=v1
 	docker build -f projects/$(PROJECT)/Dockerfile -t mljr/$(PROJECT):$(TAG) .
 
+# --- data ------------------------------------------------------------------
+data-update: ## regenerate data-repo-dummy/generated/site-data.json (needs GITHUB_TOKEN, optional STRAVA_* in projects/homepage/.env)
+	@if [ -f projects/homepage/.env ]; then set -a; . projects/homepage/.env; set +a; fi; \
+	  cd data-repo-dummy/generator && \
+	  GITHUB_TOKEN="$$GITHUB_TOKEN" GITHUB_USER="$${GITHUB_USERNAME:-MrCodeEU}" \
+	  STRAVA_CLIENT_ID="$$STRAVA_CLIENT_ID" STRAVA_CLIENT_SECRET="$$STRAVA_CLIENT_SECRET" STRAVA_REFRESH_TOKEN="$$STRAVA_REFRESH_TOKEN" \
+	  go run ./cmd/generate
+
+data-pull: ## fetch latest mljr-data submodule from origin
+	git submodule update --remote --merge data-repo-dummy
+
 # --- quality -------------------------------------------------------------------
 check: fmt vet lint guard-classes test test-showcase vuln ## full local gate
 fmt:
