@@ -26,11 +26,43 @@ func githubSection(d hpdata.SiteData) g.Node {
 		stars += p.Stars
 	}
 
+	stats := d.GitHubStats
+	badge := "sample data"
+	if stats != nil {
+		badge = "live data"
+	}
+
+	contributions := placeholderContributions()
+	commitsYear := 1200.0
+	commitsSuffix := "+"
+	streak := 23.0
+	streakSuffix := "d"
+	gauges := []g.Node{
+		uidata.Gauge(uidata.GaugeProps{Value: 58, Label: "Go", Unit: "%", Size: 130}),
+		uidata.Gauge(uidata.GaugeProps{Value: 22, Label: "TS / Svelte", Unit: "%", Size: 130, Color: "var(--info)"}),
+		uidata.Gauge(uidata.GaugeProps{Value: 20, Label: "Other", Unit: "%", Size: 130, Color: "var(--warning)"}),
+	}
+	if stats != nil {
+		contributions = realContributions(stats.Contributions)
+		commitsYear = float64(stats.CommitsYear)
+		commitsSuffix = ""
+		streak = float64(stats.LongestStreak)
+		streakSuffix = "d"
+		gauges = realLanguageGauges(stats.LanguageShare)
+	}
+
+	commitsLabel := "Commits / year"
+	streakLabel := "Longest streak"
+	if stats == nil {
+		commitsLabel += "*"
+		streakLabel += "*"
+	}
+
 	return h.Section(
 		h.ID("opensource"),
 		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink)"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("04", "Open source", "sample data", token.ToneMint),
+			sectionHeader("04", "Open source", badge, token.ToneMint),
 			h.Div(
 				h.Class("oss-grid"),
 				h.Style("display:grid;grid-template-columns:1.4fr 1fr;gap:var(--sp-5);align-items:stretch"),
@@ -51,13 +83,11 @@ func githubSection(d hpdata.SiteData) g.Node {
 					uidata.Heatmap(uidata.HeatmapProps{
 						Weeks: 52, CellSize: 11, Gap: 3,
 						ShowMonthLabels: true, ShowDayLabels: true,
-					}, placeholderContributions()),
+					}, contributions),
 					// Language share gauges below the heatmap
 					h.Div(
 						h.Style("display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-2);margin-top:var(--sp-4);justify-items:center"),
-						uidata.Gauge(uidata.GaugeProps{Value: 58, Label: "Go", Unit: "%", Size: 130}),
-						uidata.Gauge(uidata.GaugeProps{Value: 22, Label: "TS / Svelte", Unit: "%", Size: 130, Color: "var(--info)"}),
-						uidata.Gauge(uidata.GaugeProps{Value: 20, Label: "Other", Unit: "%", Size: 130, Color: "var(--warning)"}),
+						g.Group(gauges),
 					),
 				),
 				// Right: counters — same gap as the outer grid so card edges align
@@ -66,15 +96,50 @@ func githubSection(d hpdata.SiteData) g.Node {
 					h.Style("display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:1fr 1fr;gap:var(--sp-5)"),
 					ossStat("nt-oss-repos", float64(repoCount), "", "Public repos", token.ToneCyan, "lucide:folder-git-2"),
 					ossStat("nt-oss-stars", float64(stars), "", "GitHub stars", token.ToneYellow, "lucide:star"),
-					ossStat("nt-oss-commits", 1200, "+", "Commits / year*", token.ToneViolet, "lucide:git-commit-horizontal"),
-					ossStat("nt-oss-streak", 23, "d", "Longest streak*", token.TonePink, "lucide:flame"),
+					ossStat("nt-oss-commits", commitsYear, commitsSuffix, commitsLabel, token.ToneViolet, "lucide:git-commit-horizontal"),
+					ossStat("nt-oss-streak", streak, streakSuffix, streakLabel, token.TonePink, "lucide:flame"),
 				),
 			),
-			h.P(h.Style("margin:var(--sp-3) 0 0;font-size:var(--t-xs);color:var(--muted)"),
+			g.If(stats == nil, h.P(h.Style("margin:var(--sp-3) 0 0;font-size:var(--t-xs);color:var(--muted)"),
 				g.Text("* heatmap, commit and streak numbers are sample data — live GitHub stats pipeline coming soon."),
-			),
+			)),
 		),
 	)
+}
+
+// realContributions converts pipeline-provided contribution days into
+// heatmap cells.
+func realContributions(days []hpdata.ContributionDay) []uidata.HeatmapCell {
+	cells := make([]uidata.HeatmapCell, 0, len(days))
+	for _, d := range days {
+		if d.Count == 0 {
+			continue
+		}
+		date, err := time.Parse("2006-01-02", d.Date)
+		if err != nil {
+			continue
+		}
+		cells = append(cells, uidata.HeatmapCell{
+			Date:  date,
+			Value: d.Count,
+			Label: fmt.Sprintf("%d contributions on %s", d.Count, date.Format("Jan 2")),
+		})
+	}
+	return cells
+}
+
+// realLanguageGauges renders up to three gauges from pipeline-provided
+// language share data, using the same colors as the placeholder gauges.
+func realLanguageGauges(shares []hpdata.LanguageShare) []g.Node {
+	colors := []string{"", "var(--info)", "var(--warning)"}
+	gauges := make([]g.Node, 0, 3)
+	for i, s := range shares {
+		if i >= len(colors) {
+			break
+		}
+		gauges = append(gauges, uidata.Gauge(uidata.GaugeProps{Value: s.Pct, Label: s.Name, Unit: "%", Size: 130, Color: colors[i]}))
+	}
+	return gauges
 }
 
 func ossStat(id string, value float64, suffix, label string, tone token.Tone, ic string) g.Node {

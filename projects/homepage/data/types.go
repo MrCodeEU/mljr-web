@@ -22,8 +22,29 @@ type SiteData struct {
 	GitHub        []Project    `json:"github_projects"`
 	LinkedIn      LinkedInData `json:"linkedin_data"`
 	Strava        StravaData   `json:"strava_data"`
+	GitHubStats   *GitHubStats `json:"github_stats,omitempty"`
 	SchemaVersion string       `json:"schema_version,omitempty"`
 	GeneratedAt   string       `json:"generated_at,omitempty"`
+}
+
+// GitHubStats holds live contribution/heatmap data from the GitHub stats
+// pipeline. Nil when the generator hasn't produced it yet, in which case
+// pages fall back to placeholder data.
+type GitHubStats struct {
+	CommitsYear   int               `json:"commits_year"`
+	LongestStreak int               `json:"longest_streak"`
+	Contributions []ContributionDay `json:"contributions"`
+	LanguageShare []LanguageShare   `json:"language_share"`
+}
+
+type ContributionDay struct {
+	Date  string `json:"date"`
+	Count int    `json:"count"`
+}
+
+type LanguageShare struct {
+	Name string  `json:"name"`
+	Pct  float64 `json:"pct"`
 }
 
 type LinkedInData struct {

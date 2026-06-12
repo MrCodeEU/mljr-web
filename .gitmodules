@@ -1,0 +1,3 @@
+[submodule "data-repo-dummy"]
+	path = data-repo-dummy
+	url = https://github.com/MrCodeEU/mljr-data.git
