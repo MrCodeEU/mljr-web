@@ -99,6 +99,48 @@ main > div:not(#logo-svg-hp-bg) {
   max-width: 100vw;
   overflow-x: hidden;
 }
+[data-component="footer"][data-homepage-footer="true"] {
+  background: var(--surface);
+}
+[data-component="footer"][data-homepage-footer="true"] [data-slot="grid"] {
+  grid-template-columns: minmax(240px,1.35fr) repeat(3,minmax(150px,.75fr));
+  gap: 0;
+  padding: var(--sp-6) clamp(1rem,4vw,3rem);
+  align-items: stretch;
+}
+[data-component="footer"][data-homepage-footer="true"] [data-slot="brand"],
+[data-component="footer"][data-homepage-footer="true"] [data-slot="col"] {
+  border: var(--bw-2) solid var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  padding: var(--sp-4);
+  margin-left: -2px;
+}
+[data-component="footer"][data-homepage-footer="true"] [data-slot="brand"] {
+  margin-left: 0;
+  background: var(--bg);
+}
+[data-component="footer"][data-homepage-footer="true"] [data-slot="col-title"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: var(--bw-2) solid var(--ink);
+  box-shadow: var(--shadow-sm);
+  display: inline-block;
+  padding: var(--sp-1) var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+[data-component="footer"][data-homepage-footer="true"] [data-slot="tagline"] {
+  max-width: 31ch;
+  font-size: var(--t-xs);
+}
+[data-component="footer"][data-homepage-footer="true"] [data-slot="col-links"] {
+  gap: var(--sp-1);
+}
+[data-component="footer"][data-homepage-footer="true"] [data-slot="bottom"] {
+  background: var(--lime-bg,#d9f99d);
+  color: var(--ink);
+  padding-block: var(--sp-3);
+}
 .experience-mobile-timeline { display: none; }
 .hero-stat-tile:last-child { border-right: none; }
 
@@ -140,7 +182,7 @@ main > div:not(#logo-svg-hp-bg) {
   .hero-bento [data-component="bento-grid"] {
     grid-template-columns: repeat(3,1fr) !important;
   }
-  .bento-photo { min-height: 200px !important; }
+  .bento-photo { min-height: 0 !important; }
 }
 
 /* ── Mobile landscape (≤768px) ────────────────────────────────── */
@@ -224,6 +266,17 @@ main > div:not(#logo-svg-hp-bg) {
   #projects [data-component="grid"] { grid-template-columns: repeat(auto-fill,minmax(280px,1fr)) !important; }
 
   .activity-grid { grid-template-columns: 1fr !important; }
+  .activity-metrics { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+  .activity-list-grid { grid-template-columns: 1fr !important; }
+
+  [data-component="footer"][data-homepage-footer="true"] [data-slot="grid"] {
+    grid-template-columns: 1fr !important;
+    gap: var(--sp-3) !important;
+  }
+  [data-component="footer"][data-homepage-footer="true"] [data-slot="brand"],
+  [data-component="footer"][data-homepage-footer="true"] [data-slot="col"] {
+    margin-left: 0 !important;
+  }
 
   /* contact grid → single column */
   #contact [data-component="grid"] { grid-template-columns: 1fr !important; }

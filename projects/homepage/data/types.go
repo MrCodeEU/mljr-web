@@ -8,7 +8,10 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"os"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -16,9 +19,11 @@ import (
 var seedJSON []byte
 
 type SiteData struct {
-	GitHub   []Project    `json:"github_projects"`
-	LinkedIn LinkedInData `json:"linkedin_data"`
-	Strava   StravaData   `json:"strava_data"`
+	GitHub        []Project    `json:"github_projects"`
+	LinkedIn      LinkedInData `json:"linkedin_data"`
+	Strava        StravaData   `json:"strava_data"`
+	SchemaVersion string       `json:"schema_version,omitempty"`
+	GeneratedAt   string       `json:"generated_at,omitempty"`
 }
 
 type LinkedInData struct {
@@ -163,14 +168,100 @@ var skillGroups = []SkillGroup{
 	{"Ops / Data", "Ops/Data", "mint", "lucide:database", 70, []string{"SQLite", "VictoriaMetrics", "Grafana", "slog", "WebGL"}},
 }
 
-// Load parses and returns the embedded site data. Panics on bad JSON (should not happen in prod).
+// Load parses and returns the embedded fallback site data. Panics on bad JSON
+// because the embedded seed is committed with the binary.
 func Load() SiteData {
-	var d SiteData
-	if err := json.Unmarshal(seedJSON, &d); err != nil {
+	d, err := parse(seedJSON)
+	if err != nil {
 		log.Fatalf("data: parse seed-cache.json: %v", err)
 	}
-	d.Strava.Normalize()
 	return d
+}
+
+func LoadFile(path string) (SiteData, error) {
+	// #nosec G304 -- HOMEPAGE_DATA_FILE is an operator-controlled data source.
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return SiteData{}, err
+	}
+	return parse(b)
+}
+
+func parse(b []byte) (SiteData, error) {
+	var d SiteData
+	if err := json.Unmarshal(b, &d); err != nil {
+		return SiteData{}, err
+	}
+	d.Strava.Normalize()
+	return d, nil
+}
+
+type Store struct {
+	path        string
+	reloadEvery time.Duration
+
+	mu        sync.RWMutex
+	current   SiteData
+	lastCheck time.Time
+	lastMod   time.Time
+}
+
+func NewStore(path, reloadSeconds string) *Store {
+	reloadEvery := 5 * time.Minute
+	if seconds, err := strconv.Atoi(strings.TrimSpace(reloadSeconds)); err == nil && seconds > 0 {
+		reloadEvery = time.Duration(seconds) * time.Second
+	}
+
+	s := &Store{
+		path:        strings.TrimSpace(path),
+		reloadEvery: reloadEvery,
+		current:     Load(),
+	}
+	if s.path != "" {
+		if err := s.reloadIfChanged(true); err != nil {
+			log.Printf("data: using embedded fallback; %s: %v", s.path, err)
+		}
+	}
+	return s
+}
+
+func (s *Store) Current() SiteData {
+	if s == nil {
+		return Load()
+	}
+	s.mu.RLock()
+	shouldCheck := s.path != "" && time.Since(s.lastCheck) >= s.reloadEvery
+	s.mu.RUnlock()
+	if shouldCheck {
+		if err := s.reloadIfChanged(false); err != nil {
+			log.Printf("data: keeping previous data; %s: %v", s.path, err)
+		}
+	}
+
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.current
+}
+
+func (s *Store) reloadIfChanged(force bool) error {
+	info, err := os.Stat(s.path)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.lastCheck = time.Now()
+	if err != nil {
+		return err
+	}
+	if !force && !info.ModTime().After(s.lastMod) {
+		return nil
+	}
+	d, err := LoadFile(s.path)
+	if err != nil {
+		return err
+	}
+	s.current = d
+	s.lastMod = info.ModTime()
+	log.Printf("data: loaded %s", s.path)
+	return nil
 }
 
 // FeaturedProjects returns projects marked featured, excluding meta-entries.
@@ -215,16 +306,8 @@ func (d LinkedInData) DisplayName() string {
 
 // RelevantExperience returns the top N non-trivial experience items.
 func (d LinkedInData) RelevantExperience(n int) []Job {
-	// Filter out very old/minor entries (Zivildienst, early student internships)
-	skip := map[string]bool{
-		"HerzReha Bad Ischl": true,
-		"ENGEL":              true,
-	}
 	var out []Job
 	for _, j := range d.Experience {
-		if skip[j.Company] {
-			continue
-		}
 		out = append(out, j)
 		if len(out) >= n {
 			break

@@ -63,6 +63,25 @@ lucide:more-vertical
 lucide:filter
 lucide:sort-asc
 lucide:calendar
+lucide:route
+lucide:timer
+lucide:mountain
+lucide:heart-pulse
+lucide:footprints
+lucide:bike
+lucide:dumbbell
+lucide:mountain-snow
+lucide:waves
+lucide:folder-git-2
+lucide:git-commit-horizontal
+lucide:flame
+lucide:shield-check
+lucide:radar
+lucide:graduation-cap
+lucide:building-2
+lucide:cloud
+lucide:boxes
+lucide:package-x
 # lucide tech/skill icons
 lucide:network
 lucide:shield
@@ -111,3 +130,5 @@ simple-icons:angular
 simple-icons:angularjs
 simple-icons:dotnet
 simple-icons:victoriametrics
+simple-icons:postgresql
+simple-icons:sqlite

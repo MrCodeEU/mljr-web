@@ -21,8 +21,8 @@ func stravaSection(d hpdata.SiteData) g.Node {
 
 	s := d.Strava
 	recent := s.RecentActivities
-	if len(recent) > 5 {
-		recent = recent[:5]
+	if len(recent) > 8 {
+		recent = recent[:8]
 	}
 
 	return h.Section(
@@ -32,7 +32,7 @@ func stravaSection(d hpdata.SiteData) g.Node {
 			sectionHeader("06", "Activity", publicActivityBadge(s), token.ToneAccent),
 			h.Div(
 				h.Class("activity-grid"),
-				h.Style("display:grid;grid-template-columns:1.1fr .9fr;gap:var(--sp-5);align-items:stretch"),
+				h.Style("display:flex;flex-direction:column;gap:var(--sp-5)"),
 				primitive.Card(primitive.CardProps{Tone: token.ToneCyan},
 					h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-5)"),
 						h.Div(
@@ -47,7 +47,8 @@ func stravaSection(d hpdata.SiteData) g.Node {
 						),
 					),
 					h.Div(
-						h.Style("display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-3)"),
+						h.Class("activity-metrics"),
+						h.Style("display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:var(--sp-3)"),
 						activityMetric("Sessions", fmt.Sprintf("%d", s.YearToDateStats.Count), "year to date", "lucide:flame"),
 						activityMetric("Distance", fmt.Sprintf("%.1f km", hpdata.DistanceKM(s.YearToDateStats.Distance)), "run · hike · ski", "lucide:route"),
 						activityMetric("Moving time", hpdata.DurationHM(s.YearToDateStats.MovingTime), "logged effort", "lucide:timer"),
@@ -76,7 +77,9 @@ func stravaSection(d hpdata.SiteData) g.Node {
 						h.H3(h.Style("font-size:var(--t-xl);font-weight:900;margin:0"), g.Text("Recent public activities")),
 						primitive.Tag(primitive.TagProps{Tone: token.ToneYellow}, g.Text("aggregated")),
 					),
-					h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-3)"),
+					h.Div(
+						h.Class("activity-list-grid"),
+						h.Style("display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-3)"),
 						g.Group(func() []g.Node {
 							nodes := make([]g.Node, 0, len(recent))
 							for _, a := range recent {

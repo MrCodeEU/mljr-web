@@ -28,7 +28,7 @@ func main() {
 	}
 	web.MountStatic(e, assets, "projects/homepage/assets/static", web.IsDev())
 
-	d := hpdata.Load()
+	dataStore := hpdata.NewStore(cfg.Data.File, cfg.Data.ReloadSeconds)
 	analytics := pages.AnalyticsConfig{
 		UmamiScriptSrc: cfg.Analytics.UmamiScriptSrc,
 		UmamiWebsiteID: cfg.Analytics.UmamiWebsiteID,
@@ -47,7 +47,7 @@ func main() {
 	}
 
 	e.GET("/", func(c echo.Context) error {
-		return web.Render(c, 200, pages.Home(d, analytics, hlSnapshot()))
+		return web.Render(c, 200, pages.Home(dataStore.Current(), analytics, hlSnapshot()))
 	})
 	e.GET("/impressum", func(c echo.Context) error {
 		return web.Render(c, 200, pages.Impressum(analytics))

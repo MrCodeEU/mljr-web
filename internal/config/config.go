@@ -10,6 +10,7 @@ type Config struct {
 	ContactTo string
 	Analytics AnalyticsConfig
 	Homelab   HomelabConfig
+	Data      DataConfig
 }
 
 // HomelabConfig points the live homelab panel at its data sources.
@@ -36,6 +37,11 @@ type AnalyticsConfig struct {
 	UmamiProxyTarget string
 }
 
+type DataConfig struct {
+	File          string
+	ReloadSeconds string
+}
+
 func Load() Config {
 	return Config{
 		Env:       envOr("MLJR_ENV", "dev"),
@@ -60,6 +66,10 @@ func Load() Config {
 			KumaURL:  envOr("HOMELAB_KUMA_URL", "https://uptime.mljr.eu"),
 			KumaSlug: envOr("HOMELAB_KUMA_SLUG", "all"),
 			PromURL:  os.Getenv("HOMELAB_PROM_URL"),
+		},
+		Data: DataConfig{
+			File:          envOr("HOMEPAGE_DATA_FILE", "data-repo-dummy/generated/site-data.json"),
+			ReloadSeconds: envOr("HOMEPAGE_DATA_RELOAD_SECONDS", "300"),
 		},
 	}
 }

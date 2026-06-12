@@ -9,10 +9,14 @@ import (
 )
 
 type MapPin struct {
-	Lat   float64
-	Lng   float64
-	Label string
-	Popup string // HTML content for popup (optional)
+	Lat       float64
+	Lng       float64
+	AnchorLat float64 // optional true location for offset markers/leader lines
+	AnchorLng float64
+	Label     string
+	Popup     string // HTML content for popup (optional)
+	Icon      string // optional image URL for a logo marker
+	Number    int    // optional compact numbered marker
 }
 
 type OpenMapProps struct {
@@ -62,6 +66,7 @@ func OpenMap(p OpenMapProps, pins ...MapPin) g.Node {
 
 	// Build pins JS
 	var pinParts []string
+	baseZoom := p.Zoom
 	for _, pin := range pins {
 		popup := ""
 		if pin.Popup != "" {
@@ -69,9 +74,39 @@ func OpenMap(p OpenMapProps, pins ...MapPin) g.Node {
 		} else if pin.Label != "" {
 			popup = fmt.Sprintf(`.bindPopup(%s)`, jsStr(pin.Label))
 		}
+		iconVar := "pin"
+		if pin.Number > 0 {
+			iconVar = fmt.Sprintf(`numberIcon(%d)`, pin.Number)
+		} else if pin.Icon != "" {
+			iconVar = fmt.Sprintf(`logoIcon(%s)`, jsStr(pin.Icon))
+		}
+		if pin.AnchorLat != 0 || pin.AnchorLng != 0 {
+			pinParts = append(pinParts, fmt.Sprintf(
+				`(function(){
+    var anchor=[%v,%v], delta=[%v,%v], baseZoom=%d;
+    var line=L.polyline([anchor,anchor],{color:'var(--ink,#1a1a1a)',weight:2,opacity:.75,dashArray:'4 4',interactive:false}).addTo(map);
+    L.circleMarker(anchor,{radius:4,color:'var(--ink,#1a1a1a)',weight:2,fillColor:'var(--accent,#ff5941)',fillOpacity:1,interactive:false}).addTo(map);
+    var marker=L.marker(anchor,{icon:%s}).addTo(map)%s;
+    function markerPos(){
+      var factor=Math.pow(2,baseZoom-map.getZoom());
+      factor=Math.max(.45,Math.min(5.5,factor));
+      return [anchor[0]+delta[0]*factor,anchor[1]+delta[1]*factor];
+    }
+    function updateMarkerOffset(){
+      var pos=markerPos();
+      marker.setLatLng(pos);
+      line.setLatLngs([anchor,pos]);
+    }
+    updateMarkerOffset();
+    map.on('zoomend',updateMarkerOffset);
+  })();`,
+				pin.AnchorLat, pin.AnchorLng, pin.Lat-pin.AnchorLat, pin.Lng-pin.AnchorLng, baseZoom, iconVar, popup,
+			))
+			continue
+		}
 		pinParts = append(pinParts, fmt.Sprintf(
-			`L.marker([%v,%v],{icon:pin}).addTo(map)%s;`,
-			pin.Lat, pin.Lng, popup,
+			`L.marker([%v,%v],{icon:%s}).addTo(map)%s;`,
+			pin.Lat, pin.Lng, iconVar, popup,
 		))
 	}
 
@@ -85,7 +120,16 @@ func OpenMap(p OpenMapProps, pins ...MapPin) g.Node {
   L.tileLayer(%s,{attribution:%s,maxZoom:19}).addTo(map);
   var pin=L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,22],popupAnchor:[0,-24],
     html:'<div style="width:22px;height:22px;border-radius:50%% 50%% 50%% 0;transform:rotate(-45deg);background:var(--accent,#ff5941);border:3px solid var(--ink,#1a1a1a);box-shadow:2px 2px 0 rgba(0,0,0,.35);box-sizing:border-box"></div>'});
+  function logoIcon(src){
+    var html='<div style="width:32px;height:32px;border:3px solid var(--ink,#1a1a1a);background:var(--bg,#fff);box-shadow:2px 2px 0 rgba(0,0,0,.35);display:grid;place-items:center;overflow:hidden;box-sizing:border-box"><img src="'+src+'" alt="" style="width:100%%;height:100%%;object-fit:contain;background:#fff"></div>';
+    return L.divIcon({className:'',iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-34],html:html});
+  }
+  function numberIcon(n){
+    var html='<div style="width:24px;height:24px;border-radius:50%%;border:3px solid var(--ink,#1a1a1a);background:var(--accent,#ff5941);color:var(--accent-ink,#fff);box-shadow:2px 2px 0 rgba(0,0,0,.35);display:grid;place-items:center;font:900 12px/1 var(--font-mono,monospace);box-sizing:border-box">'+n+'</div>';
+    return L.divIcon({className:'',iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-14],html:html});
+  }
   %s
+  setTimeout(function(){ map.invalidateSize(); }, 0);
 })();`,
 		p.ID, p.ID, centerLat, centerLng, p.Zoom,
 		jsStr(p.TileURL), jsStr(p.TileAttrib),

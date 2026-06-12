@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	g "maragu.dev/gomponents"
@@ -11,6 +12,7 @@ import (
 	uidata "mljr-web/ui/data"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/primitive"
+	"mljr-web/ui/special"
 	"mljr-web/ui/token"
 )
 
@@ -105,6 +107,110 @@ func experienceSection(li hpdata.LinkedInData) g.Node {
 					),
 				),
 			),
+			experienceLocationMap(li),
 		),
 	)
+}
+
+type orgLocation struct {
+	lat float64
+	lng float64
+}
+
+func experienceLocationMap(li hpdata.LinkedInData) g.Node {
+	pins := []special.MapPin{
+		{Lat: 48.143, Lng: 14.461, Label: "Home · Thaling, Upper Austria", Popup: "<strong>Home · Thaling, Upper Austria</strong><br>Current base"},
+	}
+	seen := map[string]int{}
+	idx := 1
+	for _, j := range li.RelevantExperience(100) {
+		loc, ok := companyLocation(j.Company)
+		if !ok {
+			continue
+		}
+		n := seen[j.Company]
+		seen[j.Company] = n + 1
+		lat, lng := offsetLocation(loc, n)
+		pins = append(pins, special.MapPin{
+			Lat:       lat,
+			Lng:       lng,
+			AnchorLat: loc.lat,
+			AnchorLng: loc.lng,
+			Label:     j.Company,
+			Popup:     orgPopup(idx, j.Company, hpdata.LogoForCompany(j.Company), j.Title, j.Period),
+			Icon:      hpdata.LogoForCompany(j.Company),
+		})
+		idx++
+	}
+	for _, e := range li.Education {
+		loc, ok := schoolLocation(e.School)
+		if !ok {
+			continue
+		}
+		n := seen[e.School]
+		seen[e.School] = n + 1
+		lat, lng := offsetLocation(loc, n)
+		pins = append(pins, special.MapPin{
+			Lat:       lat,
+			Lng:       lng,
+			AnchorLat: loc.lat,
+			AnchorLng: loc.lng,
+			Label:     e.School,
+			Popup:     orgPopup(idx, e.School, hpdata.LogoForSchool(e.School), e.Degree, e.Period),
+			Icon:      hpdata.LogoForSchool(e.School),
+		})
+		idx++
+	}
+
+	return h.Div(
+		h.Style("margin-top:var(--sp-12)"),
+		sectionHeader("", "Places", "work · education · home", token.ToneMint),
+		special.OpenMap(special.OpenMapProps{
+			CenterLat: 48.22,
+			CenterLng: 14.34,
+			Zoom:      9,
+			Height:    "360px",
+			ID:        "experience-map",
+		}, pins...),
+	)
+}
+
+func companyLocation(company string) (orgLocation, bool) {
+	m := map[string]orgLocation{
+		"Dynatrace":                        {48.3069, 14.2858},
+		"Johannes Kepler Universität Linz": {48.3371, 14.3196},
+		"ventopay gmbh":                    {48.3678, 14.5165},
+		"Bosch":                            {48.3069, 14.2858},
+		"Bosch Rexroth":                    {48.2462, 14.2348},
+		"ENGEL":                            {48.2735, 14.5861},
+		"HerzReha Bad Ischl":               {47.7111, 13.6239},
+	}
+	loc, ok := m[company]
+	return loc, ok
+}
+
+func schoolLocation(school string) (orgLocation, bool) {
+	m := map[string]orgLocation{
+		"Johannes Kepler Universität Linz": {48.3371, 14.3196},
+		"HTL Steyr":                        {48.0427, 14.4213},
+	}
+	loc, ok := m[school]
+	return loc, ok
+}
+
+func offsetLocation(loc orgLocation, n int) (float64, float64) {
+	if n == 0 {
+		return loc.lat, loc.lng
+	}
+	angle := float64(n) * (math.Pi * 2 / 7)
+	radius := 0.013 + float64(n/7)*0.004
+	return loc.lat + math.Sin(angle)*radius, loc.lng + math.Cos(angle)*radius*1.35
+}
+
+func orgPopup(n int, org, logo, title, period string) string {
+	logoHTML := ""
+	if logo != "" {
+		logoHTML = fmt.Sprintf(`<img src="%s" alt="" style="width:34px;height:34px;object-fit:contain;border:2px solid #111;background:#fff;margin-right:8px;vertical-align:middle">`, logo)
+	}
+	return fmt.Sprintf(`<div style="display:flex;align-items:center">%s<div><strong>%02d · %s</strong><br>%s<br>%s</div></div>`, logoHTML, n, org, title, period)
 }

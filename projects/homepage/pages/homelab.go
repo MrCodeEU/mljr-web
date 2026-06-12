@@ -12,6 +12,7 @@ import (
 	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/primitive"
+	"mljr-web/ui/special"
 	"mljr-web/ui/token"
 )
 
@@ -25,6 +26,7 @@ func homelabSection(snap homelab.Snapshot) g.Node {
 		layout.Container(layout.ContainerProps{},
 			sectionHeader("05", "Homelab", "live via tailscale", token.ToneBlush),
 			HomelabPanel(snap),
+			archCard(),
 		),
 	)
 }
@@ -38,7 +40,6 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 			primitive.Callout(primitive.CalloutProps{Variant: primitive.CalloutInfo},
 				g.Text("Telemetry warming up — live homelab data appears here once the first poll lands."),
 			),
-			archCard(),
 		)
 	}
 
@@ -48,22 +49,20 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 		h.ID("homelab-panel"),
 		h.Div(
 			h.Class("homelab-grid"),
-			h.Style("display:grid;grid-template-columns:1.3fr 1fr;gap:var(--sp-5);align-items:stretch"),
-			servicesCard(snap, total),
+			h.Style("display:grid;grid-template-columns:minmax(0,1.25fr) minmax(360px,.95fr);gap:var(--sp-5);align-items:start"),
 			h.Div(
-				h.Style("display:flex;flex-direction:column;gap:var(--sp-4)"),
+				h.Style("display:flex;flex-direction:column;gap:var(--sp-4);min-width:0"),
+				servicesCard(snap, total),
+				attacksHeatmapCard(snap),
+			),
+			h.Div(
+				h.Style("display:flex;flex-direction:column;gap:var(--sp-4);min-width:0"),
 				pingCard(snap),
+				crowdsecCard(snap),
+				threatsCard(snap),
 				cpuCard(snap),
 			),
 		),
-		h.Div(
-			h.Class("homelab-grid"),
-			h.Style("display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-5);align-items:stretch;margin-top:var(--sp-5)"),
-			crowdsecCard(snap),
-			threatsCard(snap),
-		),
-		attacksHeatmapCard(snap),
-		archCard(),
 		h.Div(
 			h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-3);font-size:var(--t-xs);color:var(--muted);font-weight:700"),
 			h.Span(h.Style("width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse-dot 2s ease infinite;flex-shrink:0")),
@@ -119,8 +118,8 @@ func crowdsecCard(snap homelab.Snapshot) g.Node {
 			display = fmt.Sprintf("%d", value)
 		}
 		return h.Div(
-			h.Style("border:var(--bw-2) solid var(--ink);background:var(--bg);padding:var(--sp-3);text-align:center"),
-			h.Div(h.Style("font-size:clamp(1.6rem,2.5vw,2.2rem);font-weight:900;line-height:1;font-variant-numeric:tabular-nums"), g.Text(display)),
+			h.Style("border:var(--bw-2) solid var(--ink);background:var(--bg);padding:var(--sp-3);text-align:center;color:var(--ink)"),
+			h.Div(h.Style("font-size:clamp(1.6rem,2.5vw,2.2rem);font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:var(--ink)"), g.Text(display)),
 			h.Div(h.Style("font-size:var(--t-xs);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:var(--sp-1)"), g.Text(label)),
 		)
 	}
@@ -133,7 +132,7 @@ func crowdsecCard(snap homelab.Snapshot) g.Node {
 		originSplit = h.Div(
 			h.Style("margin-top:var(--sp-3)"),
 			h.Div(h.Style("display:flex;justify-content:space-between;gap:var(--sp-2);font-size:var(--t-xs);font-weight:800;margin-bottom:var(--sp-1)"),
-				h.Span(g.Textf("Community blocklist · %d", snap.BansCommunity)),
+				h.Span(h.Style("color:var(--accent-ink)"), g.Textf("Community blocklist · %d", snap.BansCommunity)),
 				h.Span(h.Style("color:var(--muted)"), g.Textf("caught here · %d", snap.BansLocal)),
 			),
 			h.Div(
@@ -241,6 +240,7 @@ func attacksHeatmapCard(snap homelab.Snapshot) g.Node {
 	}
 	cells := make([]uidata.HeatmapCell, len(snap.AttackDays))
 	total := 0
+	maxDay := 0
 	for i, d := range snap.AttackDays {
 		cells[i] = uidata.HeatmapCell{
 			Date:  d.Date,
@@ -248,22 +248,30 @@ func attacksHeatmapCard(snap homelab.Snapshot) g.Node {
 			Label: fmt.Sprintf("%d attacks blocked on %s", d.Count, d.Date.Format("Jan 2")),
 		}
 		total += d.Count
+		if d.Count > maxDay {
+			maxDay = d.Count
+		}
 	}
-	return h.Div(h.Style("margin-top:var(--sp-5)"),
-		primitive.Card(primitive.CardProps{Tone: token.ToneNone},
-			h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3);flex-wrap:wrap"),
-				h.Div(
-					h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("CrowdSec · last 12 months")),
-					h.H3(h.Style("font-size:var(--t-xl);font-weight:900;margin:var(--sp-1) 0 0"), g.Text("Attacks blocked per day")),
-				),
-				primitive.Tag(primitive.TagProps{Tone: token.ToneViolet},
-					g.Text(fmt.Sprintf("%d total · recording since Jun 2026", total))),
+	scaleMax := maxDay
+	if scaleMax > 50 {
+		scaleMax = 50
+	}
+	return primitive.Card(primitive.CardProps{
+		Tone:  token.ToneNone,
+		Attrs: []g.Node{h.Style("--accent:#ef4444;--surface-2:#fff7ed")},
+	},
+		h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3);flex-wrap:wrap"),
+			h.Div(
+				h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("CrowdSec · last 12 months")),
+				h.H3(h.Style("font-size:var(--t-lg);font-weight:900;margin:var(--sp-1) 0 0"), g.Text("Attacks blocked per day")),
 			),
-			uidata.Heatmap(uidata.HeatmapProps{
-				Weeks: 52, CellSize: 11, Gap: 3,
-				ShowMonthLabels: true, ShowDayLabels: true,
-			}, cells),
+			primitive.Tag(primitive.TagProps{Tone: token.ToneViolet},
+				g.Text(fmt.Sprintf("%d total", total))),
 		),
+		uidata.Heatmap(uidata.HeatmapProps{
+			Weeks: 52, CellSize: 9, Gap: 3, MaxValue: scaleMax,
+			ShowMonthLabels: true, ShowDayLabels: true,
+		}, cells),
 	)
 }
 
@@ -324,9 +332,19 @@ func archCard() g.Node {
 			h.P(h.Style("font-size:var(--t-sm);color:var(--muted);line-height:1.6;margin:0 0 var(--sp-4);max-width:78ch"),
 				g.Text("All public traffic enters through Caddy on the VPS, with CrowdSec banning attackers at the edge and Authelia guarding private apps. Behind that, three machines talk over an encrypted Tailscale mesh — no open ports at home. Every host, container and config file is declared in one Ansible repo: a single make deploy converges the whole fleet."),
 			),
+			special.OpenMap(special.OpenMapProps{
+				CenterLat: 49.1,
+				CenterLng: 11.35,
+				Zoom:      6,
+				Height:    "260px",
+				ID:        "homelab-map",
+			},
+				special.MapPin{Lat: 50.1109, Lng: 8.6821, Label: "VPS · Contabo Frankfurt", Popup: "<strong>VPS · Contabo Frankfurt</strong><br>Caddy ingress · CrowdSec · Authelia"},
+				special.MapPin{Lat: 48.143, Lng: 14.461, Label: "Home · Thaling, Upper Austria", Popup: "<strong>Home · Thaling, Upper Austria</strong><br>nuc · nas · private services"},
+			),
 			// Internet → ingress
 			h.Div(
-				h.Style("display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap;margin-bottom:var(--sp-2)"),
+				h.Style("display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap;margin:var(--sp-4) 0 var(--sp-2)"),
 				h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-2);border:var(--bw-2) solid var(--ink);background:var(--bg);padding:var(--sp-2) var(--sp-3);font-weight:900;font-size:var(--t-sm)"),
 					icon.Icon("lucide:globe", icon.Props{Size: "1.1rem"}),
 					g.Text("Internet"),

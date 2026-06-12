@@ -7,6 +7,7 @@ package homelab
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -307,9 +308,9 @@ func (p *Poller) fetchProm(ctx context.Context, s *Snapshot) {
 		dst   *int
 		query string
 	}{
-		{&s.ActiveBans, `sum(cs_active_decisions)`},
-		{&s.Attacks24h, `sum(increase(cs_bucket_overflowed_total[24h]))`},
-		{&s.SecurityEvents, `sum(cs_alerts)`},
+		{&s.ActiveBans, `sum(cs_active_decisions) or vector(0)`},
+		{&s.Attacks24h, `sum(increase(cs_bucket_overflowed_total[24h])) or vector(0)`},
+		{&s.SecurityEvents, `sum(cs_alerts) or vector(0)`},
 		{&s.HostsOnline, `count(count by (host) (up == 1))`},
 	}
 	for _, q := range queries {
@@ -330,20 +331,18 @@ func (p *Poller) fetchProm(ctx context.Context, s *Snapshot) {
 
 	// Ban origin split: community blocklist (CAPI/lists) vs local detections.
 	if vec, err := p.promQueryVector(ctx, `sum by (origin) (cs_active_decisions)`, "origin"); err != nil {
-		log.Printf("homelab: promql ban origins failed: %v", err)
+		if s.ActiveBans == 0 {
+			s.BansCommunity, s.BansLocal = 0, 0
+		} else {
+			log.Printf("homelab: promql ban origins failed: %v", err)
+		}
 	} else {
-		comm, local := -1, -1
+		comm, local := 0, 0
 		for _, nv := range vec {
 			switch strings.ToLower(nv.Name) {
 			case "capi", "lists":
-				if comm < 0 {
-					comm = 0
-				}
 				comm += nv.Value
 			default:
-				if local < 0 {
-					local = 0
-				}
 				local += nv.Value
 			}
 		}
@@ -498,7 +497,11 @@ func (p *Poller) getJSON(ctx context.Context, rawURL string, dst any) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil && !errors.Is(err, context.Canceled) {
+			log.Printf("homelab: response body close failed: %v", err)
+		}
+	}()
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("status %d", resp.StatusCode)
 	}

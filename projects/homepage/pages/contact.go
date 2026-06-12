@@ -113,23 +113,6 @@ func contactSection() g.Node {
 					),
 				),
 			),
-			// Location map
-			h.Div(h.Style("margin-top:var(--sp-8)"),
-				h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3)"),
-					icon.Icon("lucide:map-pin"),
-					h.Span(h.Style("font-size:var(--t-sm);font-weight:700;color:var(--muted)"), g.Text("Based in Upper Austria")),
-				),
-				special.OpenMap(special.OpenMapProps{
-					CenterLat: 48.3069,
-					CenterLng: 14.2858,
-					Zoom:      9,
-					Height:    "280px",
-					ID:        "contact-map",
-				},
-					special.MapPin{Lat: 48.3069, Lng: 14.2858, Label: "Linz, Austria", Popup: "<strong>Linz, Upper Austria</strong><br>Michael Reinegger"},
-					special.MapPin{Lat: 48.371, Lng: 14.515, Label: "Kronstorf"},
-				),
-			),
 		),
 	)
 }

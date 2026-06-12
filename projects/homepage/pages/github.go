@@ -79,15 +79,15 @@ func githubSection(d hpdata.SiteData) g.Node {
 
 func ossStat(id string, value float64, suffix, label string, tone token.Tone, ic string) g.Node {
 	return primitive.Card(primitive.CardProps{Tone: tone},
-		h.Div(h.Style("display:flex;flex-direction:column;justify-content:space-between;height:100%;gap:var(--sp-3)"),
+		h.Div(h.Style("display:flex;flex-direction:column;justify-content:center;align-items:flex-start;min-height:150px;height:100%;gap:var(--sp-3);min-width:0"),
 			icon.Icon(ic, icon.Props{Size: "1.6rem"}),
 			h.Div(
-				h.Div(h.Style("font-size:clamp(2.2rem,3.5vw,3.2rem);font-weight:900;line-height:1;font-variant-numeric:tabular-nums"),
+				h.Div(h.Style("font-size:clamp(2rem,3vw,2.8rem);font-weight:900;line-height:1;font-variant-numeric:tabular-nums;max-width:100%;overflow-wrap:anywhere"),
 					primitive.NumberTicker(primitive.NumberTickerProps{
 						Value: value, Suffix: suffix, TriggerOnView: true, ID: id, Duration: 2600,
 					}),
 				),
-				h.Div(h.Style("font-size:var(--t-xs);font-weight:800;text-transform:uppercase;letter-spacing:.1em;opacity:.7;margin-top:var(--sp-2)"),
+				h.Div(h.Style("font-size:var(--t-xs);font-weight:800;text-transform:uppercase;letter-spacing:.1em;opacity:.7;margin-top:var(--sp-2);overflow-wrap:anywhere"),
 					g.Text(label),
 				),
 			),

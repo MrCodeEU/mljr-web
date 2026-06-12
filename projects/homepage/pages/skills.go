@@ -65,7 +65,7 @@ func skillsSection() g.Node {
 		for _, s := range sg.Skills {
 			ic := hpdata.TechIcon(s)
 			chips = append(chips, h.Span(
-				h.Style("display:inline-flex;align-items:center;gap:4px;border:var(--bw-1) solid var(--ink);background:var(--bg);padding:2px var(--sp-2);font-size:var(--t-xs);font-weight:700;white-space:nowrap"),
+				h.Style("display:inline-flex;align-items:center;gap:4px;border:var(--bw-1) solid var(--ink);background:var(--bg);color:var(--ink);padding:2px var(--sp-2);font-size:var(--t-xs);font-weight:700;white-space:nowrap"),
 				g.If(ic != "", icon.Icon(ic, icon.Props{Size: ".85rem"})),
 				g.Text(s),
 			))
@@ -75,7 +75,7 @@ func skillsSection() g.Node {
 				h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3)"),
 				icon.Icon(sg.Icon, icon.Props{Size: "1.2rem"}),
 				h.H3(h.Style("font-size:var(--t-base);font-weight:900;margin:0;flex:1;min-width:0"), g.Text(sg.Label)),
-				h.Span(h.Style("font-size:var(--t-xs);font-weight:900;font-family:var(--font-mono,monospace);border:var(--bw-1) solid var(--ink);background:var(--bg);padding:1px var(--sp-2)"), g.Textf("%d", len(sg.Skills))),
+				h.Span(h.Style("font-size:var(--t-xs);font-weight:900;font-family:var(--font-mono,monospace);border:var(--bw-1) solid var(--ink);background:var(--bg);color:var(--ink);padding:1px var(--sp-2)"), g.Textf("%d", len(sg.Skills))),
 			),
 			h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-1)"), g.Group(chips)),
 		)
