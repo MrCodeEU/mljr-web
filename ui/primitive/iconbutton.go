@@ -9,12 +9,12 @@ import (
 )
 
 type IconButtonProps struct {
-	Icon    string       // lucide or simple-icons name
-	Label   string       // aria-label (required for accessibility)
+	Icon    string        // lucide or simple-icons name
+	Label   string        // aria-label (required for accessibility)
 	Variant token.Variant // default Outline
-	Size    token.Size   // default SizeIcon
-	Href    string       // renders as <a> when set
-	Attrs   []g.Node     // pass-through: data-on:click, id, etc.
+	Size    token.Size    // default SizeIcon
+	Href    string        // renders as <a> when set
+	Attrs   []g.Node      // pass-through: data-on:click, id, etc.
 }
 
 // IconButton renders a square button containing only an icon.

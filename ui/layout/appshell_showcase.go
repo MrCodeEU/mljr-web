@@ -16,7 +16,7 @@ func init() {
 	registry.Register(&registry.Component{
 		Slug: "app-shell", Name: "App Shell", Category: "layout",
 		PreviewHeight: "420px",
-		Summary: "Sidebar + main content layout. Wraps layout.Sidebar with a flex container.",
+		Summary:       "Sidebar + main content layout. Wraps layout.Sidebar with a flex container.",
 		Code: `layout.AppShell(layout.AppShellProps{},
     layout.Sidebar(layout.SidebarProps{DefaultOpen: true},
         layout.SidebarSection("Nav", /* items */),

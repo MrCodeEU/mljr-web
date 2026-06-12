@@ -13,7 +13,7 @@ func init() {
 	registry.Register(&registry.Component{
 		Slug: "resizable-panels", Name: "Resizable Panels", Category: "layout",
 		PreviewHeight: "400px",
-		Summary: "Two panels with a drag handle. Pointer events, touch support, configurable split and min-size.",
+		Summary:       "Two panels with a drag handle. Pointer events, touch support, configurable split and min-size.",
 		Code: `layout.ResizablePanels(
     layout.ResizablePanelsProps{
         Direction:    "horizontal",

@@ -25,7 +25,7 @@ func init() {
 				h.Div(
 					h.P(h.Style("font-size:var(--t-xs);text-transform:uppercase;font-weight:700;letter-spacing:.06em;opacity:.5;margin:0 0 var(--sp-3)"), g.Text("Single file")),
 					FileDropZone(FileDropZoneProps{
-						Name:  "doc",
+						Name:   "doc",
 						Accept: ".pdf,.doc,.docx",
 					}),
 				),

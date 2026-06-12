@@ -8,14 +8,14 @@ import (
 )
 
 type MediaCardProps struct {
-	ImageSrc    string
-	ImageAlt    string
+	ImageSrc string
+	ImageAlt string
 	// AspectRatio: "16/9" (default) | "4/3" | "1/1" | "3/4"
 	AspectRatio string
 	// Badge text overlaid on the image (empty = none)
-	Badge     string
-	BadgeTone token.Tone
-	Title     string
+	Badge       string
+	BadgeTone   token.Tone
+	Title       string
 	Description string
 	// Href makes the title a link
 	Href string

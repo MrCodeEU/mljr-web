@@ -15,7 +15,7 @@ func init() {
 	registry.Register(&registry.Component{
 		Slug: "sheet", Name: "Sheet", Category: "overlay",
 		PreviewHeight: "460px",
-		Summary: "Full-edge slide-in panel. Bottom placement suits mobile; right placement suits desktop side panels.",
+		Summary:       "Full-edge slide-in panel. Bottom placement suits mobile; right placement suits desktop side panels.",
 		Code: `// Open trigger
 primitive.Button(..., g.Attr("data-on:click", "$_sheetOpen=true"), ...)
 

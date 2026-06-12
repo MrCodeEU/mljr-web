@@ -17,10 +17,10 @@ type LightboxImage struct {
 }
 
 type LightboxProps struct {
-	ID         string          // unique per page (default "lb")
-	Images     []LightboxImage
-	Columns    int    // thumbnail grid columns (default 3)
-	ThumbSize  string // CSS size for thumbnails (default "120px")
+	ID        string // unique per page (default "lb")
+	Images    []LightboxImage
+	Columns   int    // thumbnail grid columns (default 3)
+	ThumbSize string // CSS size for thumbnails (default "120px")
 }
 
 // Lightbox renders a thumbnail grid that opens full-screen on click.

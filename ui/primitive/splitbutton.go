@@ -15,13 +15,13 @@ type SplitButtonItem struct {
 }
 
 type SplitButtonProps struct {
-	Label    string
-	Variant  token.Variant
-	Size     token.Size
-	OnClick  string // main button action
-	Href     string // main button href (if set, renders as link)
-	Items    []SplitButtonItem // dropdown items
-	SignalName string // default "_sbOpen"
+	Label      string
+	Variant    token.Variant
+	Size       token.Size
+	OnClick    string            // main button action
+	Href       string            // main button href (if set, renders as link)
+	Items      []SplitButtonItem // dropdown items
+	SignalName string            // default "_sbOpen"
 }
 
 // SplitButton renders a primary action button + chevron dropdown for alternate actions.

@@ -9,11 +9,11 @@ import (
 )
 
 type FileDropZoneProps struct {
-	Name     string
-	Accept   string // e.g. "image/*,.pdf"
-	Multiple bool
+	Name      string
+	Accept    string // e.g. "image/*,.pdf"
+	Multiple  bool
 	MaxSizeMB int // display hint, not enforced client-side
-	Label    string
+	Label     string
 }
 
 // FileDropZone renders a drag-and-drop file upload area backed by a hidden file input.

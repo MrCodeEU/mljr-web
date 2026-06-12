@@ -15,7 +15,7 @@ func init() {
 	registry.Register(&registry.Component{
 		Slug: "command", Name: "Command Palette", Category: "overlay",
 		PreviewHeight: "500px",
-		Summary: "⌘K command palette overlay. Filterable list of actions, grouped with keyboard navigation.",
+		Summary:       "⌘K command palette overlay. Filterable list of actions, grouped with keyboard navigation.",
 		Code: `// 1. Place Command anywhere on the page
 overlay.Command(overlay.CommandProps{
     Items: []overlay.CommandItem{

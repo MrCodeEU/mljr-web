@@ -9,10 +9,10 @@ import (
 )
 
 type CopyButtonProps struct {
-	Text    string       // text to copy to clipboard
+	Text    string        // text to copy to clipboard
 	Variant token.Variant // default Outline
-	Size    token.Size   // default SizeIcon
-	Label   string       // optional visible label after icon
+	Size    token.Size    // default SizeIcon
+	Label   string        // optional visible label after icon
 }
 
 // CopyButton renders a clipboard copy button with Datastar-powered copied feedback.

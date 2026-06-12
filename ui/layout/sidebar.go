@@ -8,9 +8,9 @@ import (
 )
 
 type SidebarProps struct {
-	Width        string // CSS width when open (default "240px")
-	DefaultOpen  bool
-	SignalName   string // Datastar signal name (default "_sidebarOpen")
+	Width          string // CSS width when open (default "240px")
+	DefaultOpen    bool
+	SignalName     string // Datastar signal name (default "_sidebarOpen")
 	CollapsedWidth string // CSS width when collapsed (default "56px")
 }
 

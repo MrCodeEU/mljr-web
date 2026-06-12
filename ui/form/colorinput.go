@@ -29,7 +29,7 @@ func ColorInput(p ColorInputProps) g.Node {
 		h.Type("color"),
 		h.Name(p.Name),
 		h.Value(p.Value),
-		g.Attr("data-bind:"+sig),
+		g.Attr("data-bind:" + sig),
 	}
 	if p.ID != "" {
 		inputAttrs = append(inputAttrs, h.ID(p.ID))

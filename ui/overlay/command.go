@@ -17,9 +17,9 @@ type CommandItem struct {
 }
 
 type CommandProps struct {
-	SignalName string // default "_cmdOpen"
+	SignalName  string // default "_cmdOpen"
 	Placeholder string
-	Items      []CommandItem
+	Items       []CommandItem
 }
 
 // Command renders a ⌘K-style command palette overlay. Open it by setting

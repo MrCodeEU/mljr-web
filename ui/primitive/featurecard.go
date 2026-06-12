@@ -9,10 +9,10 @@ import (
 )
 
 type FeatureCardProps struct {
-	Icon  string       // lucide or simple-icons name
+	Icon  string // lucide or simple-icons name
 	Title string
-	Tone  token.Tone   // accent color for icon box (default Primary)
-	Href  string       // if set, whole card is a link
+	Tone  token.Tone // accent color for icon box (default Primary)
+	Href  string     // if set, whole card is a link
 }
 
 // FeatureCard renders a card with colored icon box, title, and description slot.

@@ -9,12 +9,12 @@ import (
 )
 
 type FABProps struct {
-	Icon     string       // lucide icon name (default "lucide:plus")
-	Label    string       // aria-label
+	Icon     string        // lucide icon name (default "lucide:plus")
+	Label    string        // aria-label
 	Variant  token.Variant // default Primary
-	Size     string       // "sm" | "md" (default) | "lg"
-	Position string       // "bottom-right" (default) | "bottom-left" | "top-right" | "top-left"
-	Href     string       // if set, renders as <a>
+	Size     string        // "sm" | "md" (default) | "lg"
+	Position string        // "bottom-right" (default) | "bottom-left" | "top-right" | "top-left"
+	Href     string        // if set, renders as <a>
 }
 
 // FAB renders a floating action button fixed to the viewport corner.

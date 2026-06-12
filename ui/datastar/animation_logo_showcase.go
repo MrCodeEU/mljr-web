@@ -14,7 +14,7 @@ func init() {
 	registry.Register(&registry.Component{
 		Slug: "ds-anim-logo", Name: "Logo Scatter", Category: "animation",
 		PreviewHeight: "680px",
-		Summary: "Pill-shaped logo pieces scatter across the viewport on a loop, then sway gently before reassembling. Built with Motion v10 WAAPI transforms.",
+		Summary:       "Pill-shaped logo pieces scatter across the viewport on a loop, then sway gently before reassembling. Built with Motion v10 WAAPI transforms.",
 		Code: `// Motion v10 scatter pattern — see ui/special/logo_scatter.go
 // special.LogoScatter(special.LogoScatterProps{
 //   ID:   "my-logo",

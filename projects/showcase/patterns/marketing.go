@@ -31,29 +31,29 @@ func init() {
 
 			plans := []pricingPlan{
 				{
-					Name:       "Free",
-					Price:      "$0",
-					Period:     "forever",
-					Highlight:  false,
-					Features:   []string{"5 projects", "1 team member", "100MB storage", "Community support"},
-					CTA:        "Get started",
+					Name:      "Free",
+					Price:     "$0",
+					Period:    "forever",
+					Highlight: false,
+					Features:  []string{"5 projects", "1 team member", "100MB storage", "Community support"},
+					CTA:       "Get started",
 				},
 				{
-					Name:       "Pro",
-					Price:      "$19",
-					Period:     "per month",
-					Highlight:  true,
-					Badge:      "Most popular",
-					Features:   []string{"Unlimited projects", "10 team members", "50GB storage", "Priority email support", "Custom domains"},
-					CTA:        "Start free trial",
+					Name:      "Pro",
+					Price:     "$19",
+					Period:    "per month",
+					Highlight: true,
+					Badge:     "Most popular",
+					Features:  []string{"Unlimited projects", "10 team members", "50GB storage", "Priority email support", "Custom domains"},
+					CTA:       "Start free trial",
 				},
 				{
-					Name:       "Enterprise",
-					Price:      "$79",
-					Period:     "per month",
-					Highlight:  false,
-					Features:   []string{"Everything in Pro", "Unlimited team members", "500GB storage", "24/7 phone support", "SSO + SAML", "SLA guarantee"},
-					CTA:        "Contact sales",
+					Name:      "Enterprise",
+					Price:     "$79",
+					Period:    "per month",
+					Highlight: false,
+					Features:  []string{"Everything in Pro", "Unlimited team members", "500GB storage", "24/7 phone support", "SSO + SAML", "SLA guarantee"},
+					CTA:       "Contact sales",
 				},
 			}
 
@@ -134,8 +134,8 @@ func init() {
 
 type pricingPlan struct {
 	Name, Price, Period, Badge, CTA string
-	Features                         []string
-	Highlight                        bool
+	Features                        []string
+	Highlight                       bool
 }
 
 func pricingCard(p pricingPlan) g.Node {

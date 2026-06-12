@@ -47,7 +47,7 @@ func init() {
 	registry.Register(&registry.Component{
 		Slug: "pricing-card", Name: "Pricing Card", Category: "primitive",
 		PreviewHeight: "560px",
-		Summary: "Pricing tier card with price display, feature checklist, and CTA button.",
+		Summary:       "Pricing tier card with price display, feature checklist, and CTA button.",
 		Code: `primitive.PricingCard(primitive.PricingCardProps{
     Name:  "Pro",
     Price: "€29",

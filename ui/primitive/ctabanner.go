@@ -13,7 +13,7 @@ type CTABannerProps struct {
 	CTAText     string
 	CTAHref     string
 	Variant     token.Variant // default Primary
-	SecondCTA   string       // optional second CTA text (ghost variant)
+	SecondCTA   string        // optional second CTA text (ghost variant)
 	SecondHref  string
 }
 

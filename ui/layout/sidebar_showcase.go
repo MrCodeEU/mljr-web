@@ -14,7 +14,7 @@ func init() {
 	registry.Register(&registry.Component{
 		Slug: "sidebar", Name: "Sidebar", Category: "layout",
 		PreviewHeight: "400px",
-		Summary: "Collapsible left navigation sidebar. Datastar signal controls open/collapsed state. Width transitions smoothly.",
+		Summary:       "Collapsible left navigation sidebar. Datastar signal controls open/collapsed state. Width transitions smoothly.",
 		Code: `layout.Sidebar(layout.SidebarProps{DefaultOpen: true},
     layout.SidebarSection("Main",
         layout.SidebarItem(layout.SidebarItemProps{Href: "/", Active: true},

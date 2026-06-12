@@ -8,10 +8,10 @@ import (
 )
 
 type PasswordInputProps struct {
-	Name        string
-	ID          string
-	Placeholder string
-	Value       string
+	Name         string
+	ID           string
+	Placeholder  string
+	Value        string
 	Autocomplete string // e.g. "current-password", "new-password"
 }
 

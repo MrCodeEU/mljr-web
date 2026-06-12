@@ -15,7 +15,7 @@ func init() {
 	registry.Register(&registry.Component{
 		Slug: "ds-anim-scroll", Name: "Scroll Progress", Category: "animation",
 		PreviewHeight: "500px",
-		Summary: "Motion.scroll() links animation progress to page scroll position. Zero event listeners, zero JS overhead.",
+		Summary:       "Motion.scroll() links animation progress to page scroll position. Zero event listeners, zero JS overhead.",
 		Code: `// Scroll-linked animation — progress 0→1 as element scrolls through viewport
 Motion.scroll(
     Motion.animate('#progress-bar', { scaleX: [0, 1] }, { duration: 1 }),

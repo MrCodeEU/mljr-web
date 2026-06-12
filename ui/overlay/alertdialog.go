@@ -9,15 +9,14 @@ import (
 	h "maragu.dev/gomponents/html"
 )
 
-
 type AlertDialogProps struct {
 	SignalName  string // default "_alertOpen"
 	Title       string
 	Description string
-	ConfirmText string // default "Confirm"
-	CancelText  string // default "Cancel"
+	ConfirmText string        // default "Confirm"
+	CancelText  string        // default "Cancel"
 	Variant     token.Variant // button variant for confirm (default Danger)
-	OnConfirm   string // Datastar expression to run on confirm
+	OnConfirm   string        // Datastar expression to run on confirm
 }
 
 // AlertDialog renders a confirmation dialog driven by a Datastar signal.

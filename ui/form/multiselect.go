@@ -13,10 +13,10 @@ type MultiSelectOption struct {
 }
 
 type MultiSelectProps struct {
-	Name     string
-	Options  []MultiSelectOption
-	Default  []string // pre-selected values
-	Max      int      // max selections (0 = unlimited)
+	Name        string
+	Options     []MultiSelectOption
+	Default     []string // pre-selected values
+	Max         int      // max selections (0 = unlimited)
 	Placeholder string
 }
 

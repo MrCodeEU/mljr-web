@@ -18,11 +18,11 @@ import (
 	"mljr-web/ui/token"
 
 	// blank imports trigger init() in *_showcase.go files
+	_ "mljr-web/projects/showcase/patterns"
 	_ "mljr-web/ui/data"
 	_ "mljr-web/ui/datastar"
 	_ "mljr-web/ui/feedback"
 	_ "mljr-web/ui/form"
-	_ "mljr-web/projects/showcase/patterns"
 
 	"github.com/starfederation/datastar-go/datastar"
 

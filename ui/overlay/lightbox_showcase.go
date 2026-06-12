@@ -12,7 +12,7 @@ func init() {
 	registry.Register(&registry.Component{
 		Slug: "lightbox", Name: "Lightbox", Category: "overlay",
 		PreviewHeight: "520px",
-		Summary: "Full-screen image viewer. Click thumbnail to open, ←/→ keys navigate, click backdrop or × to close.",
+		Summary:       "Full-screen image viewer. Click thumbnail to open, ←/→ keys navigate, click backdrop or × to close.",
 		Code: `overlay.Lightbox(overlay.LightboxProps{
     ID:      "gallery",
     Columns: 3,
@@ -30,9 +30,9 @@ func init() {
 				{Src: "https://picsum.photos/seed/lb6/800/600", Thumb: "https://picsum.photos/seed/lb6/240/180", Alt: "Architecture", Caption: "Modern architecture"},
 			}
 			return Lightbox(LightboxProps{
-				ID:       "demo-lb",
-				Images:   imgs,
-				Columns:  3,
+				ID:        "demo-lb",
+				Images:    imgs,
+				Columns:   3,
 				ThumbSize: "140px",
 			})
 		},

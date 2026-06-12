@@ -9,7 +9,7 @@ import (
 
 type CountdownProps struct {
 	// Target is an ISO 8601 datetime string (e.g. "2026-12-31T23:59:59").
-	Target  string
+	Target string
 	// ID must be unique per page when multiple countdowns appear.
 	ID      string
 	Compact bool // show only total seconds remaining vs dd:hh:mm:ss units

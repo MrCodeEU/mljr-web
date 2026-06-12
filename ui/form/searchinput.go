@@ -41,7 +41,7 @@ func SearchInput(p SearchInputProps) g.Node {
 		h.Type("search"),
 		h.Name(p.Name),
 		h.Placeholder(p.Placeholder),
-		g.Attr("data-bind:"+p.Name),
+		g.Attr("data-bind:" + p.Name),
 		g.Attr("autocomplete", "off"),
 	}
 	if p.Target != "" {
