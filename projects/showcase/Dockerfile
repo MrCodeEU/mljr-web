@@ -21,5 +21,6 @@ FROM alpine:3.20
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /src/bin/showcase /app/showcase
 
+ENV MLJR_ENV=prod
 EXPOSE 8091
 ENTRYPOINT ["/app/showcase"]
