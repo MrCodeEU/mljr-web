@@ -80,6 +80,13 @@ vendor-js: ## vendor datastar.js + altcha.js (ESM browser bundle) into every pro
 	for f in leaflet.js leaflet.css leaflet.markercluster.js MarkerCluster.css MarkerCluster.Default.css; do \
 	  cp projects/homepage/assets/static/$$f projects/showcase/assets/static/$$f; \
 	done
+	# strip sourceMappingURL comments: we don't ship .map files, and the
+	# resulting browser devtools 404s are just noise
+	for f in projects/homepage/assets/static/datastar.js projects/showcase/assets/static/datastar.js \
+	         projects/homepage/assets/static/leaflet.js projects/showcase/assets/static/leaflet.js \
+	         projects/homepage/assets/static/leaflet.markercluster.js projects/showcase/assets/static/leaflet.markercluster.js; do \
+	  sed -i -e '/sourceMappingURL/d' $$f; \
+	done
 
 upgrade-deps: ## re-fetch tailwind + datastar + altcha at the version pins
 	rm -f $(TAILWIND)
