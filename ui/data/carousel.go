@@ -43,6 +43,7 @@ func Carousel(p CarouselProps) g.Node {
 				h.Img(
 					h.Src(src),
 					h.Alt(fmt.Sprintf("%s %d", p.Alt, i+1)),
+					g.Attr("loading", "lazy"),
 				),
 			),
 		)

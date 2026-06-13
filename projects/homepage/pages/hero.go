@@ -100,14 +100,6 @@ func heroSection(li hpdata.LinkedInData, projectCount int) g.Node {
 				),
 			),
 		),
-		// Stagger entrance animation
-		h.Script(g.Raw(`(function(){
-  if(typeof Motion==='undefined') return;
-  Motion.animate('#hero-content > *',
-    {opacity:[0,1],y:[24,0]},
-    {delay:Motion.stagger(0.09),duration:0.5,easing:[0.25,0.46,0.45,0.94]}
-  );
-})();`)),
 	)
 }
 
@@ -126,7 +118,7 @@ func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
 		h.Style("grid-column:span 1;grid-row:span 1;min-width:0"),
 		h.Div(
 			h.Class("bento-photo"),
-			h.Style("height:100%;min-height:160px;width:100%;overflow:hidden;border-radius:var(--radius);border:var(--bw-2) solid var(--ink);position:relative"),
+			h.Style("height:100%;min-height:160px;aspect-ratio:4/3;width:100%;overflow:hidden;border-radius:var(--radius);border:var(--bw-2) solid var(--ink);position:relative"),
 			h.Img(
 				h.Src(li.Profile.PhotoURL),
 				h.Alt("Michael Reinegger"),

@@ -172,6 +172,7 @@ func OpenMap(p OpenMapProps, pins ...MapPin) g.Node {
 	// are not shipped. Use a self-contained neo-brutalist divIcon pin instead.
 	// Cluster bubbles get a matching neo-brutalist treatment via iconCreateFunction.
 	script := fmt.Sprintf(`(function(){
+  function init(){
   if(typeof L==='undefined'){ console.warn('Leaflet not loaded'); return; }
   var m=document.getElementById('%s');
   if(!m||m._leaflet_id) return;
@@ -203,10 +204,18 @@ func OpenMap(p OpenMapProps, pins ...MapPin) g.Node {
   %s
   cluster.addTo(map);
   setTimeout(function(){ map.invalidateSize(); }, 0);
+  }
+  var el=document.getElementById('%s');
+  if(!el) return;
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){io.disconnect();init();}});},{rootMargin:'200px'});
+    io.observe(el);
+  } else { init(); }
 })();`,
 		p.ID, p.ID, centerLat, centerLng, p.Zoom,
 		jsStr(p.TileURL), jsStr(p.TileAttrib),
 		strings.Join(pinParts, "\n  "),
+		p.ID,
 	)
 
 	return h.Div(
@@ -214,8 +223,8 @@ func OpenMap(p OpenMapProps, pins ...MapPin) g.Node {
 		h.Link(h.Rel("stylesheet"), h.Href("/static/leaflet.css")),
 		h.Link(h.Rel("stylesheet"), h.Href("/static/MarkerCluster.css")),
 		h.Link(h.Rel("stylesheet"), h.Href("/static/MarkerCluster.Default.css")),
-		h.Script(h.Src("/static/leaflet.js")),
-		h.Script(h.Src("/static/leaflet.markercluster.js")),
+		h.Script(h.Src("/static/leaflet.js"), g.Attr("defer", "")),
+		h.Script(h.Src("/static/leaflet.markercluster.js"), g.Attr("defer", "")),
 		h.Div(
 			h.ID(p.ID),
 			g.Attr("data-slot", "map"),

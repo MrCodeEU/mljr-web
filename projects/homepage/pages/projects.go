@@ -70,6 +70,7 @@ func projectCard(p hpdata.Project, tone token.Tone) g.Node {
 		carouselNode = h.Img(
 			h.Src(imgs[0]),
 			h.Alt(p.Name),
+			g.Attr("loading", "lazy"),
 			h.Style("width:100%;aspect-ratio:16/9;object-fit:cover;border-bottom:var(--border-w) solid var(--line);display:block"),
 		)
 	}
