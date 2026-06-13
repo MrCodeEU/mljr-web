@@ -2,7 +2,6 @@ package pages
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	g "maragu.dev/gomponents"
@@ -121,24 +120,47 @@ func experienceLocationMap(li hpdata.LinkedInData) g.Node {
 	pins := []special.MapPin{
 		{Lat: 48.143, Lng: 14.461, Label: "Home · Thaling, Upper Austria", Popup: "<strong>Home · Thaling, Upper Austria</strong><br>Current base"},
 	}
-	seen := map[string]int{}
+	// Count occurrences per anchor first: locations with >1 pin are excluded
+	// from clustering entirely and instead spread around their anchor on
+	// fixed pixel-radius spokes (so they never get hidden behind a cluster
+	// bubble for their own siblings).
+	counts := map[orgLocation]int{}
+	for _, j := range li.RelevantExperience(100) {
+		if loc, ok := companyLocation(j.Company); ok {
+			counts[loc]++
+		}
+	}
+	for _, e := range li.Education {
+		if loc, ok := schoolLocation(e.School); ok {
+			counts[loc]++
+		}
+	}
+	seen := map[orgLocation]int{}
+	spread := func(loc orgLocation) (lineLat, lineLng, angle, radius float64) {
+		n := seen[loc]
+		seen[loc] = n + 1
+		if counts[loc] <= 1 {
+			return 0, 0, 0, 0
+		}
+		return loc.lat, loc.lng, float64(n) * 2.399963, 22 + 18*float64(n) // golden angle, growing radius
+	}
 	idx := 1
 	for _, j := range li.RelevantExperience(100) {
 		loc, ok := companyLocation(j.Company)
 		if !ok {
 			continue
 		}
-		n := seen[j.Company]
-		seen[j.Company] = n + 1
-		lat, lng := offsetLocation(loc, n)
+		lineLat, lineLng, angle, radius := spread(loc)
 		pins = append(pins, special.MapPin{
-			Lat:       lat,
-			Lng:       lng,
-			AnchorLat: loc.lat,
-			AnchorLng: loc.lng,
-			Label:     j.Company,
-			Popup:     orgPopup(idx, j.Company, hpdata.LogoForCompany(j.Company), j.Title, j.Period),
-			Icon:      hpdata.LogoForCompany(j.Company),
+			AnchorLat:    loc.lat,
+			AnchorLng:    loc.lng,
+			LineLat:      lineLat,
+			LineLng:      lineLng,
+			SpreadAngle:  angle,
+			SpreadRadius: radius,
+			Label:        j.Company,
+			Popup:        orgPopup(idx, j.Company, hpdata.LogoForCompany(j.Company), j.Title, j.Period),
+			Icon:         hpdata.LogoForCompany(j.Company),
 		})
 		idx++
 	}
@@ -147,17 +169,17 @@ func experienceLocationMap(li hpdata.LinkedInData) g.Node {
 		if !ok {
 			continue
 		}
-		n := seen[e.School]
-		seen[e.School] = n + 1
-		lat, lng := offsetLocation(loc, n)
+		lineLat, lineLng, angle, radius := spread(loc)
 		pins = append(pins, special.MapPin{
-			Lat:       lat,
-			Lng:       lng,
-			AnchorLat: loc.lat,
-			AnchorLng: loc.lng,
-			Label:     e.School,
-			Popup:     orgPopup(idx, e.School, hpdata.LogoForSchool(e.School), e.Degree, e.Period),
-			Icon:      hpdata.LogoForSchool(e.School),
+			AnchorLat:    loc.lat,
+			AnchorLng:    loc.lng,
+			LineLat:      lineLat,
+			LineLng:      lineLng,
+			SpreadAngle:  angle,
+			SpreadRadius: radius,
+			Label:        e.School,
+			Popup:        orgPopup(idx, e.School, hpdata.LogoForSchool(e.School), e.Degree, e.Period),
+			Icon:         hpdata.LogoForSchool(e.School),
 		})
 		idx++
 	}
@@ -169,7 +191,7 @@ func experienceLocationMap(li hpdata.LinkedInData) g.Node {
 			CenterLat: 48.22,
 			CenterLng: 14.34,
 			Zoom:      9,
-			Height:    "360px",
+			Height:    "520px",
 			ID:        "experience-map",
 		}, pins...),
 	)
@@ -198,19 +220,10 @@ func schoolLocation(school string) (orgLocation, bool) {
 	return loc, ok
 }
 
-func offsetLocation(loc orgLocation, n int) (float64, float64) {
-	if n == 0 {
-		return loc.lat, loc.lng
-	}
-	angle := float64(n) * (math.Pi * 2 / 7)
-	radius := 0.013 + float64(n/7)*0.004
-	return loc.lat + math.Sin(angle)*radius, loc.lng + math.Cos(angle)*radius*1.35
-}
-
 func orgPopup(n int, org, logo, title, period string) string {
 	logoHTML := ""
 	if logo != "" {
-		logoHTML = fmt.Sprintf(`<img src="%s" alt="" style="width:34px;height:34px;object-fit:contain;border:2px solid #111;background:#fff;margin-right:8px;vertical-align:middle">`, logo)
+		logoHTML = fmt.Sprintf(`<img class="map-tooltip-logo" src="%s" alt="">`, logo)
 	}
-	return fmt.Sprintf(`<div style="display:flex;align-items:center">%s<div><strong>%02d · %s</strong><br>%s<br>%s</div></div>`, logoHTML, n, org, title, period)
+	return fmt.Sprintf(`<div class="map-tooltip-body">%s<div><div class="map-tooltip-title">%02d · %s</div><div class="map-tooltip-meta">%s<br>%s</div></div></div>`, logoHTML, n, org, title, period)
 }

@@ -4,6 +4,8 @@
 TAILWIND_VERSION ?= v4.1.17
 DATASTAR_VERSION ?= 1.0.2
 ALTCHA_VERSION   ?= 3.0.11
+LEAFLET_VERSION  ?= 1.9.4
+LEAFLET_MARKERCLUSTER_VERSION ?= 1.5.3
 
 # --- paths ---------------------------------------------------------------------
 PROJECT ?= homepage
@@ -69,6 +71,15 @@ vendor-js: ## vendor datastar.js + altcha.js (ESM browser bundle) into every pro
 		-o projects/homepage/assets/static/altcha-workers/sha.js
 	cp projects/homepage/assets/static/altcha.js projects/showcase/assets/static/altcha.js
 	cp -R projects/homepage/assets/static/altcha-workers projects/showcase/assets/static/altcha-workers
+	# leaflet + markercluster: vendored map JS/CSS for the open-map component
+	curl -fsSL https://unpkg.com/leaflet@$(LEAFLET_VERSION)/dist/leaflet.js -o projects/homepage/assets/static/leaflet.js
+	curl -fsSL https://unpkg.com/leaflet@$(LEAFLET_VERSION)/dist/leaflet.css -o projects/homepage/assets/static/leaflet.css
+	curl -fsSL https://unpkg.com/leaflet.markercluster@$(LEAFLET_MARKERCLUSTER_VERSION)/dist/leaflet.markercluster.js -o projects/homepage/assets/static/leaflet.markercluster.js
+	curl -fsSL https://unpkg.com/leaflet.markercluster@$(LEAFLET_MARKERCLUSTER_VERSION)/dist/MarkerCluster.css -o projects/homepage/assets/static/MarkerCluster.css
+	curl -fsSL https://unpkg.com/leaflet.markercluster@$(LEAFLET_MARKERCLUSTER_VERSION)/dist/MarkerCluster.Default.css -o projects/homepage/assets/static/MarkerCluster.Default.css
+	for f in leaflet.js leaflet.css leaflet.markercluster.js MarkerCluster.css MarkerCluster.Default.css; do \
+	  cp projects/homepage/assets/static/$$f projects/showcase/assets/static/$$f; \
+	done
 
 upgrade-deps: ## re-fetch tailwind + datastar + altcha at the version pins
 	rm -f $(TAILWIND)
@@ -105,15 +116,15 @@ docker: ## per-project image:  make docker PROJECT=homepage TAG=v1
 	docker build -f projects/$(PROJECT)/Dockerfile -t mljr/$(PROJECT):$(TAG) .
 
 # --- data ------------------------------------------------------------------
-data-update: ## regenerate data-repo-dummy/generated/site-data.json (needs GITHUB_TOKEN, optional STRAVA_* in projects/homepage/.env)
+data-update: ## regenerate mljr-data/generated/site-data.json (needs GITHUB_TOKEN, optional STRAVA_* in projects/homepage/.env)
 	@if [ -f projects/homepage/.env ]; then set -a; . projects/homepage/.env; set +a; fi; \
-	  cd data-repo-dummy/generator && \
+	  cd mljr-data/generator && \
 	  GITHUB_TOKEN="$$GITHUB_TOKEN" GITHUB_USER="$${GITHUB_USERNAME:-MrCodeEU}" \
 	  STRAVA_CLIENT_ID="$$STRAVA_CLIENT_ID" STRAVA_CLIENT_SECRET="$$STRAVA_CLIENT_SECRET" STRAVA_REFRESH_TOKEN="$$STRAVA_REFRESH_TOKEN" \
 	  go run ./cmd/generate
 
 data-pull: ## fetch latest mljr-data submodule from origin
-	git submodule update --remote --merge data-repo-dummy
+	git submodule update --remote --merge mljr-data
 
 # --- quality -------------------------------------------------------------------
 check: fmt vet lint guard-classes test test-showcase vuln ## full local gate

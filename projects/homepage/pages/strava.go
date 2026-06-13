@@ -48,7 +48,7 @@ func stravaSection(d hpdata.SiteData) g.Node {
 					),
 					h.Div(
 						h.Class("activity-metrics"),
-						h.Style("display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:var(--sp-3)"),
+						h.Style("display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:var(--sp-3)"),
 						activityMetric("Sessions", fmt.Sprintf("%d", s.YearToDateStats.Count), "year to date", "lucide:flame"),
 						activityMetric("Distance", fmt.Sprintf("%.1f km", hpdata.DistanceKM(s.YearToDateStats.Distance)), "run · hike · ski", "lucide:route"),
 						activityMetric("Moving time", hpdata.DurationHM(s.YearToDateStats.MovingTime), "logged effort", "lucide:timer"),
@@ -59,7 +59,7 @@ func stravaSection(d hpdata.SiteData) g.Node {
 							activityMetric("Calories", fmt.Sprintf("%.1fk", s.YTDCalories/1000), "burned (est.)", "lucide:zap")),
 					),
 					g.If(len(s.Disciplines) > 0,
-						h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-5)"),
+						h.Div(h.Style("display:flex;flex-wrap:wrap;justify-content:center;gap:var(--sp-2);margin-top:var(--sp-5)"),
 							g.Group(func() []g.Node {
 								nodes := make([]g.Node, 0, len(s.Disciplines))
 								for _, disc := range s.Disciplines {

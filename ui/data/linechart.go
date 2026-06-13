@@ -20,6 +20,7 @@ type LineChartProps struct {
 	Height   int      // px (default 160)
 	ShowDots bool
 	ShowGrid bool
+	YAxis    bool // render min/max value labels on the left edge
 	Caption  string
 }
 
@@ -32,7 +33,10 @@ func LineChart(p LineChartProps) g.Node {
 		return g.El("svg")
 	}
 
-	const padL = 8
+	padL := 8
+	if p.YAxis {
+		padL = 30
+	}
 	const padR = 8
 	const labelH = 20
 	totalW := 400
@@ -89,6 +93,39 @@ func LineChart(p LineChartProps) g.Node {
 				g.Attr("stroke-dasharray", "4 4"),
 			))
 		}
+	}
+
+	// Y-axis: min/max value labels on the left edge, plus a vertical axis line.
+	if p.YAxis {
+		nodes = append(nodes, g.El("line",
+			g.Attr("x1", fmt.Sprintf("%d", padL)),
+			g.Attr("y1", "0"),
+			g.Attr("x2", fmt.Sprintf("%d", padL)),
+			g.Attr("y2", fmt.Sprintf("%.1f", chartH)),
+			g.Attr("stroke", "var(--line)"),
+		))
+		fmtVal := func(v float64) string {
+			if v == math.Trunc(v) {
+				return fmt.Sprintf("%.0f", v)
+			}
+			return fmt.Sprintf("%.1f", v)
+		}
+		nodes = append(nodes, g.El("text",
+			g.Attr("x", fmt.Sprintf("%d", padL-4)),
+			g.Attr("y", "9"),
+			g.Attr("text-anchor", "end"),
+			g.Attr("font-size", "10"),
+			g.Attr("fill", "var(--muted)"),
+			g.Raw(fmtVal(maxV)),
+		))
+		nodes = append(nodes, g.El("text",
+			g.Attr("x", fmt.Sprintf("%d", padL-4)),
+			g.Attr("y", fmt.Sprintf("%.1f", chartH-2)),
+			g.Attr("text-anchor", "end"),
+			g.Attr("font-size", "10"),
+			g.Attr("fill", "var(--muted)"),
+			g.Raw(fmtVal(minV)),
+		))
 	}
 
 	// Series

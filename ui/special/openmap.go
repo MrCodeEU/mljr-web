@@ -9,14 +9,18 @@ import (
 )
 
 type MapPin struct {
-	Lat       float64
-	Lng       float64
-	AnchorLat float64 // optional true location for offset markers/leader lines
-	AnchorLng float64
-	Label     string
-	Popup     string // HTML content for popup (optional)
-	Icon      string // optional image URL for a logo marker
-	Number    int    // optional compact numbered marker
+	Lat          float64
+	Lng          float64
+	AnchorLat    float64 // if set (with AnchorLng), used as the pin's true position instead of Lat/Lng
+	AnchorLng    float64
+	LineLat      float64 // if set (with LineLng), draw a dashed line from here to the pin (true location vs. jittered marker pos)
+	LineLng      float64
+	SpreadAngle  float64 // if LineLat/LineLng set, direction (radians) to offset this pin from its anchor by SpreadRadius pixels (stays separated at any zoom, never drifts off-map)
+	SpreadRadius float64 // pixel distance for the SpreadAngle offset; 0 means sit exactly at the anchor (no leader line drawn)
+	Label        string
+	Popup        string // HTML content for popup (optional)
+	Icon         string // optional image URL for a logo marker
+	Number       int    // optional compact numbered marker
 }
 
 type OpenMapProps struct {
@@ -36,9 +40,12 @@ type OpenMapProps struct {
 	TileAttrib string
 }
 
-// OpenMap renders a Leaflet-powered interactive map.
-// Requires /static/leaflet.js and /static/leaflet.css to be served.
-// Uses OpenStreetMap tiles by default — self-host tiles for full privacy.
+// OpenMap renders a Leaflet-powered interactive map with clustered markers.
+// Requires /static/leaflet.js, /static/leaflet.css, /static/leaflet.markercluster.js,
+// /static/MarkerCluster.css and /static/MarkerCluster.Default.css to be served.
+// Nearby pins automatically group into a cluster bubble and spiderfy (spread
+// with leader lines) on click/max-zoom — isolated pins always sit at their
+// true location.
 func OpenMap(p OpenMapProps, pins ...MapPin) g.Node {
 	if p.Zoom == 0 {
 		p.Zoom = 13
@@ -60,19 +67,32 @@ func OpenMap(p OpenMapProps, pins ...MapPin) g.Node {
 	centerLat := p.CenterLat
 	centerLng := p.CenterLng
 	if centerLat == 0 && centerLng == 0 && len(pins) > 0 {
-		centerLat = pins[0].Lat
-		centerLng = pins[0].Lng
+		lat, lng := pins[0].Lat, pins[0].Lng
+		if pins[0].AnchorLat != 0 || pins[0].AnchorLng != 0 {
+			lat, lng = pins[0].AnchorLat, pins[0].AnchorLng
+		}
+		centerLat, centerLng = lat, lng
 	}
+
+	type spreadMember struct {
+		iconVar, tooltip string
+		angle, radius    float64
+	}
+	groups := map[[2]float64][]spreadMember{}
+	var groupOrder [][2]float64
 
 	// Build pins JS
 	var pinParts []string
-	baseZoom := p.Zoom
 	for _, pin := range pins {
-		popup := ""
+		lat, lng := pin.Lat, pin.Lng
+		if pin.AnchorLat != 0 || pin.AnchorLng != 0 {
+			lat, lng = pin.AnchorLat, pin.AnchorLng
+		}
+		tooltip := ""
 		if pin.Popup != "" {
-			popup = fmt.Sprintf(`.bindPopup(%s)`, jsStr(pin.Popup))
+			tooltip = fmt.Sprintf(`.bindTooltip(%s,{direction:'top',offset:[0,-10],opacity:0.96,className:'map-tooltip'})`, jsStr(pin.Popup))
 		} else if pin.Label != "" {
-			popup = fmt.Sprintf(`.bindPopup(%s)`, jsStr(pin.Label))
+			tooltip = fmt.Sprintf(`.bindTooltip(%s,{direction:'top',offset:[0,-10],opacity:0.96,className:'map-tooltip'})`, jsStr(pin.Label))
 		}
 		iconVar := "pin"
 		if pin.Number > 0 {
@@ -80,43 +100,82 @@ func OpenMap(p OpenMapProps, pins ...MapPin) g.Node {
 		} else if pin.Icon != "" {
 			iconVar = fmt.Sprintf(`logoIcon(%s)`, jsStr(pin.Icon))
 		}
-		if pin.AnchorLat != 0 || pin.AnchorLng != 0 {
+		if pin.LineLat != 0 || pin.LineLng != 0 {
+			key := [2]float64{pin.LineLat, pin.LineLng}
+			if _, ok := groups[key]; !ok {
+				groupOrder = append(groupOrder, key)
+			}
+			groups[key] = append(groups[key], spreadMember{iconVar: iconVar, tooltip: tooltip, angle: pin.SpreadAngle, radius: pin.SpreadRadius})
+		} else {
 			pinParts = append(pinParts, fmt.Sprintf(
-				`(function(){
-    var anchor=[%v,%v], delta=[%v,%v], baseZoom=%d;
-    var line=L.polyline([anchor,anchor],{color:'var(--ink,#1a1a1a)',weight:2,opacity:.75,dashArray:'4 4',interactive:false}).addTo(map);
-    L.circleMarker(anchor,{radius:4,color:'var(--ink,#1a1a1a)',weight:2,fillColor:'var(--accent,#ff5941)',fillOpacity:1,interactive:false}).addTo(map);
-    var marker=L.marker(anchor,{icon:%s}).addTo(map)%s;
-    function markerPos(){
-      var factor=Math.pow(2,baseZoom-map.getZoom());
-      factor=Math.max(.45,Math.min(5.5,factor));
-      return [anchor[0]+delta[0]*factor,anchor[1]+delta[1]*factor];
-    }
-    function updateMarkerOffset(){
-      var pos=markerPos();
-      marker.setLatLng(pos);
-      line.setLatLngs([anchor,pos]);
-    }
-    updateMarkerOffset();
-    map.on('zoomend',updateMarkerOffset);
-  })();`,
-				pin.AnchorLat, pin.AnchorLng, pin.Lat-pin.AnchorLat, pin.Lng-pin.AnchorLng, baseZoom, iconVar, popup,
+				`cluster.addLayer(L.marker([%v,%v],{icon:%s})%s);`,
+				lat, lng, iconVar, tooltip,
 			))
-			continue
 		}
-		pinParts = append(pinParts, fmt.Sprintf(
-			`L.marker([%v,%v],{icon:%s}).addTo(map)%s;`,
-			pin.Lat, pin.Lng, iconVar, popup,
-		))
+	}
+
+	// Duplicate-location groups: zoomed out, show a single count badge in the
+	// normal cluster (so it merges naturally with nearby cluster bubbles);
+	// zoomed in past the spread threshold, swap to individually placed pins on
+	// fixed pixel-radius spokes around a shared anchor dot.
+	for _, key := range groupOrder {
+		members := groups[key]
+		var memberJS strings.Builder
+		for _, mb := range members {
+			fmt.Fprintf(&memberJS,
+				`members.push({mk:L.marker(a,{icon:%s})%s,ln:L.polyline([a,a],{color:'var(--ink,#1a1a1a)',weight:2,opacity:.6,dashArray:'4 4'}),angle:%v,radius:%v});`,
+				mb.iconVar, mb.tooltip, mb.angle, mb.radius,
+			)
+		}
+		pinParts = append(pinParts, fmt.Sprintf(`(function(){
+  var a=L.latLng(%v,%v);
+  var rep=L.marker(a,{icon:numberIcon(%d)});
+  cluster.addLayer(rep);
+  var dot=L.circleMarker(a,{radius:4,color:'var(--ink,#1a1a1a)',weight:2,fillColor:'var(--accent,#ff5941)',fillOpacity:0,opacity:0}).addTo(map);
+  var members=[];
+  %s
+  members.forEach(function(m){ m.ln.addTo(map); m.mk.addTo(map); m.mk.setOpacity(0); m.ln.setStyle({opacity:0}); });
+  var expanded=null;
+  function reposition(){
+    members.forEach(function(m){
+      var p=map.latLngToLayerPoint(a).add([Math.cos(m.angle)*m.radius,Math.sin(m.angle)*m.radius]);
+      var b=map.layerPointToLatLng(p);
+      m.mk.setLatLng(b);
+      m.ln.setLatLngs([a,b]);
+    });
+    dot.bringToFront();
+  }
+  function setInteractive(layer,on){
+    var el=layer._icon||layer._path;
+    if(el) el.style.pointerEvents=on?'':'none';
+  }
+  function update(){
+    var want=map.getZoom()>=12;
+    if(want===expanded){ if(want) reposition(); return; }
+    expanded=want;
+    rep.setOpacity(want?0:1);
+    setInteractive(rep,!want);
+    dot.setStyle({opacity:want?1:0,fillOpacity:want?1:0});
+    members.forEach(function(m){
+      m.mk.setOpacity(want?1:0);
+      setInteractive(m.mk,want);
+      m.ln.setStyle({opacity:want?.6:0});
+    });
+    if(want) reposition();
+  }
+  map.on('zoomend',update);
+  update();
+})();`, key[0], key[1], len(members), memberJS.String()))
 	}
 
 	// Default Leaflet markers reference PNGs relative to the CSS file, which
 	// are not shipped. Use a self-contained neo-brutalist divIcon pin instead.
+	// Cluster bubbles get a matching neo-brutalist treatment via iconCreateFunction.
 	script := fmt.Sprintf(`(function(){
   if(typeof L==='undefined'){ console.warn('Leaflet not loaded'); return; }
   var m=document.getElementById('%s');
   if(!m||m._leaflet_id) return;
-  var map=L.map('%s').setView([%v,%v],%d);
+  var map=L.map('%s',{maxZoom:19}).setView([%v,%v],%d);
   L.tileLayer(%s,{attribution:%s,maxZoom:19}).addTo(map);
   var pin=L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,22],popupAnchor:[0,-24],
     html:'<div style="width:22px;height:22px;border-radius:50%% 50%% 50%% 0;transform:rotate(-45deg);background:var(--accent,#ff5941);border:3px solid var(--ink,#1a1a1a);box-shadow:2px 2px 0 rgba(0,0,0,.35);box-sizing:border-box"></div>'});
@@ -128,7 +187,21 @@ func OpenMap(p OpenMapProps, pins ...MapPin) g.Node {
     var html='<div style="width:24px;height:24px;border-radius:50%%;border:3px solid var(--ink,#1a1a1a);background:var(--accent,#ff5941);color:var(--accent-ink,#fff);box-shadow:2px 2px 0 rgba(0,0,0,.35);display:grid;place-items:center;font:900 12px/1 var(--font-mono,monospace);box-sizing:border-box">'+n+'</div>';
     return L.divIcon({className:'',iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-14],html:html});
   }
+  var cluster=L.markerClusterGroup({
+    maxClusterRadius:28,
+    spiderfyOnMaxZoom:true,
+    zoomToBoundsOnClick:false,
+    showCoverageOnHover:false,
+    spiderLegPolylineOptions:{color:'var(--ink,#1a1a1a)',weight:2,opacity:.75,dashArray:'4 4'},
+    iconCreateFunction:function(c){
+      var n=c.getChildCount();
+      var html='<div style="width:34px;height:34px;border-radius:50%%;border:3px solid var(--ink,#1a1a1a);background:var(--accent,#ff5941);color:var(--accent-ink,#fff);box-shadow:2px 2px 0 rgba(0,0,0,.35);display:grid;place-items:center;font:900 13px/1 var(--font-mono,monospace);box-sizing:border-box">'+n+'</div>';
+      return L.divIcon({className:'',iconSize:[34,34],html:html});
+    }
+  });
+  cluster.on('clusterclick',function(e){ e.layer.spiderfy(); });
   %s
+  cluster.addTo(map);
   setTimeout(function(){ map.invalidateSize(); }, 0);
 })();`,
 		p.ID, p.ID, centerLat, centerLng, p.Zoom,
@@ -139,7 +212,10 @@ func OpenMap(p OpenMapProps, pins ...MapPin) g.Node {
 	return h.Div(
 		g.Attr("data-component", "open-map"),
 		h.Link(h.Rel("stylesheet"), h.Href("/static/leaflet.css")),
+		h.Link(h.Rel("stylesheet"), h.Href("/static/MarkerCluster.css")),
+		h.Link(h.Rel("stylesheet"), h.Href("/static/MarkerCluster.Default.css")),
 		h.Script(h.Src("/static/leaflet.js")),
+		h.Script(h.Src("/static/leaflet.markercluster.js")),
 		h.Div(
 			h.ID(p.ID),
 			g.Attr("data-slot", "map"),

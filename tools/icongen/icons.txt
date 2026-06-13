@@ -79,6 +79,7 @@ lucide:shield-check
 lucide:radar
 lucide:graduation-cap
 lucide:building-2
+lucide:map-pin
 lucide:cloud
 lucide:boxes
 lucide:package-x

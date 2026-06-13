@@ -12,7 +12,7 @@ func SecurityHeaders() echo.MiddlewareFunc {
 	const csp = "default-src 'self'; " +
 		"script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
 		"style-src 'self' 'unsafe-inline'; " +
-		"img-src 'self' data: https://*.tile.openstreetmap.org; " +
+		"img-src 'self' data: https://*.tile.openstreetmap.org https://picsum.photos https://fastly.picsum.photos; " +
 		"font-src 'self'; " +
 		"connect-src 'self'; " +
 		"frame-ancestors 'self'; " +

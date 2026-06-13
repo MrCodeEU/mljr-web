@@ -48,7 +48,7 @@ func TestStoreKeepsPreviousDataWhenReloadFails(t *testing.T) {
 }
 
 func TestGeneratedSiteDataHasContractMetadata(t *testing.T) {
-	d, err := LoadFile("../../../data-repo-dummy/generated/site-data.json")
+	d, err := LoadFile("../../../mljr-data/generated/site-data.json")
 	if err != nil {
 		t.Fatal(err)
 	}

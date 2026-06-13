@@ -1,3 +1,4 @@
-[submodule "data-repo-dummy"]
-	path = data-repo-dummy
+[submodule "mljr-data"]
+	path = mljr-data
 	url = https://github.com/MrCodeEU/mljr-data.git
+	branch = master

@@ -68,7 +68,7 @@ func Load() Config {
 			PromURL:  os.Getenv("HOMELAB_PROM_URL"),
 		},
 		Data: DataConfig{
-			File:          envOr("HOMEPAGE_DATA_FILE", "data-repo-dummy/generated/site-data.json"),
+			File:          envOr("HOMEPAGE_DATA_FILE", "mljr-data/generated/site-data.json"),
 			ReloadSeconds: envOr("HOMEPAGE_DATA_RELOAD_SECONDS", "300"),
 		},
 	}

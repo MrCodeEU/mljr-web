@@ -58,9 +58,9 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 			h.Div(
 				h.Style("display:flex;flex-direction:column;gap:var(--sp-4);min-width:0"),
 				pingCard(snap),
+				cpuCard(snap),
 				crowdsecCard(snap),
 				threatsCard(snap),
-				cpuCard(snap),
 			),
 		),
 		h.Div(
@@ -105,7 +105,7 @@ func servicesCard(snap homelab.Snapshot, total int) g.Node {
 				g.Text(fmt.Sprintf("%d / %d up", snap.UpCount, total))),
 		),
 		h.Div(
-			h.Style("display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:var(--sp-2)"),
+			h.Style("display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-2)"),
 			g.Group(chips),
 		),
 	)
@@ -223,8 +223,10 @@ func cpuCard(snap homelab.Snapshot) g.Node {
 				g.Text(fmt.Sprintf("%.0f%%", last))),
 		),
 		uidata.LineChart(uidata.LineChartProps{
-			Height: 70,
-			Labels: snap.CPULabels,
+			Height:   70,
+			Labels:   snap.CPULabels,
+			ShowGrid: true,
+			YAxis:    true,
 			Series: []uidata.LineChartSeries{{
 				Points: snap.CPUUtil,
 				Color:  "var(--accent)",
@@ -252,10 +254,6 @@ func attacksHeatmapCard(snap homelab.Snapshot) g.Node {
 			maxDay = d.Count
 		}
 	}
-	scaleMax := maxDay
-	if scaleMax > 50 {
-		scaleMax = 50
-	}
 	return primitive.Card(primitive.CardProps{
 		Tone:  token.ToneNone,
 		Attrs: []g.Node{h.Style("--accent:#ef4444;--surface-2:#fff7ed")},
@@ -269,7 +267,7 @@ func attacksHeatmapCard(snap homelab.Snapshot) g.Node {
 				g.Text(fmt.Sprintf("%d total", total))),
 		),
 		uidata.Heatmap(uidata.HeatmapProps{
-			Weeks: 52, CellSize: 9, Gap: 3, MaxValue: scaleMax,
+			Weeks: 52, CellSize: 9, Gap: 3, MaxValue: maxDay,
 			ShowMonthLabels: true, ShowDayLabels: true,
 		}, cells),
 	)
@@ -280,6 +278,9 @@ func pingCard(snap homelab.Snapshot) g.Node {
 		return nil
 	}
 	last := snap.PingHistory[len(snap.PingHistory)-1]
+	labels := make([]string, len(snap.PingHistory))
+	labels[0] = "24h ago"
+	labels[len(labels)-1] = "now"
 	return primitive.Card(primitive.CardProps{Tone: token.ToneSky},
 		h.Div(h.Style("display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
 			h.H3(h.Style("font-size:var(--t-base);font-weight:900;margin:0"), g.Text("Avg response time")),
@@ -287,7 +288,10 @@ func pingCard(snap homelab.Snapshot) g.Node {
 				g.Text(fmt.Sprintf("%.0f ms", last))),
 		),
 		uidata.LineChart(uidata.LineChartProps{
-			Height: 70,
+			Height:   70,
+			Labels:   labels,
+			ShowGrid: true,
+			YAxis:    true,
 			Series: []uidata.LineChartSeries{{
 				Points: snap.PingHistory,
 				Color:  "var(--accent)",

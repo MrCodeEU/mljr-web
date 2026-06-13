@@ -31,7 +31,7 @@ func Icon(name string, p ...Props) g.Node {
 	}
 	attrs := []g.Node{
 		g.Attr("data-component", "icon"),
-		h.Style("width:" + pp.Size + ";height:" + pp.Size),
+		h.Style("display:inline-flex;width:" + pp.Size + ";height:" + pp.Size + ";font-size:" + pp.Size + ";flex-shrink:0"),
 	}
 	if pp.Label != "" {
 		attrs = append(attrs, h.Role("img"), g.Attr("aria-label", pp.Label))

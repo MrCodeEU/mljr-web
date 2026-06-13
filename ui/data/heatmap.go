@@ -3,6 +3,7 @@ package data
 import (
 	"fmt"
 	stdhtml "html"
+	"math"
 	"strings"
 	"time"
 
@@ -80,8 +81,8 @@ func Heatmap(p HeatmapProps, cells []HeatmapCell) g.Node {
 	svgH := 7*step + topPad
 
 	var sb strings.Builder
-	fmt.Fprintf(&sb, `<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d" data-component="heatmap">`,
-		svgW, svgH, svgW, svgH)
+	fmt.Fprintf(&sb, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" style="width:100%%;height:auto;max-width:%dpx" data-component="heatmap">`,
+		svgW, svgH, svgW)
 
 	// Day labels
 	if p.ShowDayLabels {
@@ -113,7 +114,9 @@ func Heatmap(p HeatmapProps, cells []HeatmapCell) g.Node {
 
 			intensity := 0.0
 			if cell.Value > 0 {
-				intensity = float64(cell.Value) / float64(maxVal)
+				// sqrt compresses the high end so a few outlier days don't
+				// flatten every other day into the same top bucket.
+				intensity = math.Sqrt(float64(cell.Value) / float64(maxVal))
 			}
 			color := heatmapColor(intensity)
 

@@ -413,6 +413,13 @@
   }
 }
 
+/* Hero grid: stack content above bento on mobile/tablet */
+@media (max-width: 768px) {
+  .hero-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* Bento grid: collapse to 1 col on mobile */
 @media (max-width: 480px) {
   [data-component="bento-grid"] {

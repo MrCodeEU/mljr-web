@@ -1,6 +1,8 @@
 package pages
 
 import (
+	"time"
+
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
@@ -18,11 +20,11 @@ func heroSection(li hpdata.LinkedInData, projectCount int) g.Node {
 		layout.Container(layout.ContainerProps{},
 			h.Div(
 				h.Class("hero-grid"),
-				h.Style("display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-10);align-items:stretch"),
+				h.Style("display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--sp-10);align-items:stretch"),
 				// Left column
 				h.Div(
 					h.ID("hero-content"),
-					h.Style("display:flex;flex-direction:column;gap:var(--sp-5);position:relative;z-index:2"),
+					h.Style("display:flex;flex-direction:column;justify-content:center;gap:var(--sp-5);position:relative;z-index:2"),
 					// Availability tag
 					h.Div(
 						h.Style("display:inline-flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) var(--sp-3);border:var(--bw-2) solid var(--ink);border-radius:calc(var(--radius)*2);font-size:var(--t-xs);font-weight:700;width:fit-content;background:var(--surface)"),
@@ -112,7 +114,7 @@ func heroSection(li hpdata.LinkedInData, projectCount int) g.Node {
 func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
 	// Neo-brutalist bento: context cards first, simple counters second.
 	card := func(tone token.Tone, children ...g.Node) g.Node {
-		return primitive.Card(primitive.CardProps{Tone: tone}, children...)
+		return primitive.Card(primitive.CardProps{Tone: tone, Attrs: []g.Node{h.Style("height:100%")}}, children...)
 	}
 
 	kickerStyle := "font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.12em;opacity:.72"
@@ -124,7 +126,7 @@ func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
 		h.Style("grid-column:span 1;grid-row:span 1;min-width:0"),
 		h.Div(
 			h.Class("bento-photo"),
-			h.Style("height:100%;aspect-ratio:1/1;overflow:hidden;border-radius:var(--radius);border:var(--bw-2) solid var(--ink);position:relative"),
+			h.Style("height:100%;min-height:160px;width:100%;overflow:hidden;border-radius:var(--radius);border:var(--bw-2) solid var(--ink);position:relative"),
 			h.Img(
 				h.Src(li.Profile.PhotoURL),
 				h.Alt("Michael Reinegger"),
@@ -139,61 +141,74 @@ func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
 		),
 	)
 
-	focusCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 2;grid-row:span 1;min-width:0"),
+	focusCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 1;grid-row:span 1;min-width:0"),
 		card(token.ToneLime,
-			h.Div(h.Style("display:flex;align-items:flex-start;gap:var(--sp-3)"),
-				icon.Icon("lucide:building-2", icon.Props{Size: "2rem"}),
-				h.Div(
-					h.Div(h.Style(kickerStyle), g.Text("Current focus")),
-					h.Div(h.Style("font-size:clamp(1.35rem,2.4vw,2.2rem);font-weight:950;line-height:1.05;margin-top:var(--sp-1)"), g.Text("Dynatrace thesis")),
-					h.Div(h.Style(labelStyle+";margin-top:var(--sp-2)"), g.Text("Permission metamodel · Prolog")),
-				),
+			h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2);height:100%"),
+				icon.Icon("lucide:building-2", icon.Props{Size: "1.8rem"}),
+				h.Div(h.Style(kickerStyle+";margin-top:var(--sp-1)"), g.Text("Current focus")),
+				h.Div(h.Style("font-size:clamp(1.2rem,2vw,1.8rem);font-weight:950;line-height:1.1"), g.Text("Dynatrace thesis")),
+				h.Div(h.Style(labelStyle+";margin-top:auto"), g.Text("Permission metamodel · Prolog")),
 			),
 		),
 	)
 	statusCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 1;grid-row:span 1;min-width:0"),
 		card(token.ToneMint,
-			h.Div(h.Style(kickerStyle), g.Text("Based in")),
-			h.Div(h.Style("font-size:var(--t-lg);font-weight:950;line-height:1.1;margin-top:var(--sp-2)"), g.Text("Linz / Upper Austria")),
-			h.Div(h.Style(labelStyle+";margin-top:var(--sp-3)"), g.Text("Open to opportunities")),
+			h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2);height:100%"),
+				icon.Icon("lucide:map-pin", icon.Props{Size: "1.6rem"}),
+				h.Div(h.Style(kickerStyle+";margin-top:var(--sp-1)"), g.Text("Near")),
+				h.Div(h.Style("font-size:var(--t-lg);font-weight:950;line-height:1.15"), g.Text("Linz, Austria")),
+				h.Div(h.Style(labelStyle+";margin-top:auto"), g.Text("Open to opportunities")),
+			),
 		),
 	)
 	mscCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 1;grid-row:span 1;min-width:0"),
 		card(token.ToneCyan,
-			icon.Icon("lucide:graduation-cap", icon.Props{Size: "1.6rem"}),
-			h.Div(h.Style(kickerStyle+";margin-top:var(--sp-3)"), g.Text("MSc / Dipl.-Ing.")),
-			h.Div(h.Style("font-size:var(--t-base);font-weight:900;line-height:1.2;margin-top:var(--sp-1)"), g.Text("Networks & IT Security")),
-			h.Div(h.Style(labelStyle+";margin-top:var(--sp-2)"), g.Text("JKU Linz · 2026")),
+			h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2);height:100%"),
+				icon.Icon("lucide:graduation-cap", icon.Props{Size: "1.6rem"}),
+				h.Div(h.Style(kickerStyle+";margin-top:var(--sp-1)"), g.Text("MSc / Dipl.-Ing.")),
+				h.Div(h.Style("font-size:var(--t-base);font-weight:900;line-height:1.25"), g.Text("Networks & IT Security")),
+				h.Div(h.Style(labelStyle+";margin-top:auto"), g.Text("JKU Linz · 2026")),
+			),
 		),
 	)
-	infraCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 1;grid-row:span 1;min-width:0"),
+	infraCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 2;grid-row:span 1;min-width:0"),
 		card(token.ToneSky,
-			icon.Icon("lucide:server", icon.Props{Size: "1.6rem"}),
-			h.Div(h.Style(kickerStyle+";margin-top:var(--sp-3)"), g.Text("Homelab")),
-			h.Div(h.Style("font-size:var(--t-base);font-weight:900;line-height:1.2;margin-top:var(--sp-1)"), g.Text("VPS edge + home servers")),
-			h.Div(h.Style(labelStyle+";margin-top:var(--sp-2)"), g.Text("Caddy · CrowdSec · Tailscale")),
+			h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-4)"),
+				icon.Icon("lucide:server", icon.Props{Size: "2rem"}),
+				h.Div(
+					h.Div(h.Style(kickerStyle), g.Text("Homelab")),
+					h.Div(h.Style("font-size:var(--t-base);font-weight:900;line-height:1.25;margin-top:var(--sp-1)"), g.Text("VPS edge + home servers")),
+					h.Div(h.Style(labelStyle+";margin-top:var(--sp-2)"), g.Text("Caddy · CrowdSec · Tailscale")),
+				),
+			),
 		),
 	)
 	projectsCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 1;grid-row:span 1;min-width:0"),
 		card(token.ToneViolet,
-			h.Div(h.Style(numStyle),
-				primitive.NumberTicker(primitive.NumberTickerProps{Value: float64(projectCount), TriggerOnView: true, ID: "nt-proj", Duration: 3200}),
+			h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2);height:100%"),
+				icon.Icon("lucide:folder-git-2", icon.Props{Size: "1.4rem"}),
+				h.Div(h.Style(numStyle+";margin-top:auto"),
+					primitive.NumberTicker(primitive.NumberTickerProps{Value: float64(projectCount), TriggerOnView: true, ID: "nt-proj", Duration: 3200}),
+				),
+				h.Div(h.Style(labelStyle), g.Text("Projects")),
 			),
-			h.Div(h.Style(labelStyle), g.Text("Projects")),
 		),
 	)
 	yearsCell := h.Div(g.Attr("data-component", "bento-item"), h.Style("grid-column:span 1;grid-row:span 1;min-width:0"),
 		card(token.ToneYellow,
-			h.Div(h.Style(numStyle),
-				primitive.NumberTicker(primitive.NumberTickerProps{Value: 8, Suffix: "+", TriggerOnView: true, ID: "nt-yrs", Duration: 2800}),
+			h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2);height:100%"),
+				icon.Icon("lucide:code-2", icon.Props{Size: "1.4rem"}),
+				h.Div(h.Style(numStyle+";margin-top:auto"),
+					primitive.NumberTicker(primitive.NumberTickerProps{Value: float64(time.Now().Year() - 2015), Suffix: "+", TriggerOnView: true, ID: "nt-yrs", Duration: 2800}),
+				),
+				h.Div(h.Style(labelStyle), g.Text("Years coding")),
 			),
-			h.Div(h.Style(labelStyle), g.Text("Years coding")),
 		),
 	)
 
 	return h.Div(
 		g.Attr("data-component", "bento-grid"),
-		h.Style("display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(132px,auto);gap:var(--sp-3);height:100%"),
+		h.Style("display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(150px,auto);gap:var(--sp-3);height:100%"),
 		photoCell, focusCell, statusCell, mscCell, infraCell, projectsCell, yearsCell,
 	)
 }

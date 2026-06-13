@@ -1,0 +1,9 @@
+.git
+bin
+projects/*/assets/static/app.css
+projects/*/assets/static/datastar.js
+projects/*/assets/static/altcha.js
+projects/*/assets/static/leaflet.js
+projects/*/assets/static/leaflet.markercluster.js
+.playwright-mcp
+*.md

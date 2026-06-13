@@ -179,9 +179,6 @@ main > div:not(#logo-svg-hp-bg) {
     grid-template-columns: 1fr !important;
     gap: var(--sp-8) !important;
   }
-  .hero-bento [data-component="bento-grid"] {
-    grid-template-columns: repeat(3,1fr) !important;
-  }
   .bento-photo { min-height: 0 !important; }
 }
 
