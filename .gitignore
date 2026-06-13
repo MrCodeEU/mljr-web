@@ -9,9 +9,6 @@ projects/*/assets/static/datastar.js
 projects/*/assets/static/altcha.js
 projects/*/assets/static/leaflet.js
 projects/*/assets/static/leaflet.markercluster.js
-projects/homepage/assets/static/portfolio/
-projects/homepage/assets/static/logos/
-projects/homepage/assets/static/img/
 projects/homepage/data/seed-cache.json
 .DS_Store
 .playwright-mcp/
