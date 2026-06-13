@@ -390,6 +390,15 @@ make upgrade-deps                   # bump tailwind + datastar.js + altcha.js to
 
 Version pins live at the top of the `Makefile`. To upgrade: edit `TAILWIND_VERSION` / `DATASTAR_VERSION` / `ALTCHA_VERSION`, run `make upgrade-deps`, commit the refreshed files.
 
+## Deployment
+
+- `projects/{homepage,showcase}/Dockerfile` — multi-stage, `golang:1.26-bookworm` builder (prebuilt tailwindcss binary is glibc-only, fails on alpine/musl) → `alpine:3.20` runtime. Build context is the **repo root** (needs `mljr-data` submodule + shared `ui/`).
+- **`ENV MLJR_ENV=prod` is REQUIRED in the final stage.** If unset, `web.IsDev()` returns true and the server tries to serve `/static/*` from the filesystem path `projects/<P>/assets/static` — which doesn't exist in the alpine image (only the binary is copied). Result: every CSS/JS asset 404s and the page renders unstyled. This bit us once; don't drop it when editing the Dockerfiles.
+- `mljr-data` is a git submodule (`MrCodeEU/mljr-data`, branch `master`) providing `generated/site-data.json` (curated projects, GitHub/Strava stats). The homepage Dockerfile copies it to `projects/homepage/data/seed-cache.json` (go:embed fallback) at build time — "bake and rebuild" model, no live data mount. To pick up new `mljr-data` content: regenerate/commit/push `mljr-data`, then rebuild the homepage image.
+- CI: `.github/workflows/docker.yml` builds + pushes both images to `ghcr.io/mrcodeeu/mljr-web/{homepage,showcase}` on push to `main`. The homepage job runs `git submodule update --remote mljr-data` first (plain `update --remote`, NOT `--merge` — merge fails with "refusing to merge unrelated histories" since the submodule was re-created from scratch).
+- After a successful push to `main`, the workflow fires a `repository_dispatch` (`service-update`) to `MrCodeEU/homelab-automation` using the `DISPATCH_TOKEN` secret, triggering a single-service ansible deploy. Service names must match `ansible/inventory/group_vars/all/all.yml`: `homepage` and `ui-showcase`.
+- CSP `img-src` in `internal/web/security.go` includes `https://picsum.photos https://fastly.picsum.photos` for placeholder project images — extend this if new external image hosts are used.
+
 ## Animation library — Motion v10
 
 **Decision: Motion v10 only.** Single library, ~24KB UMD, available as `window.Motion` in all showcase previews.
