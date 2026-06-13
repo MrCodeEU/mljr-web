@@ -16,9 +16,10 @@ import (
 )
 
 // githubSection renders the open-source activity panel: a contribution
-// heatmap, language-share gauges, and headline counters. Repo and star
-// counts come from real seed data; the heatmap and commit counters are
-// placeholder values until the GitHub stats pipeline lands.
+// heatmap, language-share gauges, and headline counters, all sourced from
+// the GitHub stats pipeline (mljr-data). Falls back to sample data if
+// GitHubStats hasn't been synced yet (e.g. first boot before the data sync
+// timer runs).
 func githubSection(d hpdata.SiteData) g.Node {
 	repoCount := len(d.GitHub)
 	stars := 0

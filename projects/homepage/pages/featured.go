@@ -14,9 +14,9 @@ import (
 	"mljr-web/ui/token"
 )
 
-// featuredSection renders a spotlight grid of featured projects using 3D tilt
-// cards. The first project gets a double-height hero cell; the rest stack
-// beside it — an asymmetric editorial layout.
+// featuredSection renders a spotlight grid of featured projects. The first
+// project gets a double-height hero cell; the rest stack beside it — an
+// asymmetric editorial layout.
 func featuredSection(featured []hpdata.Project) g.Node {
 	if len(featured) == 0 {
 		return nil
@@ -35,10 +35,8 @@ func featuredSection(featured []hpdata.Project) g.Node {
 			span = "grid-row:span 2"
 		}
 		cells[i] = h.Div(
-			h.Style(span+";display:flex;min-width:0"),
-			primitive.TiltCard(primitive.TiltCardProps{MaxTilt: 6, Scale: 1.015, Shine: true},
-				featuredCard(p, tones[i%len(tones)], big),
-			),
+			h.Style(span+";display:flex;min-width:0;align-self:start"),
+			featuredCard(p, tones[i%len(tones)], big),
 		)
 	}
 

@@ -277,7 +277,8 @@ Tech stack: Go + gomponents · Datastar 1.0.2 · Tailwind v4 · Motion v10
 | ✅ | Mobile responsive | `homepageCSS` const: ≤900px hero stack + new-section single-col, ≤768px bento collapse + snake→vertical timeline, ≤480px CTA full-width |
 | ✅ | Numbered section headers | Swiss-editorial outlined index (`.section-num`), `sectionHeader(num, heading, sub, tone)` in `pages/skills.go`. Order: 01 Experience · 02 Featured · 03 Projects · 04 Open Source · 05 Homelab · 06 Activity · 07 Skills · 08 Under the hood · 09 Contact |
 | ✅ | Featured work section | `pages/featured.go` — asymmetric spotlight grid, TiltCard + shine, first project double-height; main projects grid then shows non-featured only |
-| ✅ | Open Source section | `pages/github.go` — contribution Heatmap + 3 language Gauges + 4 NumberTicker counters. Repos/stars real; heatmap/commits/streak are deterministic placeholder data (labeled) until a GitHub stats pipeline lands |
+| ✅ | Open Source section | `pages/github.go` — contribution Heatmap + 3 language Gauges + 4 NumberTicker counters, all sourced from `mljr-data`'s GitHub stats pipeline (`github_stats` in site-data.json). Falls back to sample data only if stats haven't synced yet |
+| ✅ | Logo assets | `assets/static/img/logo/*` served at `/logo/<name>.<ext>` (via `web.MountLogos`) for reuse on other sites |
 | ✅ | Homelab live panel | `homelab/` poller (60s) → Uptime Kuma public status-page API + PromQL (CrowdSec bans/attacks, hosts online). `data-on-interval` refresh via `/api/homelab` SSE fragment. Env: `HOMELAB_KUMA_URL`, `HOMELAB_PROM_URL`; dev fallback `homelab.Sample()` |
 | ✅ | Under the hood section | `pages/codeshowcase.go` — chroma-highlighted `gaugeExcerpt` (keep in sync with `ui/data/gauge.go`) + fact chips |
 | ✅ | No section backgrounds | Sections must not set `background:` — it blocks the logo-scatter page background |

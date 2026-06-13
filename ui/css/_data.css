@@ -336,7 +336,7 @@
 /* ── syntax-highlighter ──────────────────────────────────────── */
 [data-component="syntax-highlighter"] {
   position: relative; border: var(--bw-2) solid var(--ink);
-  border-radius: var(--radius); overflow: hidden;
+  border-radius: var(--radius); overflow: hidden; min-width: 0;
 }
 [data-component="syntax-highlighter"] [data-slot="header"] {
   display: flex; align-items: center; justify-content: space-between;

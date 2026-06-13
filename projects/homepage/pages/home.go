@@ -164,6 +164,7 @@ main > div:not(#logo-svg-hp-bg) {
   .featured-grid { grid-template-columns: 1fr !important; }
   .oss-grid { grid-template-columns: 1fr !important; }
   .hood-grid { grid-template-columns: 1fr !important; }
+  .hood-grid > * { min-width: 0 !important; }
   .hood-grid > div:first-child { position: static !important; }
   .homelab-grid { grid-template-columns: 1fr !important; }
   .skills-grid { grid-template-columns: 1fr !important; }

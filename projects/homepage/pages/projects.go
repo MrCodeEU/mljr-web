@@ -79,9 +79,10 @@ func projectCard(p hpdata.Project, tone token.Tone) g.Node {
 	if p.URL != "" {
 		linkNodes = append(linkNodes,
 			h.A(h.Href(p.URL), g.Attr("target", "_blank"), g.Attr("rel", "noopener"),
-				primitive.Button(primitive.ButtonProps{Variant: token.Ghost, Size: token.SizeSM},
+				primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
 					icon.Icon("simple-icons:github"),
-					g.Text("GitHub"),
+					g.Text("Source"),
+					icon.Icon("lucide:arrow-up-right"),
 				),
 			),
 		)
@@ -92,9 +93,9 @@ func projectCard(p hpdata.Project, tone token.Tone) g.Node {
 		}
 		linkNodes = append(linkNodes,
 			h.A(h.Href(lnk.URL), g.Attr("target", "_blank"), g.Attr("rel", "noopener"),
-				primitive.Button(primitive.ButtonProps{Variant: token.Ghost, Size: token.SizeSM},
-					icon.Icon("lucide:arrow-up-right"),
+				primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
 					g.Text(lnk.Name),
+					icon.Icon("lucide:arrow-up-right"),
 				),
 			),
 		)

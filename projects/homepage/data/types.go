@@ -9,6 +9,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,9 +28,9 @@ type SiteData struct {
 	GeneratedAt   string       `json:"generated_at,omitempty"`
 }
 
-// GitHubStats holds live contribution/heatmap data from the GitHub stats
-// pipeline. Nil when the generator hasn't produced it yet, in which case
-// pages fall back to placeholder data.
+// GitHubStats holds contribution/heatmap data produced by the mljr-data
+// generator. Nil only before the first data sync (e.g. fresh deploy), in
+// which case pages fall back to sample data.
 type GitHubStats struct {
 	CommitsYear   int               `json:"commits_year"`
 	LongestStreak int               `json:"longest_streak"`
@@ -87,6 +88,7 @@ type Project struct {
 	Topics   []string      `json:"topics"`
 	Images   []string      `json:"images"`
 	Featured bool          `json:"featured"`
+	Order    int           `json:"order,omitempty"`
 	Links    []ProjectLink `json:"links"`
 }
 
@@ -296,7 +298,8 @@ func (d SiteData) FeaturedProjects() []Project {
 	return out
 }
 
-// AllProjects returns all non-featured, non-meta projects.
+// AllProjects returns all non-featured, non-meta projects, ordered by the
+// curated "order" field (ascending, lower = shown first), then by name.
 func (d SiteData) AllProjects() []Project {
 	var out []Project
 	for _, p := range d.GitHub {
@@ -304,6 +307,12 @@ func (d SiteData) AllProjects() []Project {
 			out = append(out, p)
 		}
 	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].Order != out[j].Order {
+			return out[i].Order < out[j].Order
+		}
+		return out[i].Name < out[j].Name
+	})
 	return out
 }
 

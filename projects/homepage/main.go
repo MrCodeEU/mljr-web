@@ -27,6 +27,7 @@ func main() {
 		log.Fatal(err)
 	}
 	web.MountStatic(e, assets, "projects/homepage/assets/static", web.IsDev())
+	web.MountLogos(e, assets, "projects/homepage/assets/static", web.IsDev())
 
 	dataStore := hpdata.NewStore(cfg.Data.File, cfg.Data.ReloadSeconds)
 	analytics := pages.AnalyticsConfig{

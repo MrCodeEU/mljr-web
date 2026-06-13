@@ -1,9 +1,10 @@
 # Homepage data
 
-`seed-cache.json` is the single embedded data source for the homepage
-(GitHub projects, LinkedIn profile, Strava aggregates). It is currently a
-**dummy/seed snapshot** maintained by hand. The plan is to grow this into a
-separate data repo with an automated refresh pipeline.
+`seed-cache.json` is the embedded fallback data source for the homepage
+(GitHub projects, LinkedIn profile, Strava aggregates, GitHub stats). It's a
+copy of `mljr-data/generated/site-data.json` baked in at build time and only
+used as the cold-start default — see the root `agents.md` "Runtime data
+refresh" section for how live data is synced without a rebuild.
 
 ## Shape
 
@@ -20,28 +21,21 @@ Display conversion happens at render time (`DistanceKM`, `DurationClock`,
 
 ## Refresh pipeline — current state
 
-| Source   | State                                                        |
-|----------|--------------------------------------------------------------|
-| Strava   | `scrapers/strava.go` — working OAuth refresh-token client; fetches activities, aggregates stats/disciplines |
-| GitHub   | manual — repo list curated by hand                           |
-| LinkedIn | manual — no usable API; export is copied in by hand          |
+All sources are automated via the `mljr-data` repo's nightly generator
+(`generator/cmd/generate`, see its `README.md`):
 
-## Automation plan
+| Source   | State                                                          |
+|----------|-----------------------------------------------------------------|
+| Strava   | OAuth refresh-token client; fetches activities, aggregates stats/disciplines |
+| GitHub   | GraphQL/REST: per-project stars/language/topics + account-level `github_stats` (contribution heatmap, commit count, language share) |
+| LinkedIn | manual — no usable API; `profile.json`/`timeline.json` edited by hand |
 
-1. **Split into a data repo** (`mljr-data`): JSON output + fetcher binaries.
-   The homepage embeds the latest committed `seed-cache.json` at build time —
-   no runtime dependency on third-party APIs, site stays a single binary.
-2. **Strava (automate first, scraper already exists)**: scheduled GitHub
-   Action (weekly) runs the scraper with `STRAVA_CLIENT_ID/SECRET/
-   REFRESH_TOKEN` repo secrets, writes `strava_data`, commits on change.
-   Only public-safe aggregates are stored — no GPS traces, no start points.
-3. **GitHub stats**: same Action queries the GraphQL API
-   (`contributionsCollection` for the real heatmap, repo list for
-   stars/languages). Replaces `placeholderContributions()` in
-   `pages/github.go` and the `*`-marked sample counters.
-4. **LinkedIn**: stays manual (ToS). Keep a small YAML/JSON file edited by
-   hand; the Action merges it into the cache.
-5. **Trigger**: data repo commit fires `repository_dispatch` → homepage image
-   rebuild → deploy via the homelab-automation Ansible flow.
+## Updating live data
 
-Until the pipeline lands: edit `seed-cache.json` directly and rebuild.
+1. Edit `mljr-data/projects.json` (or `profile.json`/`timeline.json`), commit
+   and push — the generator workflow regenerates `generated/site-data.json`.
+2. The prod systemd timer syncs that file to the homepage container's mounted
+   volume within ~15 min; the running process hot-reloads it (no rebuild,
+   no redeploy).
+3. To update the embedded cold-start fallback, run `make data-update` (or
+   copy `mljr-data/generated/site-data.json` to `seed-cache.json`) and rebuild.

@@ -74,6 +74,7 @@ func codeShowcaseSection() g.Node {
 				),
 				// Right: paged source excerpts — what you see is what runs
 				h.Div(
+					h.Style("min-width:0"),
 					h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-4);flex-wrap:wrap"),
 						h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)"),
 							g.Text("5 real excerpts from this site")),
