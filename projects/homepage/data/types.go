@@ -337,11 +337,13 @@ func (d LinkedInData) RelevantExperience(n int) []Job {
 	return out
 }
 
-// LocalImages returns only local (non-URL) images for a project.
+// LocalImages returns displayable images for a project: site-relative paths
+// and absolute http(s) URLs (e.g. placeholder images), excluding bare repo
+// paths that haven't been resolved to a URL.
 func (p Project) LocalImages() []string {
 	var out []string
 	for _, img := range p.Images {
-		if strings.HasPrefix(img, "/") {
+		if strings.HasPrefix(img, "/") || strings.HasPrefix(img, "http://") || strings.HasPrefix(img, "https://") {
 			out = append(out, img)
 		}
 	}

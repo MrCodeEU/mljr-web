@@ -7,6 +7,7 @@ import (
 	h "maragu.dev/gomponents/html"
 
 	hpdata "mljr-web/projects/homepage/data"
+	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/primitive"
@@ -58,13 +59,28 @@ func featuredSection(featured []hpdata.Project) g.Node {
 func featuredCard(p hpdata.Project, tone token.Tone, big bool) g.Node {
 	imgs := p.LocalImages()
 
+	aspect := "16/9"
+	if big {
+		aspect = "16/8"
+	}
+
 	var media g.Node
-	if big && len(imgs) > 0 {
+	switch {
+	case len(imgs) > 1:
+		media = h.Div(
+			h.Style("border-bottom:var(--bw-2) solid var(--ink);aspect-ratio:"+aspect),
+			uidata.Carousel(uidata.CarouselProps{
+				ID:     "fc" + slugify(p.Name),
+				Images: imgs,
+				Alt:    p.Name,
+			}),
+		)
+	case len(imgs) == 1:
 		media = h.Img(
 			h.Src(imgs[0]),
 			h.Alt(p.Name),
 			g.Attr("loading", "lazy"),
-			h.Style("width:100%;aspect-ratio:16/8;object-fit:cover;border-bottom:var(--bw-2) solid var(--ink);display:block"),
+			h.Style("width:100%;aspect-ratio:"+aspect+";object-fit:cover;border-bottom:var(--bw-2) solid var(--ink);display:block"),
 		)
 	}
 

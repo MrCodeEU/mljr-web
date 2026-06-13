@@ -95,6 +95,7 @@
     background: var(--tone); color: var(--on-tone);
     border: var(--border-w) var(--border-style) var(--line);
     padding: .3rem .6rem; border-radius: var(--radius);
+    white-space: nowrap; flex-shrink: 0;
   }
 
   /* ink theme: tag as a stamp/seal */
