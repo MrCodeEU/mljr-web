@@ -39,6 +39,7 @@ lucide:tablet
 lucide:smartphone
 lucide:folder
 lucide:file-text
+lucide:clock
 lucide:plus
 lucide:minus
 lucide:settings

@@ -120,6 +120,11 @@ func experienceSection(d hpdata.SiteData) g.Node {
 											),
 										),
 									),
+									g.If(t.PDF == "",
+										h.Div(h.Style("margin-top:var(--sp-3)"),
+											primitive.Tag(primitive.TagProps{}, icon.Icon("lucide:clock"), g.Text("Coming soon")),
+										),
+									),
 								))
 							}
 							return nodes
