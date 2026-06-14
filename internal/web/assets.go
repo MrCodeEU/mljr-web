@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/labstack/echo/v4"
 )
@@ -35,6 +36,16 @@ func MountLogos(e *echo.Echo, embedded fs.FS, devPath string, dev bool) {
 		panic(err)
 	}
 	e.GET("/logo/*", echo.WrapHandler(http.StripPrefix("/logo/", http.FileServer(http.FS(sub)))))
+}
+
+// MountDataAssets serves the mljr-data tree's assets/ directory (project
+// screenshots, thesis PDFs, etc.) under /assets/. dataFile is the resolved
+// HOMEPAGE_DATA_FILE path (<repo>/generated/site-data.json); assets/ is its
+// sibling. This is plain filesystem serving in both dev and prod — content
+// is synced onto disk at runtime, not embedded into the binary.
+func MountDataAssets(e *echo.Echo, dataFile string) {
+	assetsDir := filepath.Join(filepath.Dir(filepath.Dir(dataFile)), "assets")
+	e.Static("/assets", assetsDir)
 }
 
 // IsDev reports whether the process is in dev mode.

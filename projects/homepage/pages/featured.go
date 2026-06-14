@@ -21,11 +21,8 @@ func featuredSection(featured []hpdata.Project) g.Node {
 	if len(featured) == 0 {
 		return nil
 	}
-	if len(featured) > 3 {
-		featured = featured[:3]
-	}
 
-	tones := []token.Tone{token.ToneYellow, token.ToneCyan, token.ToneViolet}
+	tones := []token.Tone{token.ToneYellow, token.ToneCyan, token.ToneViolet, token.TonePink, token.ToneLime}
 
 	cells := make([]g.Node, len(featured))
 	for i, p := range featured {
@@ -97,17 +94,32 @@ func featuredCard(p hpdata.Project, tone token.Tone, big bool) g.Node {
 		))
 	}
 
-	var ghLink g.Node
+	var linkNodes []g.Node
 	if p.URL != "" {
-		ghLink = h.A(h.Href(p.URL), g.Attr("target", "_blank"), g.Attr("rel", "noopener"),
-			h.Style("margin-top:auto"),
-			primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
-				icon.Icon("simple-icons:github"),
-				g.Text("Source"),
-				icon.Icon("lucide:arrow-up-right"),
+		linkNodes = append(linkNodes,
+			h.A(h.Href(p.URL), g.Attr("target", "_blank"), g.Attr("rel", "noopener"),
+				primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
+					icon.Icon("simple-icons:github"),
+					g.Text("Source"),
+					icon.Icon("lucide:arrow-up-right"),
+				),
 			),
 		)
 	}
+	for _, lnk := range p.Links {
+		if lnk.URL == "" {
+			continue
+		}
+		linkNodes = append(linkNodes,
+			h.A(h.Href(lnk.URL), g.Attr("target", "_blank"), g.Attr("rel", "noopener"),
+				primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
+					g.Text(lnk.Name),
+					icon.Icon("lucide:arrow-up-right"),
+				),
+			),
+		)
+	}
+	ghLink := h.Div(h.Style("margin-top:auto;display:flex;flex-wrap:wrap;gap:var(--sp-2)"), g.Group(linkNodes))
 
 	return primitive.Card(primitive.CardProps{Tone: tone, Attrs: []g.Node{h.Style("width:100%;display:flex;flex-direction:column")}},
 		media,

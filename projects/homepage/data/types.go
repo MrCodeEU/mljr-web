@@ -26,6 +26,48 @@ type SiteData struct {
 	GitHubStats   *GitHubStats `json:"github_stats,omitempty"`
 	SchemaVersion string       `json:"schema_version,omitempty"`
 	GeneratedAt   string       `json:"generated_at,omitempty"`
+	Content       SiteContent  `json:"content"`
+	Thesis        []Thesis     `json:"thesis"`
+}
+
+// SiteContent holds hand-authored copy for sections that change
+// independently of the GitHub/LinkedIn/Strava data feeds (mljr-data/content.json).
+type SiteContent struct {
+	Hero    HeroContent    `json:"hero"`
+	Contact ContactContent `json:"contact"`
+}
+
+type HeroContent struct {
+	StatusTag    string       `json:"status_tag"`
+	TaglineLines []string     `json:"tagline_lines"`
+	Description  string       `json:"description"`
+	Bento        BentoContent `json:"bento"`
+}
+
+type BentoContent struct {
+	Focus     BentoCell `json:"focus"`
+	Status    BentoCell `json:"status"`
+	Education BentoCell `json:"education"`
+	Homelab   BentoCell `json:"homelab"`
+}
+
+type BentoCell struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+	Sub   string `json:"sub"`
+}
+
+type ContactContent struct {
+	Intro     string   `json:"intro"`
+	Currently []string `json:"currently"`
+}
+
+// Thesis is a hand-authored education thesis entry with an optional PDF link.
+type Thesis struct {
+	Title       string `json:"title"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	PDF         string `json:"pdf"`
 }
 
 // GitHubStats holds contribution/heatmap data produced by the mljr-data

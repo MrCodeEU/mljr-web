@@ -16,7 +16,6 @@ import (
 const perPage = 6
 
 func Home(d hpdata.SiteData, a AnalyticsConfig, hl homelab.Snapshot) g.Node {
-	li := d.LinkedIn
 	featured := d.FeaturedProjects()
 	rest := d.AllProjects()
 	// Featured projects get their own spotlight section; the grid shows the rest.
@@ -47,9 +46,9 @@ func Home(d hpdata.SiteData, a AnalyticsConfig, hl homelab.Snapshot) g.Node {
 		h.Main(
 			h.Style("position:relative"),
 			AnimatedLogoBackground(),
-			heroSection(li, totalProjects),
+			heroSection(d, totalProjects),
 			statsSection(d),
-			experienceSection(li),
+			experienceSection(d),
 			featuredSection(featured),
 			projectsSection(gridProjects),
 			githubSection(d),
@@ -57,7 +56,7 @@ func Home(d hpdata.SiteData, a AnalyticsConfig, hl homelab.Snapshot) g.Node {
 			stravaSection(d),
 			skillsSection(),
 			codeShowcaseSection(),
-			contactSection(),
+			contactSection(d.Content.Contact),
 		),
 
 		siteFooter(),

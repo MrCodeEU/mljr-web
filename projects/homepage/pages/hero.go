@@ -13,7 +13,9 @@ import (
 	"mljr-web/ui/token"
 )
 
-func heroSection(li hpdata.LinkedInData, projectCount int) g.Node {
+func heroSection(d hpdata.SiteData, projectCount int) g.Node {
+	li := d.LinkedIn
+	hero := d.Content.Hero
 	return h.Section(
 		h.ID("hero"),
 		h.Style("min-height:90vh;display:flex;align-items:center;padding:var(--sp-12) 0 var(--sp-8)"),
@@ -29,7 +31,7 @@ func heroSection(li hpdata.LinkedInData, projectCount int) g.Node {
 					h.Div(
 						h.Style("display:inline-flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) var(--sp-3);border:var(--bw-2) solid var(--ink);border-radius:calc(var(--radius)*2);font-size:var(--t-xs);font-weight:700;width:fit-content;background:var(--surface)"),
 						h.Span(h.Style("width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;animation:pulse-dot 2s ease infinite")),
-						g.Text("Open to opportunities"),
+						g.Text(hero.StatusTag),
 					),
 					// Main headline
 					h.H1(
@@ -46,14 +48,7 @@ func heroSection(li hpdata.LinkedInData, projectCount int) g.Node {
 						h.Style("font-size:clamp(var(--t-lg),3vw,var(--t-xl));font-weight:700;margin:0;line-height:1.3"),
 						g.Text("I build "),
 						primitive.Typewriter(primitive.TypewriterProps{
-							Lines: []string{
-								"Go microservices.",
-								"secure systems.",
-								"self-hosted infra.",
-								"fast web APIs.",
-								"CLI tools.",
-								"homelab solutions.",
-							},
+							Lines:       hero.TaglineLines,
 							Speed:       55,
 							DeleteSpeed: 28,
 							Pause:       2200,
@@ -63,7 +58,7 @@ func heroSection(li hpdata.LinkedInData, projectCount int) g.Node {
 					// Description
 					h.P(
 						h.Style("font-size:var(--t-base);color:var(--muted);max-width:46ch;margin:0;line-height:1.6"),
-						g.Text("Master's student (Dipl.-Ing.) in Networks & IT Security at JKU Linz, writing my thesis on permission metamodels at Dynatrace. I care about correctness, performance, and shipping things that actually work."),
+						g.Text(hero.Description),
 					),
 					// CTA buttons
 					h.Div(
@@ -96,14 +91,15 @@ func heroSection(li hpdata.LinkedInData, projectCount int) g.Node {
 				h.Div(
 					h.Class("hero-bento"),
 					h.Style("position:relative;z-index:2"),
-					heroBento(li, projectCount),
+					heroBento(li, hero, projectCount),
 				),
 			),
 		),
 	)
 }
 
-func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
+func heroBento(li hpdata.LinkedInData, hero hpdata.HeroContent, projectCount int) g.Node {
+	bento := hero.Bento
 	// Neo-brutalist bento: context cards first, simple counters second.
 	card := func(tone token.Tone, children ...g.Node) g.Node {
 		return primitive.Card(primitive.CardProps{Tone: tone, Attrs: []g.Node{h.Style("height:100%")}}, children...)
@@ -137,9 +133,9 @@ func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
 		card(token.ToneLime,
 			h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2);height:100%"),
 				icon.Icon("lucide:building-2", icon.Props{Size: "1.8rem"}),
-				h.Div(h.Style(kickerStyle+";margin-top:var(--sp-1)"), g.Text("Current focus")),
-				h.Div(h.Style("font-size:clamp(1.2rem,2vw,1.8rem);font-weight:950;line-height:1.1"), g.Text("Dynatrace thesis")),
-				h.Div(h.Style(labelStyle+";margin-top:auto"), g.Text("Permission metamodel · Prolog")),
+				h.Div(h.Style(kickerStyle+";margin-top:var(--sp-1)"), g.Text(bento.Focus.Label)),
+				h.Div(h.Style("font-size:clamp(1.2rem,2vw,1.8rem);font-weight:950;line-height:1.1"), g.Text(bento.Focus.Value)),
+				h.Div(h.Style(labelStyle+";margin-top:auto"), g.Text(bento.Focus.Sub)),
 			),
 		),
 	)
@@ -147,9 +143,9 @@ func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
 		card(token.ToneMint,
 			h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2);height:100%"),
 				icon.Icon("lucide:map-pin", icon.Props{Size: "1.6rem"}),
-				h.Div(h.Style(kickerStyle+";margin-top:var(--sp-1)"), g.Text("Near")),
-				h.Div(h.Style("font-size:var(--t-lg);font-weight:950;line-height:1.15"), g.Text("Linz, Austria")),
-				h.Div(h.Style(labelStyle+";margin-top:auto"), g.Text("Open to opportunities")),
+				h.Div(h.Style(kickerStyle+";margin-top:var(--sp-1)"), g.Text(bento.Status.Label)),
+				h.Div(h.Style("font-size:var(--t-lg);font-weight:950;line-height:1.15"), g.Text(bento.Status.Value)),
+				h.Div(h.Style(labelStyle+";margin-top:auto"), g.Text(bento.Status.Sub)),
 			),
 		),
 	)
@@ -157,9 +153,9 @@ func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
 		card(token.ToneCyan,
 			h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2);height:100%"),
 				icon.Icon("lucide:graduation-cap", icon.Props{Size: "1.6rem"}),
-				h.Div(h.Style(kickerStyle+";margin-top:var(--sp-1)"), g.Text("MSc / Dipl.-Ing.")),
-				h.Div(h.Style("font-size:var(--t-base);font-weight:900;line-height:1.25"), g.Text("Networks & IT Security")),
-				h.Div(h.Style(labelStyle+";margin-top:auto"), g.Text("JKU Linz · 2026")),
+				h.Div(h.Style(kickerStyle+";margin-top:var(--sp-1)"), g.Text(bento.Education.Label)),
+				h.Div(h.Style("font-size:var(--t-base);font-weight:900;line-height:1.25"), g.Text(bento.Education.Value)),
+				h.Div(h.Style(labelStyle+";margin-top:auto"), g.Text(bento.Education.Sub)),
 			),
 		),
 	)
@@ -168,9 +164,9 @@ func heroBento(li hpdata.LinkedInData, projectCount int) g.Node {
 			h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-4)"),
 				icon.Icon("lucide:server", icon.Props{Size: "2rem"}),
 				h.Div(
-					h.Div(h.Style(kickerStyle), g.Text("Homelab")),
-					h.Div(h.Style("font-size:var(--t-base);font-weight:900;line-height:1.25;margin-top:var(--sp-1)"), g.Text("VPS edge + home servers")),
-					h.Div(h.Style(labelStyle+";margin-top:var(--sp-2)"), g.Text("Caddy · CrowdSec · Tailscale")),
+					h.Div(h.Style(kickerStyle), g.Text(bento.Homelab.Label)),
+					h.Div(h.Style("font-size:var(--t-base);font-weight:900;line-height:1.25;margin-top:var(--sp-1)"), g.Text(bento.Homelab.Value)),
+					h.Div(h.Style(labelStyle+";margin-top:var(--sp-2)"), g.Text(bento.Homelab.Sub)),
 				),
 			),
 		),

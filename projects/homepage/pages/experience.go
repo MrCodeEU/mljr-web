@@ -9,13 +9,15 @@ import (
 
 	hpdata "mljr-web/projects/homepage/data"
 	uidata "mljr-web/ui/data"
+	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/primitive"
 	"mljr-web/ui/special"
 	"mljr-web/ui/token"
 )
 
-func experienceSection(li hpdata.LinkedInData) g.Node {
+func experienceSection(d hpdata.SiteData) g.Node {
+	li := d.LinkedIn
 	jobs := li.RelevantExperience(100) // all positions
 
 	tones := []token.Tone{token.ToneCyan, token.ToneViolet, token.ToneLime, token.ToneSky, token.TonePink, token.ToneMint, token.ToneBlush, token.ToneYellow}
@@ -97,12 +99,31 @@ func experienceSection(li hpdata.LinkedInData) g.Node {
 						return nodes
 					}()),
 				),
-				// Thesis callout
-				h.Div(
-					h.Style("margin-top:var(--sp-4)"),
-					primitive.Callout(primitive.CalloutProps{Variant: primitive.CalloutInfo},
-						h.Strong(g.Text("Current thesis: ")),
-						g.Text("Abstracting Permission Systems → Prolog-based metamodel @ Dynatrace"),
+				// Thesis section
+				g.If(len(d.Thesis) > 0,
+					h.Div(
+						h.Style("margin-top:var(--sp-4);display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--sp-4)"),
+						g.Group(func() []g.Node {
+							nodes := make([]g.Node, 0, len(d.Thesis))
+							for _, t := range d.Thesis {
+								nodes = append(nodes, primitive.Card(primitive.CardProps{Tone: token.ToneAccent},
+									h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
+										h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35"), g.Text(t.Title)),
+										primitive.Tag(primitive.TagProps{}, g.Text(t.Type)),
+									),
+									h.P(h.Style("margin:0;font-size:var(--t-sm);line-height:1.55;opacity:.85"), g.Text(t.Description)),
+									g.If(t.PDF != "",
+										h.A(h.Href(t.PDF), g.Attr("target", "_blank"), g.Attr("rel", "noopener"), h.Style("margin-top:var(--sp-3);display:block"),
+											primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
+												icon.Icon("lucide:file-text"),
+												g.Text("View PDF"),
+											),
+										),
+									),
+								))
+							}
+							return nodes
+						}()),
 					),
 				),
 			),
