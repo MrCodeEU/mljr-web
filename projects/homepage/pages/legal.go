@@ -220,8 +220,8 @@ func siteFooter(lang string) g.Node {
 			}},
 			{Title: t("footer.elsewhere_title"), Links: []layout.FooterLink{
 				{Label: t("footer.github"), Href: "https://github.com/MrCodeEU", External: true},
-				{Label: t("footer.linkedin"), Href: "https://www.linkedin.com/in/michael-reinegger", External: true},
-				{Label: t("footer.strava"), Href: "https://www.strava.com/athletes/mrcode", External: true},
+				{Label: t("footer.linkedin"), Href: "https://www.linkedin.com/in/mrcodeeu/", External: true},
+				{Label: t("footer.strava"), Href: "https://www.strava.com/athletes/123496455", External: true},
 				{Label: t("footer.status_page"), Href: "https://uptime.mljr.eu/status/all", External: true},
 			}},
 			{Title: t("footer.legal_title"), Links: []layout.FooterLink{

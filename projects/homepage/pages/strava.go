@@ -40,7 +40,7 @@ func stravaSection(d hpdata.SiteData, lang string) g.Node {
 							h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("Strava snapshot")),
 							h.H3(h.Style("font-size:clamp(1.8rem,3vw,3rem);line-height:1;margin:var(--sp-2) 0 0;font-weight:950"), g.Text("Training as data")),
 						),
-						h.A(h.Href("https://www.strava.com/athletes/mrcode"), g.Attr("target", "_blank"), g.Attr("rel", "noopener noreferrer"),
+						h.A(h.Href("https://www.strava.com/athletes/123496455"), g.Attr("target", "_blank"), g.Attr("rel", "noopener noreferrer"),
 							primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
 								icon.Icon("lucide:external-link"),
 								g.Text("Strava"),
