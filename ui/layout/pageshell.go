@@ -16,6 +16,7 @@ type PageProps struct {
 	JSPath      string      // default /static/datastar.js
 	HeadExtra   []g.Node
 	BodyAttrs   []g.Node
+	Lang        string // BCP-47 language code for <html lang>, default "en"
 }
 
 // PageShell renders the full HTML document. The pre-paint inline script reads
@@ -34,6 +35,9 @@ func PageShell(p PageProps, body ...g.Node) g.Node {
 	if p.JSPath == "" {
 		p.JSPath = "/static/datastar.js"
 	}
+	if p.Lang == "" {
+		p.Lang = "en"
+	}
 
 	// Pre-paint: read localStorage, set data-theme/data-mode on <html>,
 	// expose values as window.__mljr* so Datastar signal seeds can read them.
@@ -42,7 +46,7 @@ func PageShell(p PageProps, body ...g.Node) g.Node {
 	return g.Group{
 		g.Raw("<!doctype html>"),
 		h.HTML(
-			h.Lang("en"),
+			h.Lang(p.Lang),
 			g.Attr("data-theme", string(p.Theme)),
 			g.Attr("data-mode", string(p.Mode)),
 			h.Head(

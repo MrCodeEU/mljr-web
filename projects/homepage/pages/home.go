@@ -15,7 +15,7 @@ import (
 
 const perPage = 6
 
-func Home(d hpdata.SiteData, a AnalyticsConfig, hl homelab.Snapshot) g.Node {
+func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot) g.Node {
 	featured := d.FeaturedProjects()
 	rest := d.AllProjects()
 	// Featured projects get their own spotlight section; the grid shows the rest.
@@ -36,30 +36,31 @@ func Home(d hpdata.SiteData, a AnalyticsConfig, hl homelab.Snapshot) g.Node {
 			Theme:       token.ThemeSwissBrut,
 			Mode:        token.ModeLight,
 			HeadExtra:   headExtra,
+			Lang:        lang,
 		},
 		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
 
 		primitive.ReadProgress(primitive.ReadProgressProps{Height: "8px", Color: "var(--accent)", ZIndex: 100}),
 
-		siteNavbar(),
+		siteNavbar(lang),
 
 		h.Main(
 			h.Style("position:relative"),
 			AnimatedLogoBackground(),
-			heroSection(d, totalProjects),
+			heroSection(d, lang, totalProjects),
 			statsSection(d),
-			experienceSection(d),
-			featuredSection(featured),
-			projectsSection(gridProjects),
-			githubSection(d),
-			homelabSection(hl),
-			stravaSection(d),
-			skillsSection(),
-			codeShowcaseSection(),
-			contactSection(d.Content.Contact),
+			experienceSection(d, lang),
+			featuredSection(featured, lang),
+			projectsSection(gridProjects, lang),
+			githubSection(d, lang),
+			homelabSection(hl, lang),
+			stravaSection(d, lang),
+			skillsSection(lang),
+			codeShowcaseSection(lang),
+			contactSection(d.ContentFor(lang).Contact, lang),
 		),
 
-		siteFooter(),
+		siteFooter(lang),
 
 		overlay.Toaster(overlay.ToasterProps{}),
 		overlay.Portal("portal"),

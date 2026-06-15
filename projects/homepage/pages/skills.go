@@ -4,6 +4,7 @@ import (
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
+	"mljr-web/internal/i18n"
 	hpdata "mljr-web/projects/homepage/data"
 	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
@@ -12,7 +13,7 @@ import (
 	"mljr-web/ui/token"
 )
 
-func skillsSection() g.Node {
+func skillsSection(lang string) g.Node {
 	groups := hpdata.SkillGroups()
 
 	// 3 Marquee rows alternating direction, one per "layer" of the skill stack
@@ -85,7 +86,7 @@ func skillsSection() g.Node {
 		h.ID("skills"),
 		h.Style("padding:var(--sp-12) 0"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("07", "Skills", "depth × breadth", token.ToneViolet),
+			sectionHeader("07", i18n.T(lang, "sections.skills.title"), i18n.T(lang, "sections.skills.sub"), token.ToneViolet),
 			h.Div(
 				h.Class("skills-grid"),
 				h.Style("display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:var(--sp-5);align-items:stretch"),

@@ -1,0 +1,148 @@
+{
+  "nav": {
+    "experience": "Experience",
+    "projects": "Projects",
+    "opensource": "Open Source",
+    "activity": "Activity",
+    "skills": "Skills",
+    "contact": "Contact"
+  },
+  "hero": {
+    "greeting": "Hi, I'm",
+    "name": "Michael.",
+    "cta_projects": "View projects",
+    "cta_contact": "Contact",
+    "cta_github": "GitHub",
+    "photo_name": "Michael Reinegger",
+    "photo_location": "Linz, Austria",
+    "projects_label": "Projects",
+    "years_label": "Years coding"
+  },
+  "sections": {
+    "experience": { "title": "Experience", "thesis_view_pdf": "View PDF", "thesis_coming_soon": "Coming soon" },
+    "education": { "title": "Education" },
+    "places": { "title": "Places", "sub": "work · education · home" },
+    "featured": { "title": "Featured work", "sub": "hand-picked" },
+    "projects": { "title": "Projects" },
+    "opensource": { "title": "Open Source" },
+    "homelab": { "title": "Homelab", "sub": "live via tailscale" },
+    "activity": { "title": "Activity" },
+    "skills": { "title": "Skills", "sub": "depth × breadth" },
+    "codeshowcase": { "title": "Under the hood", "sub": "this site, in code" },
+    "contact": { "title": "Get in touch", "sub": "Let's talk" }
+  },
+  "contact": {
+    "currently": "Currently",
+    "name_label": "Name",
+    "name_placeholder": "Your name",
+    "email_label": "Email",
+    "email_placeholder": "your@email.com",
+    "message_label": "Message",
+    "message_placeholder": "What's on your mind?",
+    "send": "Send message",
+    "sending": "Sending…",
+    "captcha_required": "Please complete the captcha.",
+    "captcha_failed": "Captcha verification failed. Please try again.",
+    "delivery_failed": "Message delivery failed. Please email me directly.",
+    "error_name_required": "Name is required",
+    "error_email_invalid": "Valid email required",
+    "error_message_short": "Message must be at least 10 characters",
+    "success_title": "Message sent!",
+    "success_body": "I'll get back to you as soon as possible."
+  },
+  "projects": {
+    "source": "Source"
+  },
+  "footer": {
+    "tagline": "Go, security and self-hosted infrastructure. Every component on this site is a Go function — no JS framework, no CDN, no adtech tracking.",
+    "site_title": "Site",
+    "homelab": "Homelab",
+    "elsewhere_title": "Elsewhere",
+    "github": "GitHub",
+    "linkedin": "LinkedIn",
+    "strava": "Strava",
+    "status_page": "Status page",
+    "legal_title": "Legal",
+    "impressum": "Impressum",
+    "datenschutz": "Datenschutz",
+    "contact": "Contact",
+    "copyright": "© %d Michael Reinegger · mljr.eu",
+    "built_with": "built with Go · gomponents · Datastar · Tailwind v4"
+  },
+  "legal": {
+    "back": "Back",
+    "toc_title": "Contents",
+    "impressum": {
+      "title": "Impressum",
+      "description": "Legal notice for mljr.eu.",
+      "section_ecg": {
+        "title": "Information pursuant to the Austrian E-Commerce Act and Media Act",
+        "name": "Name",
+        "address": "Address",
+        "email": "Email",
+        "other_contact": "Other contact addresses",
+        "website": "Website",
+        "purpose": "Purpose of the website",
+        "purpose_value": "Personal portfolio website with information about projects, education, work experience and contact options.",
+        "owner": "Media owner and publisher"
+      },
+      "section_notice": {
+        "title": "Notice",
+        "body": "This website is a purely personal portfolio website. No goods or services are sold via this website."
+      }
+    },
+    "datenschutz": {
+      "title": "Datenschutz",
+      "description": "Privacy notice for mljr.eu.",
+      "section_controller": {
+        "title": "Data controller",
+        "address": "Michael Reinegger, Ahornstrasse 8, 4484 Kronstorf, Austria",
+        "email": "Email: hello@mljr.eu"
+      },
+      "section_purpose": {
+        "title": "Purpose of the website",
+        "body": "This website serves as a personal portfolio website. It presents projects, experience, education, activity data and contact options."
+      },
+      "section_hosting": {
+        "title": "Hosting and server logs",
+        "body1": "The website runs on a VPS hosted by Contabo. When the website is accessed, the server technically processes access data necessary to deliver the website, detect errors and investigate misuse.",
+        "body2": "In particular, this may include the time, IP address, host, HTTP method, requested URL, HTTP status, response time and user agent. This data is not used to create personal profiles."
+      },
+      "section_form": {
+        "title": "Contact form",
+        "body": "If you use the contact form, the data you enter is processed in order to respond to your message. An ALTCHA challenge is used to prevent spam."
+      },
+      "section_umami": {
+        "title": "Analytics with Umami",
+        "body1": "This website may use a self-hosted Umami instance for basic analytics. Umami is integrated without cookies.",
+        "body2": "Aggregated technical usage data such as page views, referrers, browser, operating system, device type and approximate origin are collected. IP addresses are not used to create personal profiles. The measurement serves to roughly understand the use of the website and to derive technical or content improvements.",
+        "body3": "This integration is only active if the website is configured accordingly. It is disabled by default in the local development environment."
+      },
+      "section_cookies": {
+        "title": "Cookies and local storage",
+        "body": "This website does not set tracking cookies. Technically necessary local settings such as theme, colour mode and language preference may be stored in your browser to display the site. These settings remain on your device and are not used for advertising or profiling purposes."
+      },
+      "section_external": {
+        "title": "External content",
+        "body1": "The website currently self-hosts fonts, scripts and stylesheets. No Google Fonts or CDN fonts are embedded.",
+        "body2": "External links, for example to GitHub, LinkedIn or Strava, lead to offers from other providers. The respective privacy notices of these providers apply to their content and data processing."
+      },
+      "section_legal_basis": {
+        "title": "Legal basis",
+        "body": "The technical delivery of the website, server logs, security measures and basic analytics are based on legitimate interests in the operation, security and improvement of the website. Contact requests are processed in order to handle your inquiry."
+      },
+      "section_retention": {
+        "title": "Storage period",
+        "body": "Server logs are stored only as long as necessary for operation, troubleshooting and security. Contact requests are stored as long as necessary for processing and traceable communication."
+      },
+      "section_rights": {
+        "title": "Your rights",
+        "body1": "You may request information, correction, deletion, restriction of processing and object to certain processing, provided the legal requirements are met. You can contact hello@mljr.eu for this purpose.",
+        "body2": "You also have the right to lodge a complaint with a data protection supervisory authority, in Austria in particular the Austrian Data Protection Authority."
+      }
+    }
+  },
+  "toggle": {
+    "language_aria": "Switch language"
+  }
+}

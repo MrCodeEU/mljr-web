@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"mljr-web/internal/i18n"
 	"mljr-web/internal/mail"
 	"mljr-web/internal/web"
 	"mljr-web/projects/homepage/homelab"
@@ -59,6 +60,8 @@ func contactSubmit(key string, contactMailer mail.ContactMailer) echo.HandlerFun
 		contactMailer = mail.LogMailer{}
 	}
 	return func(c echo.Context) error {
+		lang := web.Lang(c)
+
 		var s contactSignals
 		if err := datastar.ReadSignals(c.Request(), &s); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -69,22 +72,22 @@ func contactSubmit(key string, contactMailer mail.ContactMailer) echo.HandlerFun
 		// honeypot
 		if s.Honeypot != "" {
 			log.Printf("contact: honeypot triggered from %s", c.RealIP())
-			return patchSuccess(sse)
+			return patchSuccess(sse, lang)
 		}
 
 		// validation
 		valid := true
 		errs := map[string]any{"nameError": "", "emailError": "", "msgError": ""}
 		if strings.TrimSpace(s.Name) == "" {
-			errs["nameError"] = "Name is required"
+			errs["nameError"] = i18n.T(lang, "contact.error_name_required")
 			valid = false
 		}
 		if !strings.Contains(s.Email, "@") || !strings.Contains(s.Email, ".") {
-			errs["emailError"] = "Valid email required"
+			errs["emailError"] = i18n.T(lang, "contact.error_email_invalid")
 			valid = false
 		}
 		if len(strings.TrimSpace(s.Message)) < 10 {
-			errs["msgError"] = "Message must be at least 10 characters"
+			errs["msgError"] = i18n.T(lang, "contact.error_message_short")
 			valid = false
 		}
 		if !valid {
@@ -98,11 +101,11 @@ func contactSubmit(key string, contactMailer mail.ContactMailer) echo.HandlerFun
 
 		// altcha
 		if s.Altcha == "" {
-			return patchFormError(sse, "Please complete the captcha.")
+			return patchFormError(sse, i18n.T(lang, "contact.captcha_required"))
 		}
 		ok, err := altchalib.VerifySolution(s.Altcha, key, true)
 		if err != nil || !ok {
-			return patchFormError(sse, "Captcha verification failed. Please try again.")
+			return patchFormError(sse, i18n.T(lang, "contact.captcha_failed"))
 		}
 
 		ctx, cancel := context.WithTimeout(c.Request().Context(), 20*time.Second)
@@ -115,22 +118,22 @@ func contactSubmit(key string, contactMailer mail.ContactMailer) echo.HandlerFun
 			UserAgent: c.Request().UserAgent(),
 		}); err != nil {
 			log.Printf("contact: send mail failed from %s <%s>: %v", s.Name, s.Email, err)
-			return patchFormError(sse, "Message delivery failed. Please email me directly.")
+			return patchFormError(sse, i18n.T(lang, "contact.delivery_failed"))
 		}
 
 		log.Printf("contact: mail accepted from %s <%s>: %.80s", s.Name, s.Email, s.Message)
-		return patchSuccess(sse)
+		return patchSuccess(sse, lang)
 	}
 }
 
-func patchSuccess(sse *datastar.ServerSentEventGenerator) error {
+func patchSuccess(sse *datastar.ServerSentEventGenerator, lang string) error {
 	node := h.Div(
 		h.ID("contact-form"),
 		g.Attr("data-component", "contact-result"),
 		g.Attr("data-variant", "success"),
 		h.Div(g.Attr("data-slot", "icon"), g.Text("✓")),
-		primitive.Heading(primitive.HeadingProps{Level: 3}, g.Text("Message sent!")),
-		h.P(g.Text("I'll get back to you as soon as possible.")),
+		primitive.Heading(primitive.HeadingProps{Level: 3}, g.Text(i18n.T(lang, "contact.success_title"))),
+		h.P(g.Text(i18n.T(lang, "contact.success_body"))),
 	)
 	if err := sse.PatchElements(web.RenderToString(node)); err != nil {
 		return err

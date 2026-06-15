@@ -6,6 +6,7 @@ import (
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
+	"mljr-web/internal/i18n"
 	hpdata "mljr-web/projects/homepage/data"
 	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
@@ -17,7 +18,7 @@ import (
 // featuredSection renders a spotlight grid of featured projects. The first
 // project gets a double-height hero cell; the rest stack beside it — an
 // asymmetric editorial layout.
-func featuredSection(featured []hpdata.Project) g.Node {
+func featuredSection(featured []hpdata.Project, lang string) g.Node {
 	if len(featured) == 0 {
 		return nil
 	}
@@ -29,7 +30,7 @@ func featuredSection(featured []hpdata.Project) g.Node {
 		big := i == 0
 		cells[i] = h.Div(
 			h.Style("display:flex;min-width:0;margin-bottom:var(--sp-4);break-inside:avoid"),
-			featuredCard(p, tones[i%len(tones)], big),
+			featuredCard(p, tones[i%len(tones)], big, lang),
 		)
 	}
 
@@ -37,7 +38,7 @@ func featuredSection(featured []hpdata.Project) g.Node {
 		h.ID("featured"),
 		h.Style("padding:var(--sp-12) 0"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("02", "Featured work", "hand-picked", token.ToneYellow),
+			sectionHeader("02", i18n.T(lang, "sections.featured.title"), i18n.T(lang, "sections.featured.sub"), token.ToneYellow),
 			h.Div(
 				h.Class("featured-grid"),
 				h.Style("column-count:2;column-gap:var(--sp-4)"),
@@ -47,7 +48,7 @@ func featuredSection(featured []hpdata.Project) g.Node {
 	)
 }
 
-func featuredCard(p hpdata.Project, tone token.Tone, big bool) g.Node {
+func featuredCard(p hpdata.Project, tone token.Tone, big bool, lang string) g.Node {
 	imgs := p.LocalImages()
 
 	aspect := "16/9"
@@ -71,7 +72,7 @@ func featuredCard(p hpdata.Project, tone token.Tone, big bool) g.Node {
 			h.Src(imgs[0]),
 			h.Alt(p.Name),
 			g.Attr("loading", "lazy"),
-			h.Style("width:100%;aspect-ratio:"+aspect+";object-fit:cover;border-bottom:var(--bw-2) solid var(--ink);display:block"),
+			h.Style("width:100%;aspect-ratio:"+aspect+";object-fit:contain;background:var(--surface-2);border-bottom:var(--bw-2) solid var(--ink);display:block"),
 		)
 	}
 
@@ -96,7 +97,7 @@ func featuredCard(p hpdata.Project, tone token.Tone, big bool) g.Node {
 			h.A(h.Href(p.URL), g.Attr("target", "_blank"), g.Attr("rel", "noopener"),
 				primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
 					icon.Icon("simple-icons:github"),
-					g.Text("Source"),
+					g.Text(i18n.T(lang, "projects.source")),
 					icon.Icon("lucide:arrow-up-right"),
 				),
 			),

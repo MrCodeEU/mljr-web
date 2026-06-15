@@ -7,6 +7,7 @@ import (
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
+	"mljr-web/internal/i18n"
 	hpdata "mljr-web/projects/homepage/data"
 	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
@@ -20,7 +21,7 @@ import (
 // the GitHub stats pipeline (mljr-data). Falls back to sample data if
 // GitHubStats hasn't been synced yet (e.g. first boot before the data sync
 // timer runs).
-func githubSection(d hpdata.SiteData) g.Node {
+func githubSection(d hpdata.SiteData, lang string) g.Node {
 	repoCount := len(d.GitHub)
 	stars := 0
 	for _, p := range d.GitHub {
@@ -63,7 +64,7 @@ func githubSection(d hpdata.SiteData) g.Node {
 		h.ID("opensource"),
 		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink)"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("04", "Open source", badge, token.ToneMint),
+			sectionHeader("04", i18n.T(lang, "sections.opensource.title"), badge, token.ToneMint),
 			h.Div(
 				h.Class("oss-grid"),
 				h.Style("display:grid;grid-template-columns:1.4fr 1fr;gap:var(--sp-5);align-items:stretch"),

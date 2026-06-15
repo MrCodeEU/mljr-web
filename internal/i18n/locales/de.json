@@ -1,0 +1,148 @@
+{
+  "nav": {
+    "experience": "Erfahrung",
+    "projects": "Projekte",
+    "opensource": "Open Source",
+    "activity": "Aktivität",
+    "skills": "Skills",
+    "contact": "Kontakt"
+  },
+  "hero": {
+    "greeting": "Hallo, ich bin",
+    "name": "Michael.",
+    "cta_projects": "Projekte ansehen",
+    "cta_contact": "Kontakt",
+    "cta_github": "GitHub",
+    "photo_name": "Michael Reinegger",
+    "photo_location": "Linz, Österreich",
+    "projects_label": "Projekte",
+    "years_label": "Jahre Coding"
+  },
+  "sections": {
+    "experience": { "title": "Erfahrung", "thesis_view_pdf": "PDF ansehen", "thesis_coming_soon": "Demnächst verfügbar" },
+    "education": { "title": "Ausbildung" },
+    "places": { "title": "Orte", "sub": "Arbeit · Ausbildung · Zuhause" },
+    "featured": { "title": "Ausgewählte Projekte", "sub": "handverlesen" },
+    "projects": { "title": "Projekte" },
+    "opensource": { "title": "Open Source" },
+    "homelab": { "title": "Homelab", "sub": "live via Tailscale" },
+    "activity": { "title": "Aktivität" },
+    "skills": { "title": "Skills", "sub": "Tiefe × Breite" },
+    "codeshowcase": { "title": "Unter der Haube", "sub": "diese Seite, im Code" },
+    "contact": { "title": "Kontakt aufnehmen", "sub": "Lass uns reden" }
+  },
+  "contact": {
+    "currently": "Aktuell",
+    "name_label": "Name",
+    "name_placeholder": "Dein Name",
+    "email_label": "E-Mail",
+    "email_placeholder": "deine@email.com",
+    "message_label": "Nachricht",
+    "message_placeholder": "Was möchtest du mir sagen?",
+    "send": "Nachricht senden",
+    "sending": "Wird gesendet…",
+    "captcha_required": "Bitte löse das Captcha.",
+    "captcha_failed": "Captcha-Überprüfung fehlgeschlagen. Bitte versuche es erneut.",
+    "delivery_failed": "Nachricht konnte nicht zugestellt werden. Bitte schreib mir direkt eine E-Mail.",
+    "error_name_required": "Name ist erforderlich",
+    "error_email_invalid": "Gültige E-Mail-Adresse erforderlich",
+    "error_message_short": "Nachricht muss mindestens 10 Zeichen lang sein",
+    "success_title": "Nachricht gesendet!",
+    "success_body": "Ich melde mich so schnell wie möglich bei dir."
+  },
+  "projects": {
+    "source": "Quelle"
+  },
+  "footer": {
+    "tagline": "Go, Sicherheit und selbst gehostete Infrastruktur. Jede Komponente dieser Seite ist eine Go-Funktion — kein JS-Framework, kein CDN, kein Adtech-Tracking.",
+    "site_title": "Seite",
+    "homelab": "Homelab",
+    "elsewhere_title": "Anderswo",
+    "github": "GitHub",
+    "linkedin": "LinkedIn",
+    "strava": "Strava",
+    "status_page": "Status-Seite",
+    "legal_title": "Rechtliches",
+    "impressum": "Impressum",
+    "datenschutz": "Datenschutz",
+    "contact": "Kontakt",
+    "copyright": "© %d Michael Reinegger · mljr.eu",
+    "built_with": "gebaut mit Go · gomponents · Datastar · Tailwind v4"
+  },
+  "legal": {
+    "back": "Zurück",
+    "toc_title": "Inhalt",
+    "impressum": {
+      "title": "Impressum",
+      "description": "Impressum für mljr.eu.",
+      "section_ecg": {
+        "title": "Angaben gemäß ECG und MedienG",
+        "name": "Name",
+        "address": "Anschrift",
+        "email": "E-Mail",
+        "other_contact": "Weitere Kontaktadressen",
+        "website": "Website",
+        "purpose": "Zweck der Website",
+        "purpose_value": "Persönliche Portfolio-Website mit Informationen zu Projekten, Ausbildung, Berufserfahrung und Kontaktmöglichkeit.",
+        "owner": "Medieninhaber und Herausgeber"
+      },
+      "section_notice": {
+        "title": "Hinweis",
+        "body": "Diese Website ist eine rein persönliche Portfolio-Website. Es werden keine Waren oder Dienstleistungen über diese Website verkauft."
+      }
+    },
+    "datenschutz": {
+      "title": "Datenschutz",
+      "description": "Datenschutzerklärung für mljr.eu.",
+      "section_controller": {
+        "title": "Verantwortlicher",
+        "address": "Michael Reinegger, Ahornstrasse 8, 4484 Kronstorf, Österreich",
+        "email": "E-Mail: hello@mljr.eu"
+      },
+      "section_purpose": {
+        "title": "Zweck der Website",
+        "body": "Diese Website dient als persönliche Portfolio-Website. Sie stellt Projekte, Erfahrung, Ausbildung, Aktivitätsdaten und Kontaktmöglichkeiten dar."
+      },
+      "section_hosting": {
+        "title": "Hosting und Server-Logs",
+        "body1": "Die Website wird auf einem VPS bei Contabo betrieben. Beim Aufruf der Website verarbeitet der Server technisch notwendige Zugriffsdaten, um die Website auszuliefern, Fehler zu erkennen und Missbrauch zu untersuchen.",
+        "body2": "Dabei können insbesondere Zeitpunkt, IP-Adresse, Host, HTTP-Methode, aufgerufene URL, HTTP-Status, Antwortzeit und User-Agent verarbeitet werden. Diese Daten werden nicht zur Erstellung persönlicher Profile verwendet."
+      },
+      "section_form": {
+        "title": "Kontaktformular",
+        "body": "Wenn du das Kontaktformular verwendest, werden die von dir eingegebenen Daten verarbeitet, um deine Nachricht zu beantworten. Zur Spam-Abwehr wird eine ALTCHA-Challenge eingesetzt."
+      },
+      "section_umami": {
+        "title": "Reichweitenmessung mit Umami",
+        "body1": "Diese Website kann eine selbst gehostete Umami-Instanz zur einfachen Reichweitenmessung verwenden. Umami wird ohne Cookies eingebunden.",
+        "body2": "Erfasst werden aggregierte technische Nutzungsdaten wie Seitenaufrufe, Referrer, Browser, Betriebssystem, Gerätetyp und ungefähre Herkunft. IP-Adressen werden nicht für persönliche Profile verwendet. Die Messung dient dazu, die Nutzung der Website grob zu verstehen und technische oder inhaltliche Verbesserungen abzuleiten.",
+        "body3": "Die Einbindung ist nur aktiv, wenn die Website entsprechend konfiguriert ist. In der lokalen Entwicklungsumgebung ist sie standardmäßig deaktiviert."
+      },
+      "section_cookies": {
+        "title": "Cookies und lokale Speicherung",
+        "body": "Diese Website setzt keine Tracking-Cookies. Für die Darstellung können technisch notwendige lokale Einstellungen wie Theme, Farbmodus oder Sprache im Browser gespeichert werden. Diese Einstellungen bleiben auf deinem Gerät und werden nicht zu Werbe- oder Profilingzwecken verwendet."
+      },
+      "section_external": {
+        "title": "Externe Inhalte",
+        "body1": "Die Website lädt Schriftarten, Skripte und Stylesheets nach aktuellem Stand selbst gehostet aus. Es werden keine Google Fonts oder CDN-Schriften eingebunden.",
+        "body2": "Externe Links, zum Beispiel zu GitHub, LinkedIn oder Strava, führen zu Angeboten anderer Anbieter. Für deren Inhalte und Datenverarbeitung gelten die jeweiligen Datenschutzhinweise dieser Anbieter."
+      },
+      "section_legal_basis": {
+        "title": "Rechtsgrundlagen",
+        "body": "Die technische Auslieferung der Website, Server-Logs, Sicherheitsmaßnahmen und einfache Reichweitenmessung erfolgen auf Grundlage berechtigter Interessen an Betrieb, Sicherheit und Verbesserung der Website. Die Verarbeitung von Kontaktanfragen erfolgt zur Bearbeitung deiner Anfrage."
+      },
+      "section_retention": {
+        "title": "Speicherdauer",
+        "body": "Server-Logs werden nur so lange gespeichert, wie dies für Betrieb, Fehleranalyse und Sicherheit erforderlich ist. Kontaktanfragen werden so lange gespeichert, wie es für die Bearbeitung und eine nachvollziehbare Kommunikation erforderlich ist."
+      },
+      "section_rights": {
+        "title": "Deine Rechte",
+        "body1": "Du kannst Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung und Widerspruch gegen bestimmte Verarbeitungen verlangen, soweit die gesetzlichen Voraussetzungen vorliegen. Du kannst dich dazu per E-Mail an hello@mljr.eu wenden.",
+        "body2": "Außerdem besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde, in Österreich insbesondere bei der Österreichischen Datenschutzbehörde."
+      }
+    }
+  },
+  "toggle": {
+    "language_aria": "Sprache wechseln"
+  }
+}

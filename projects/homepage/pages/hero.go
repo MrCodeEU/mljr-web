@@ -6,6 +6,7 @@ import (
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
+	"mljr-web/internal/i18n"
 	hpdata "mljr-web/projects/homepage/data"
 	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
@@ -13,9 +14,9 @@ import (
 	"mljr-web/ui/token"
 )
 
-func heroSection(d hpdata.SiteData, projectCount int) g.Node {
+func heroSection(d hpdata.SiteData, lang string, projectCount int) g.Node {
 	li := d.LinkedIn
-	hero := d.Content.Hero
+	hero := d.ContentFor(lang).Hero
 	return h.Section(
 		h.ID("hero"),
 		h.Style("min-height:90vh;display:flex;align-items:center;padding:var(--sp-12) 0 var(--sp-8)"),
@@ -36,12 +37,12 @@ func heroSection(d hpdata.SiteData, projectCount int) g.Node {
 					// Main headline
 					h.H1(
 						h.Style("font-size:clamp(2.5rem,6vw,4rem);font-weight:900;line-height:1.05;margin:0"),
-						g.Text("Hi, I'm "),
+						g.Text(i18n.T(lang, "hero.greeting") + " "),
 						primitive.GradientText(primitive.GradientTextProps{
 							From:  "var(--accent)",
 							To:    "var(--ink)",
 							Angle: "135deg",
-						}, g.Text("Michael.")),
+						}, g.Text(i18n.T(lang, "hero.name"))),
 					),
 					// Typewriter tagline
 					h.P(
@@ -66,14 +67,14 @@ func heroSection(d hpdata.SiteData, projectCount int) g.Node {
 						h.Style("display:flex;gap:var(--sp-3);flex-wrap:wrap"),
 						h.A(h.Href("#projects"),
 							primitive.Button(primitive.ButtonProps{Variant: token.Primary, Size: token.SizeLG},
-								g.Text("View projects"),
+								g.Text(i18n.T(lang, "hero.cta_projects")),
 								icon.Icon("lucide:arrow-right", icon.Props{Size: "1.1rem"}),
 							),
 						),
 						h.A(h.Href("#contact"),
 							primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeLG},
 								icon.Icon("lucide:mail", icon.Props{Size: "1.1rem"}),
-								g.Text("Contact"),
+								g.Text(i18n.T(lang, "hero.cta_contact")),
 							),
 						),
 						h.A(
@@ -82,7 +83,7 @@ func heroSection(d hpdata.SiteData, projectCount int) g.Node {
 							g.Attr("rel", "noopener"),
 							primitive.Button(primitive.ButtonProps{Variant: token.Ghost, Size: token.SizeLG},
 								icon.Icon("simple-icons:github", icon.Props{Size: "1.1rem"}),
-								g.Text("GitHub"),
+								g.Text(i18n.T(lang, "hero.cta_github")),
 							),
 						),
 					),
@@ -91,14 +92,14 @@ func heroSection(d hpdata.SiteData, projectCount int) g.Node {
 				h.Div(
 					h.Class("hero-bento"),
 					h.Style("position:relative;z-index:2"),
-					heroBento(li, hero, projectCount),
+					heroBento(li, hero, lang, projectCount),
 				),
 			),
 		),
 	)
 }
 
-func heroBento(li hpdata.LinkedInData, hero hpdata.HeroContent, projectCount int) g.Node {
+func heroBento(li hpdata.LinkedInData, hero hpdata.HeroContent, lang string, projectCount int) g.Node {
 	bento := hero.Bento
 	// Neo-brutalist bento: context cards first, simple counters second.
 	card := func(tone token.Tone, children ...g.Node) g.Node {
@@ -117,14 +118,14 @@ func heroBento(li hpdata.LinkedInData, hero hpdata.HeroContent, projectCount int
 			h.Style("height:100%;min-height:160px;aspect-ratio:4/3;width:100%;overflow:hidden;border-radius:var(--radius);border:var(--bw-2) solid var(--ink);position:relative"),
 			h.Img(
 				h.Src(li.Profile.PhotoURL),
-				h.Alt("Michael Reinegger"),
+				h.Alt(i18n.T(lang, "hero.photo_name")),
 				g.Attr("loading", "eager"),
 				h.Style("width:100%;height:100%;object-fit:cover;object-position:center 28%"),
 			),
 			h.Div(
 				h.Style("position:absolute;bottom:0;left:0;right:0;padding:var(--sp-3) var(--sp-4);background:linear-gradient(transparent,rgba(0,0,0,.75));color:white"),
-				h.Div(h.Style("font-weight:900;font-size:var(--t-md)"), g.Text("Michael Reinegger")),
-				h.Div(h.Style("font-size:var(--t-xs);opacity:.85"), g.Text("Linz, Austria")),
+				h.Div(h.Style("font-weight:900;font-size:var(--t-md)"), g.Text(i18n.T(lang, "hero.photo_name"))),
+				h.Div(h.Style("font-size:var(--t-xs);opacity:.85"), g.Text(i18n.T(lang, "hero.photo_location"))),
 			),
 		),
 	)
@@ -178,7 +179,7 @@ func heroBento(li hpdata.LinkedInData, hero hpdata.HeroContent, projectCount int
 				h.Div(h.Style(numStyle+";margin-top:auto"),
 					primitive.NumberTicker(primitive.NumberTickerProps{Value: float64(projectCount), TriggerOnView: true, ID: "nt-proj", Duration: 3200}),
 				),
-				h.Div(h.Style(labelStyle), g.Text("Projects")),
+				h.Div(h.Style(labelStyle), g.Text(i18n.T(lang, "hero.projects_label"))),
 			),
 		),
 	)
@@ -189,7 +190,7 @@ func heroBento(li hpdata.LinkedInData, hero hpdata.HeroContent, projectCount int
 				h.Div(h.Style(numStyle+";margin-top:auto"),
 					primitive.NumberTicker(primitive.NumberTickerProps{Value: float64(time.Now().Year() - 2015), Suffix: "+", TriggerOnView: true, ID: "nt-yrs", Duration: 2800}),
 				),
-				h.Div(h.Style(labelStyle), g.Text("Years coding")),
+				h.Div(h.Style(labelStyle), g.Text(i18n.T(lang, "hero.years_label"))),
 			),
 		),
 	)

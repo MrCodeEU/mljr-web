@@ -3,6 +3,21 @@
  * _layout / _primitive / _overlay / _form / _data / _feedback partials.
  */
 
+/* Smooth cross-document fade for full-page reloads (e.g. language toggle)
+ * in browsers that support the View Transitions API. No-op elsewhere. */
+@view-transition {
+  navigation: auto;
+}
+
+/* ModeToggle renders both moon/sun icons with data-show bindings; Datastar
+ * hides the inactive one once it hydrates. Before hydration both are
+ * visible, doubling the button width. Mirror the same logic from
+ * html[data-mode] (set synchronously pre-paint) so there's no flash. */
+html[data-mode="light"] .mode-toggle-icon-sun,
+html[data-mode="dark"] .mode-toggle-icon-moon {
+  display: none;
+}
+
 @theme {
   --font-display: "Archivo", "Archivo Expanded", system-ui, sans-serif;
   --font-body:    "Inter", system-ui, sans-serif;

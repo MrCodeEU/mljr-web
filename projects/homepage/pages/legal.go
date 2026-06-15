@@ -1,12 +1,14 @@
 package pages
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
+	"mljr-web/internal/i18n"
 	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/primitive"
@@ -21,95 +23,98 @@ type AnalyticsConfig struct {
 	UmamiDomains   string
 }
 
-func Impressum(a AnalyticsConfig) g.Node {
-	return legalPage(a, "Impressum", "Legal notice for mljr.eu.",
-		legalSection("Angaben gemaess ECG und MedienG",
-			legalDefinition("Name", "Michael Reinegger"),
-			legalDefinition("Anschrift", "Ahornstrasse 8, 4484 Kronstorf, Oesterreich"),
-			legalDefinition("E-Mail", "hello@mljr.eu"),
-			legalDefinition("Weitere Kontaktadressen", "reinemic2.0@gmail.com, michael-reinegger@tuta.io"),
-			legalDefinition("Website", "mljr.eu"),
-			legalDefinition("Zweck der Website", "Persoenliche Portfolio-Website mit Informationen zu Projekten, Ausbildung, Berufserfahrung und Kontaktmoeglichkeit."),
-			legalDefinition("Medieninhaber und Herausgeber", "Michael Reinegger"),
+func Impressum(lang string, a AnalyticsConfig) g.Node {
+	t := func(key string) string { return i18n.T(lang, key) }
+	return legalPage(lang, a, t("legal.impressum.title"), t("legal.impressum.description"),
+		legalSection(t("legal.impressum.section_ecg.title"),
+			legalDefinition(t("legal.impressum.section_ecg.name"), "Michael Reinegger"),
+			legalDefinition(t("legal.impressum.section_ecg.address"), "Ahornstrasse 8, 4484 Kronstorf, Österreich"),
+			legalDefinition(t("legal.impressum.section_ecg.email"), "hello@mljr.eu"),
+			legalDefinition(t("legal.impressum.section_ecg.other_contact"), "reinemic2.0@gmail.com, michael-reinegger@tuta.io"),
+			legalDefinition(t("legal.impressum.section_ecg.website"), "mljr.eu"),
+			legalDefinition(t("legal.impressum.section_ecg.purpose"), t("legal.impressum.section_ecg.purpose_value")),
+			legalDefinition(t("legal.impressum.section_ecg.owner"), "Michael Reinegger"),
 		),
-		legalSection("Hinweis",
-			h.P(g.Text("Diese Website ist eine rein persoenliche Portfolio-Website. Es werden keine Waren oder Dienstleistungen ueber diese Website verkauft.")),
-		),
-	)
-}
-
-func Datenschutz(a AnalyticsConfig) g.Node {
-	return legalPage(a, "Datenschutz", "Privacy notice for mljr.eu.",
-		legalSection("Verantwortlicher",
-			h.P(g.Text("Michael Reinegger, Ahornstrasse 8, 4484 Kronstorf, Oesterreich")),
-			h.P(g.Text("E-Mail: hello@mljr.eu")),
-		),
-		legalSection("Zweck der Website",
-			h.P(g.Text("Diese Website dient als persoenliche Portfolio-Website. Sie stellt Projekte, Erfahrung, Ausbildung, Aktivitaetsdaten und Kontaktmoeglichkeiten dar.")),
-		),
-		legalSection("Hosting und Server-Logs",
-			h.P(g.Text("Die Website wird auf einem VPS bei Contabo betrieben. Beim Aufruf der Website verarbeitet der Server technisch notwendige Zugriffsdaten, um die Website auszuliefern, Fehler zu erkennen und Missbrauch zu untersuchen.")),
-			h.P(g.Text("Dabei koennen insbesondere Zeitpunkt, IP-Adresse, Host, HTTP-Methode, aufgerufene URL, HTTP-Status, Antwortzeit und User-Agent verarbeitet werden. Diese Daten werden nicht zur Erstellung persoenlicher Profile verwendet.")),
-		),
-		legalSection("Kontaktformular",
-			h.P(g.Text("Wenn du das Kontaktformular verwendest, werden die von dir eingegebenen Daten verarbeitet, um deine Nachricht zu beantworten. Zur Spam-Abwehr wird eine ALTCHA-Challenge eingesetzt.")),
-		),
-		legalSection("Reichweitenmessung mit Umami",
-			h.P(g.Text("Diese Website kann eine selbst gehostete Umami-Instanz zur einfachen Reichweitenmessung verwenden. Umami wird ohne Cookies eingebunden.")),
-			h.P(g.Text("Erfasst werden aggregierte technische Nutzungsdaten wie Seitenaufrufe, Referrer, Browser, Betriebssystem, Geraetetyp und ungefaehre Herkunft. IP-Adressen werden nicht fuer persoenliche Profile verwendet. Die Messung dient dazu, die Nutzung der Website grob zu verstehen und technische oder inhaltliche Verbesserungen abzuleiten.")),
-			h.P(g.Text("Die Einbindung ist nur aktiv, wenn die Website entsprechend konfiguriert ist. In der lokalen Entwicklungsumgebung ist sie standardmaessig deaktiviert.")),
-		),
-		legalSection("Cookies und lokale Speicherung",
-			h.P(g.Text("Diese Website setzt keine Tracking-Cookies. Fuer die Darstellung koennen technisch notwendige lokale Einstellungen wie Theme oder Farbmodus im Browser gespeichert werden. Diese Einstellungen bleiben auf deinem Geraet und werden nicht zu Werbe- oder Profilingzwecken verwendet.")),
-		),
-		legalSection("Externe Inhalte",
-			h.P(g.Text("Die Website laedt Schriftarten, Skripte und Stylesheets nach aktuellem Stand selbst gehostet aus. Es werden keine Google Fonts oder CDN-Schriften eingebunden.")),
-			h.P(g.Text("Externe Links, zum Beispiel zu GitHub, LinkedIn oder Strava, fuehren zu Angeboten anderer Anbieter. Fuer deren Inhalte und Datenverarbeitung gelten die jeweiligen Datenschutzhinweise dieser Anbieter.")),
-		),
-		legalSection("Rechtsgrundlagen",
-			h.P(g.Text("Die technische Auslieferung der Website, Server-Logs, Sicherheitsmassnahmen und einfache Reichweitenmessung erfolgen auf Grundlage berechtigter Interessen an Betrieb, Sicherheit und Verbesserung der Website. Die Verarbeitung von Kontaktanfragen erfolgt zur Bearbeitung deiner Anfrage.")),
-		),
-		legalSection("Speicherdauer",
-			h.P(g.Text("Server-Logs werden nur so lange gespeichert, wie dies fuer Betrieb, Fehleranalyse und Sicherheit erforderlich ist. Kontaktanfragen werden so lange gespeichert, wie es fuer die Bearbeitung und eine nachvollziehbare Kommunikation erforderlich ist.")),
-		),
-		legalSection("Deine Rechte",
-			h.P(g.Text("Du kannst Auskunft, Berichtigung, Loeschung, Einschraenkung der Verarbeitung und Widerspruch gegen bestimmte Verarbeitungen verlangen, soweit die gesetzlichen Voraussetzungen vorliegen. Du kannst dich dazu per E-Mail an hello@mljr.eu wenden.")),
-			h.P(g.Text("Ausserdem besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehoerde, in Oesterreich insbesondere bei der Oesterreichischen Datenschutzbehoerde.")),
+		legalSection(t("legal.impressum.section_notice.title"),
+			h.P(g.Text(t("legal.impressum.section_notice.body"))),
 		),
 	)
 }
 
-func legalPage(a AnalyticsConfig, title, description string, content ...g.Node) g.Node {
+func Datenschutz(lang string, a AnalyticsConfig) g.Node {
+	t := func(key string) string { return i18n.T(lang, key) }
+	return legalPage(lang, a, t("legal.datenschutz.title"), t("legal.datenschutz.description"),
+		legalSection(t("legal.datenschutz.section_controller.title"),
+			h.P(g.Text(t("legal.datenschutz.section_controller.address"))),
+			h.P(g.Text(t("legal.datenschutz.section_controller.email"))),
+		),
+		legalSection(t("legal.datenschutz.section_purpose.title"),
+			h.P(g.Text(t("legal.datenschutz.section_purpose.body"))),
+		),
+		legalSection(t("legal.datenschutz.section_hosting.title"),
+			h.P(g.Text(t("legal.datenschutz.section_hosting.body1"))),
+			h.P(g.Text(t("legal.datenschutz.section_hosting.body2"))),
+		),
+		legalSection(t("legal.datenschutz.section_form.title"),
+			h.P(g.Text(t("legal.datenschutz.section_form.body"))),
+		),
+		legalSection(t("legal.datenschutz.section_umami.title"),
+			h.P(g.Text(t("legal.datenschutz.section_umami.body1"))),
+			h.P(g.Text(t("legal.datenschutz.section_umami.body2"))),
+			h.P(g.Text(t("legal.datenschutz.section_umami.body3"))),
+		),
+		legalSection(t("legal.datenschutz.section_cookies.title"),
+			h.P(g.Text(t("legal.datenschutz.section_cookies.body"))),
+		),
+		legalSection(t("legal.datenschutz.section_external.title"),
+			h.P(g.Text(t("legal.datenschutz.section_external.body1"))),
+			h.P(g.Text(t("legal.datenschutz.section_external.body2"))),
+		),
+		legalSection(t("legal.datenschutz.section_legal_basis.title"),
+			h.P(g.Text(t("legal.datenschutz.section_legal_basis.body"))),
+		),
+		legalSection(t("legal.datenschutz.section_retention.title"),
+			h.P(g.Text(t("legal.datenschutz.section_retention.body"))),
+		),
+		legalSection(t("legal.datenschutz.section_rights.title"),
+			h.P(g.Text(t("legal.datenschutz.section_rights.body1"))),
+			h.P(g.Text(t("legal.datenschutz.section_rights.body2"))),
+		),
+	)
+}
+
+func legalPage(lang string, a AnalyticsConfig, title, description string, content ...g.Node) g.Node {
 	return layout.PageShell(
 		layout.PageProps{
 			Title:       title + " - Michael Reinegger",
 			Description: description,
 			Theme:       token.ThemeSwissBrut,
 			Mode:        token.ModeLight,
+			Lang:        lang,
 			HeadExtra: append([]g.Node{
 				g.El("style", g.Raw(homepageCSS+legalCSS)),
 			}, AnalyticsHead(a)...),
 		},
 		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
-		siteNavbar(),
+		siteNavbar(lang),
 		h.Main(h.Class("legal-page"),
 			h.Div(h.Class("legal-outer"),
 				// Sticky TOC sidebar (desktop)
 				h.Aside(h.Class("legal-toc"),
 					layout.TableOfContents(layout.TOCProps{
-						Title:           "Contents",
+						Title:           i18n.T(lang, "legal.toc_title"),
 						Sticky:          true,
 						ContentSelector: ".legal-shell",
 					}),
 				),
 				h.Div(h.Class("legal-shell"),
-					h.A(h.Href("/"), h.Class("legal-back"), icon.Icon("lucide:arrow-left"), g.Text("Back")),
+					h.A(h.Href("/"), h.Class("legal-back"), icon.Icon("lucide:arrow-left"), g.Text(i18n.T(lang, "legal.back"))),
 					h.H1(g.Text(title)),
 					g.Group(content),
 				),
 			),
 		),
-		siteFooter(),
+		siteFooter(lang),
 	)
 }
 
@@ -147,7 +152,7 @@ func AnalyticsHead(a AnalyticsConfig) []g.Node {
 	return []g.Node{h.Script(attrs...)}
 }
 
-func siteNavbar() g.Node {
+func siteNavbar(lang string) g.Node {
 	return layout.Navbar(layout.NavbarProps{},
 		h.A(h.Href("/"),
 			h.Img(
@@ -159,14 +164,22 @@ func siteNavbar() g.Node {
 			),
 		),
 		g.Group{
-			h.A(h.Href("/#experience"), h.Class("nav-link-hide"), g.Text("Experience")),
-			h.A(h.Href("/#projects"), g.Text("Projects")),
-			h.A(h.Href("/#opensource"), h.Class("nav-link-hide"), g.Text("Open Source")),
-			h.A(h.Href("/#activity"), h.Class("nav-link-hide"), g.Text("Activity")),
-			h.A(h.Href("/#skills"), h.Class("nav-link-hide"), g.Text("Skills")),
-			h.A(h.Href("/#contact"), g.Text("Contact")),
+			h.A(h.Href("/#experience"), h.Class("nav-link-hide"), g.Text(i18n.T(lang, "nav.experience"))),
+			h.A(h.Href("/#projects"), g.Text(i18n.T(lang, "nav.projects"))),
+			h.A(h.Href("/#opensource"), h.Class("nav-link-hide"), g.Text(i18n.T(lang, "nav.opensource"))),
+			h.A(h.Href("/#activity"), h.Class("nav-link-hide"), g.Text(i18n.T(lang, "nav.activity"))),
+			h.A(h.Href("/#skills"), h.Class("nav-link-hide"), g.Text(i18n.T(lang, "nav.skills"))),
+			h.A(h.Href("/#contact"), g.Text(i18n.T(lang, "nav.contact"))),
 		},
 		g.Group{
+			special.LanguageToggle(special.LanguageToggleProps{
+				Languages: []special.Language{
+					{Code: "en", Label: "EN", Title: "English"},
+					{Code: "de", Label: "DE", Title: "Deutsch"},
+				},
+				Current:        lang,
+				ReloadOnChange: true,
+			}),
 			special.ThemeToggle(),
 			special.ModeToggle(),
 			h.A(
@@ -187,38 +200,40 @@ func siteNavbar() g.Node {
 	)
 }
 
-func siteFooter() g.Node {
+func siteFooter(lang string) g.Node {
+	t := func(key string) string { return i18n.T(lang, key) }
+	year, _ := strconv.Atoi(time.Now().Format("2006"))
 	return layout.Footer(layout.FooterProps{
 		Attrs: []g.Node{g.Attr("data-homepage-footer", "true")},
 		Brand: h.Div(
 			h.Img(h.Src("/static/img/logo/Logo-h.png"), h.Alt("mljr.eu"), h.Width("172"), h.Height("32"), h.Style("height:32px;width:auto")),
 		),
-		Tagline: "Go, security and self-hosted infrastructure. Every component on this site is a Go function — no JS framework, no CDN, no adtech tracking.",
+		Tagline: t("footer.tagline"),
 		Columns: []layout.FooterColumn{
-			{Title: "Site", Links: []layout.FooterLink{
-				{Label: "Experience", Href: "/#experience"},
-				{Label: "Projects", Href: "/#projects"},
-				{Label: "Open source", Href: "/#opensource"},
-				{Label: "Homelab", Href: "/#homelab"},
-				{Label: "Activity", Href: "/#activity"},
-				{Label: "Skills", Href: "/#skills"},
+			{Title: t("footer.site_title"), Links: []layout.FooterLink{
+				{Label: t("nav.experience"), Href: "/#experience"},
+				{Label: t("nav.projects"), Href: "/#projects"},
+				{Label: t("nav.opensource"), Href: "/#opensource"},
+				{Label: t("footer.homelab"), Href: "/#homelab"},
+				{Label: t("nav.activity"), Href: "/#activity"},
+				{Label: t("nav.skills"), Href: "/#skills"},
 			}},
-			{Title: "Elsewhere", Links: []layout.FooterLink{
-				{Label: "GitHub", Href: "https://github.com/MrCodeEU", External: true},
-				{Label: "LinkedIn", Href: "https://www.linkedin.com/in/michael-reinegger", External: true},
-				{Label: "Strava", Href: "https://www.strava.com/athletes/mrcode", External: true},
-				{Label: "Status page", Href: "https://uptime.mljr.eu/status/all", External: true},
+			{Title: t("footer.elsewhere_title"), Links: []layout.FooterLink{
+				{Label: t("footer.github"), Href: "https://github.com/MrCodeEU", External: true},
+				{Label: t("footer.linkedin"), Href: "https://www.linkedin.com/in/michael-reinegger", External: true},
+				{Label: t("footer.strava"), Href: "https://www.strava.com/athletes/mrcode", External: true},
+				{Label: t("footer.status_page"), Href: "https://uptime.mljr.eu/status/all", External: true},
 			}},
-			{Title: "Legal", Links: []layout.FooterLink{
-				{Label: "Impressum", Href: "/impressum"},
-				{Label: "Datenschutz", Href: "/datenschutz"},
-				{Label: "Contact", Href: "/#contact"},
+			{Title: t("footer.legal_title"), Links: []layout.FooterLink{
+				{Label: t("footer.impressum"), Href: "/impressum"},
+				{Label: t("footer.datenschutz"), Href: "/datenschutz"},
+				{Label: t("footer.contact"), Href: "/#contact"},
 			}},
 		},
 		Bottom: h.Div(
 			h.Style("display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:var(--sp-3);width:100%"),
-			h.Span(g.Text("© "+time.Now().Format("2006")+" Michael Reinegger · mljr.eu")),
-			h.Span(g.Text("built with Go · gomponents · Datastar · Tailwind v4")),
+			h.Span(g.Text(i18n.T(lang, "footer.copyright", year))),
+			h.Span(g.Text(t("footer.built_with"))),
 		),
 	})
 }

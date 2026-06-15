@@ -9,8 +9,8 @@ import (
 
 func TestLegalPagesRenderOwnerAndPrivacyText(t *testing.T) {
 	for name, node := range map[string]any{
-		"impressum":   Impressum(AnalyticsConfig{}),
-		"datenschutz": Datenschutz(AnalyticsConfig{}),
+		"impressum":   Impressum("en", AnalyticsConfig{}),
+		"datenschutz": Datenschutz("en", AnalyticsConfig{}),
 	} {
 		renderable, ok := node.(interface {
 			Render(w io.Writer) error

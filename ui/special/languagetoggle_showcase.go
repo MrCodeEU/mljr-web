@@ -3,6 +3,7 @@
 package special
 
 import (
+	"mljr-web/internal/i18n"
 	"mljr-web/ui/registry"
 
 	g "maragu.dev/gomponents"
@@ -49,6 +50,13 @@ func init() {
 					}),
 				),
 				h.P(h.Style("color:var(--muted);font-size:var(--t-xs)"), g.Text("Cookie is set on click. Add ReloadOnChange: true to reload the page after switching.")),
+				h.Div(
+					h.P(h.Style("font-size:var(--t-xs);opacity:.5;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 var(--sp-2)"), g.Text("Catalog sample (i18n.T)")),
+					h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-1);font-size:var(--t-sm)"),
+						h.Div(g.Text("en: "+i18n.T("en", "hero.cta_contact"))),
+						h.Div(g.Text("de: "+i18n.T("de", "hero.cta_contact"))),
+					),
+				),
 			)
 		},
 	})

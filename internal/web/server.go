@@ -32,6 +32,7 @@ func NewEcho() *echo.Echo {
 		},
 	}))
 	e.Use(SecurityHeaders())
+	e.Use(LocaleMiddleware())
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
 			p := c.Path()

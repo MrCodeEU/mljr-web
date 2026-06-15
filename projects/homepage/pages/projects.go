@@ -6,6 +6,7 @@ import (
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
+	"mljr-web/internal/i18n"
 	hpdata "mljr-web/projects/homepage/data"
 	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
@@ -14,7 +15,7 @@ import (
 	"mljr-web/ui/token"
 )
 
-func projectsSection(projects []hpdata.Project) g.Node {
+func projectsSection(projects []hpdata.Project, lang string) g.Node {
 	total := len(projects)
 	pages := (total + perPage - 1) / perPage
 
@@ -31,7 +32,7 @@ func projectsSection(projects []hpdata.Project) g.Node {
 		var cols []g.Node
 		tones := []token.Tone{token.ToneNone, token.ToneSky, token.ToneLime, token.ToneViolet, token.TonePink, token.ToneMint}
 		for i, proj := range slice {
-			cols = append(cols, projectCard(proj, tones[i%len(tones)]))
+			cols = append(cols, projectCard(proj, tones[i%len(tones)], lang))
 		}
 
 		pageNodes = append(pageNodes, layout.Grid(layout.GridProps{}, g.Group(cols)))
@@ -42,7 +43,7 @@ func projectsSection(projects []hpdata.Project) g.Node {
 		h.Style("padding:var(--sp-12) 0"),
 		uidata.PaginationSignals("pg", perPage),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("03", "Projects", fmt.Sprintf("%d projects", total), token.ToneLime),
+			sectionHeader("03", i18n.T(lang, "sections.projects.title"), fmt.Sprintf("%d projects", total), token.ToneLime),
 			// top pagination
 			h.Div(h.Style("margin-bottom:var(--sp-5);display:flex;justify-content:center"),
 				uidata.Pagination(uidata.PaginationProps{ID: "pg", Total: total, PerPage: perPage}),
@@ -56,7 +57,7 @@ func projectsSection(projects []hpdata.Project) g.Node {
 	)
 }
 
-func projectCard(p hpdata.Project, tone token.Tone) g.Node {
+func projectCard(p hpdata.Project, tone token.Tone, lang string) g.Node {
 	imgs := p.LocalImages()
 
 	var carouselNode g.Node
@@ -71,7 +72,7 @@ func projectCard(p hpdata.Project, tone token.Tone) g.Node {
 			h.Src(imgs[0]),
 			h.Alt(p.Name),
 			g.Attr("loading", "lazy"),
-			h.Style("width:100%;aspect-ratio:16/9;object-fit:cover;border-bottom:var(--border-w) solid var(--line);display:block"),
+			h.Style("width:100%;aspect-ratio:16/9;object-fit:contain;background:var(--surface-2);border-bottom:var(--border-w) solid var(--line);display:block"),
 		)
 	}
 
@@ -81,7 +82,7 @@ func projectCard(p hpdata.Project, tone token.Tone) g.Node {
 			h.A(h.Href(p.URL), g.Attr("target", "_blank"), g.Attr("rel", "noopener"),
 				primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
 					icon.Icon("simple-icons:github"),
-					g.Text("Source"),
+					g.Text(i18n.T(lang, "projects.source")),
 					icon.Icon("lucide:arrow-up-right"),
 				),
 			),

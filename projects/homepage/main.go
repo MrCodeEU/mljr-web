@@ -49,13 +49,13 @@ func main() {
 	}
 
 	e.GET("/", func(c echo.Context) error {
-		return web.Render(c, 200, pages.Home(dataStore.Current(), analytics, hlSnapshot()))
+		return web.Render(c, 200, pages.Home(dataStore.Current(), web.Lang(c), analytics, hlSnapshot()))
 	})
 	e.GET("/impressum", func(c echo.Context) error {
-		return web.Render(c, 200, pages.Impressum(analytics))
+		return web.Render(c, 200, pages.Impressum(web.Lang(c), analytics))
 	})
 	e.GET("/datenschutz", func(c echo.Context) error {
-		return web.Render(c, 200, pages.Datenschutz(analytics))
+		return web.Render(c, 200, pages.Datenschutz(web.Lang(c), analytics))
 	})
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "ok") })
 	e.GET("/favicon.ico", func(c echo.Context) error { return c.NoContent(204) })

@@ -4,6 +4,7 @@ import (
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
+	"mljr-web/internal/i18n"
 	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
@@ -15,7 +16,7 @@ import (
 // sketch on the left, a paged carousel of real source excerpts on the right
 // (highlighted server-side with chroma, paged by the same PaginatedPages
 // component example #3 shows).
-func codeShowcaseSection() g.Node {
+func codeShowcaseSection(lang string) g.Node {
 	examples := []struct {
 		Caption  string
 		Filename string
@@ -46,7 +47,7 @@ func codeShowcaseSection() g.Node {
 		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink)"),
 		uidata.PaginationSignals("hood", 1),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("08", "Under the hood", "this site, in code", token.ToneSky),
+			sectionHeader("08", i18n.T(lang, "sections.codeshowcase.title"), i18n.T(lang, "sections.codeshowcase.sub"), token.ToneSky),
 			h.Div(
 				h.Class("hood-grid"),
 				h.Style("display:grid;grid-template-columns:1fr 1.2fr;gap:var(--sp-6);align-items:start"),

@@ -7,6 +7,7 @@ import (
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
+	"mljr-web/internal/i18n"
 	hpdata "mljr-web/projects/homepage/data"
 	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
@@ -16,7 +17,7 @@ import (
 	"mljr-web/ui/token"
 )
 
-func experienceSection(d hpdata.SiteData) g.Node {
+func experienceSection(d hpdata.SiteData, lang string) g.Node {
 	li := d.LinkedIn
 	jobs := li.RelevantExperience(100) // all positions
 
@@ -69,14 +70,14 @@ func experienceSection(d hpdata.SiteData) g.Node {
 		h.ID("experience"),
 		h.Style("padding:var(--sp-12) 0"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("01", "Experience", fmt.Sprintf("%d positions", len(jobs)), token.ToneCyan),
+			sectionHeader("01", i18n.T(lang, "sections.experience.title"), fmt.Sprintf("%d positions", len(jobs)), token.ToneCyan),
 			// Snake timeline spans full width
 			h.Div(h.Class("experience-snake"), uidata.SnakeTimeline(uidata.SnakeTimelineProps{Cols: 3}, snakeItems...)),
 			h.Div(h.Class("experience-mobile-timeline"), uidata.Timeline(uidata.TimelineProps{}, mobileItems...)),
 			// Education row below
 			h.Div(
 				h.Style("margin-top:var(--sp-12)"),
-				sectionHeader("", "Education", fmt.Sprintf("%d degrees", len(li.Education)), token.ToneSky),
+				sectionHeader("", i18n.T(lang, "sections.education.title"), fmt.Sprintf("%d degrees", len(li.Education)), token.ToneSky),
 				h.Div(
 					h.Style("display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--sp-4)"),
 					g.Group(func() []g.Node {
@@ -100,12 +101,13 @@ func experienceSection(d hpdata.SiteData) g.Node {
 					}()),
 				),
 				// Thesis section
-				g.If(len(d.Thesis) > 0,
+				g.If(len(d.ThesisFor(lang)) > 0,
 					h.Div(
 						h.Style("margin-top:var(--sp-4);display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--sp-4)"),
 						g.Group(func() []g.Node {
-							nodes := make([]g.Node, 0, len(d.Thesis))
-							for _, t := range d.Thesis {
+							thesis := d.ThesisFor(lang)
+							nodes := make([]g.Node, 0, len(thesis))
+							for _, t := range thesis {
 								nodes = append(nodes, primitive.Card(primitive.CardProps{Tone: token.ToneAccent},
 									h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
 										h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35"), g.Text(t.Title)),
@@ -116,13 +118,13 @@ func experienceSection(d hpdata.SiteData) g.Node {
 										h.A(h.Href(t.PDF), g.Attr("target", "_blank"), g.Attr("rel", "noopener"), h.Style("margin-top:var(--sp-3);display:block"),
 											primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
 												icon.Icon("lucide:file-text"),
-												g.Text("View PDF"),
+												g.Text(i18n.T(lang, "sections.experience.thesis_view_pdf")),
 											),
 										),
 									),
 									g.If(t.PDF == "",
 										h.Div(h.Style("margin-top:var(--sp-3)"),
-											primitive.Tag(primitive.TagProps{}, icon.Icon("lucide:clock"), g.Text("Coming soon")),
+											primitive.Tag(primitive.TagProps{}, icon.Icon("lucide:clock"), g.Text(i18n.T(lang, "sections.experience.thesis_coming_soon"))),
 										),
 									),
 								))
@@ -132,7 +134,7 @@ func experienceSection(d hpdata.SiteData) g.Node {
 					),
 				),
 			),
-			experienceLocationMap(li),
+			experienceLocationMap(li, lang),
 		),
 	)
 }
@@ -142,7 +144,7 @@ type orgLocation struct {
 	lng float64
 }
 
-func experienceLocationMap(li hpdata.LinkedInData) g.Node {
+func experienceLocationMap(li hpdata.LinkedInData, lang string) g.Node {
 	pins := []special.MapPin{
 		{Lat: 48.143, Lng: 14.461, Label: "Home · Thaling, Upper Austria", Popup: "<strong>Home · Thaling, Upper Austria</strong><br>Current base"},
 	}
@@ -212,7 +214,7 @@ func experienceLocationMap(li hpdata.LinkedInData) g.Node {
 
 	return h.Div(
 		h.Style("margin-top:var(--sp-12)"),
-		sectionHeader("", "Places", "work · education · home", token.ToneMint),
+		sectionHeader("", i18n.T(lang, "sections.places.title"), i18n.T(lang, "sections.places.sub"), token.ToneMint),
 		special.OpenMap(special.OpenMapProps{
 			CenterLat: 48.22,
 			CenterLng: 14.34,

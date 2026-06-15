@@ -26,8 +26,26 @@ type SiteData struct {
 	GitHubStats   *GitHubStats `json:"github_stats,omitempty"`
 	SchemaVersion string       `json:"schema_version,omitempty"`
 	GeneratedAt   string       `json:"generated_at,omitempty"`
-	Content       SiteContent  `json:"content"`
-	Thesis        []Thesis     `json:"thesis"`
+	Content       map[string]SiteContent `json:"content"`
+	Thesis        map[string][]Thesis    `json:"thesis"`
+}
+
+// ContentFor returns the hand-authored copy for lang, falling back to
+// English if the locale isn't present.
+func (d SiteData) ContentFor(lang string) SiteContent {
+	if c, ok := d.Content[lang]; ok {
+		return c
+	}
+	return d.Content["en"]
+}
+
+// ThesisFor returns the thesis entries for lang, falling back to English if
+// the locale isn't present.
+func (d SiteData) ThesisFor(lang string) []Thesis {
+	if t, ok := d.Thesis[lang]; ok {
+		return t
+	}
+	return d.Thesis["en"]
 }
 
 // SiteContent holds hand-authored copy for sections that change
@@ -329,7 +347,8 @@ func (s *Store) reloadIfChanged(force bool) error {
 	return nil
 }
 
-// FeaturedProjects returns projects marked featured, excluding meta-entries.
+// FeaturedProjects returns projects marked featured, excluding meta-entries,
+// ordered by the curated "order" field (ascending, lower = shown first).
 func (d SiteData) FeaturedProjects() []Project {
 	var out []Project
 	for _, p := range d.GitHub {
@@ -337,6 +356,12 @@ func (d SiteData) FeaturedProjects() []Project {
 			out = append(out, p)
 		}
 	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].Order != out[j].Order {
+			return out[i].Order < out[j].Order
+		}
+		return out[i].Name < out[j].Name
+	})
 	return out
 }
 
