@@ -10,6 +10,7 @@ projects/*/assets/static/altcha.js
 projects/*/assets/static/leaflet.js
 projects/*/assets/static/leaflet.markercluster.js
 projects/homepage/data/seed-cache.json
+projects/homepage/assets/static/portfolio/
 .DS_Store
 .playwright-mcp/
 .env

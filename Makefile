@@ -39,7 +39,7 @@ ifeq ($(UNAME_S),Darwin)
   endif
 endif
 
-.PHONY: help setup tailwind vendor-js air icons dev dev-showcase build check fmt vet lint test test-showcase vuln guard-classes docker upgrade-deps clean
+.PHONY: help setup tailwind vendor-js air icons dev dev-showcase build check fmt vet lint test test-showcase vuln guard-classes docker upgrade-deps clean sync-assets data-update data-pull
 
 help:           ## list targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN{FS=":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -97,7 +97,7 @@ icons: ## regenerate ui/icon/icons_gen.go from tools/icongen/icons.txt
 	go run ./tools/icongen
 
 # --- dev / build ---------------------------------------------------------------
-dev: $(TAILWIND) $(AIR) ## hot-reload a project:  make dev PROJECT=homepage
+dev: $(TAILWIND) $(AIR) sync-assets ## hot-reload a project:  make dev PROJECT=homepage
 	$(TAILWIND) -i $(CSS_IN) -o $(CSS_OUT)
 	@$(URL_LINE) $(PORT)
 	@$(TAILWIND) -i $(CSS_IN) -o $(CSS_OUT) --watch & TW=$$!; \
@@ -115,7 +115,7 @@ dev-showcase: $(TAILWIND) $(AIR) ## run the catalogue (build tag: showcase)
 	  MLJR_ENV=dev PORT=8091 AIR_MAIN_PKG=./projects/showcase AIR_BUILD_TAGS=showcase \
 	    $(AIR) -c .air.toml
 
-build: $(TAILWIND) ## static binary -> bin/$(PROJECT)
+build: $(TAILWIND) sync-assets ## static binary -> bin/$(PROJECT)
 	$(TAILWIND) -i $(CSS_IN) -o $(CSS_OUT) --minify
 	CGO_ENABLED=0 go build $(BUILD_TAG_FLAGS) -buildvcs=false -trimpath -ldflags="-s -w -X mljr-web/internal/version.Tag=$$(cat VERSION 2>/dev/null || echo dev)" -o bin/$(PROJECT) $(PKG)
 
@@ -132,6 +132,11 @@ data-update: ## regenerate mljr-data/generated/site-data.json (needs GITHUB_TOKE
 
 data-pull: ## fetch latest mljr-data submodule from origin
 	git submodule update --remote --merge mljr-data
+
+sync-assets: ## copy mljr-data portfolio images into projects/homepage/assets/static/portfolio
+	@rm -rf projects/homepage/assets/static/portfolio
+	@mkdir -p projects/homepage/assets/static/portfolio
+	@cp -r mljr-data/assets/portfolio/. projects/homepage/assets/static/portfolio/
 
 # --- quality -------------------------------------------------------------------
 check: fmt vet lint guard-classes test test-showcase vuln ## full local gate
