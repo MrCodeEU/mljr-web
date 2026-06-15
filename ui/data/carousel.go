@@ -53,7 +53,9 @@ func Carousel(p CarouselProps) g.Node {
 	for i := range p.Images {
 		dotChildren = append(dotChildren,
 			h.Button(
+				h.Type("button"),
 				g.Attr("data-slot", "dots-btn"),
+				g.Attr("aria-label", fmt.Sprintf("Go to slide %d", i+1)),
 				// active state via data-attr
 				g.Attr("data-attr", fmt.Sprintf(`{"data-state": $%s === %d ? "active" : ""}`, sig, i)),
 				ui.On("click", fmt.Sprintf("$%s = %d", sig, i)),

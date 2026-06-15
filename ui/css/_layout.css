@@ -54,6 +54,7 @@
     background: var(--bg);
     border-bottom: var(--border-w) var(--border-style) var(--line);
     padding: var(--sp-3) clamp(1rem, 4vw, 3rem);
+    min-height: 64px;
     display: flex; align-items: center; justify-content: space-between;
     gap: var(--sp-4);
   }
@@ -61,12 +62,23 @@
     font-family: var(--font-display); font-weight: 800;
     font-size: var(--t-md); letter-spacing: var(--tracking-tight);
   }
+  [data-component="navbar"] [data-slot="menu"] {
+    display: flex; align-items: center; justify-content: flex-end;
+    flex: 1; gap: var(--sp-5);
+  }
   [data-component="navbar"] [data-slot="nav"] {
     display: flex; gap: var(--sp-5); align-items: center;
     font-family: var(--font-display); font-weight: 600; font-size: var(--t-sm);
   }
   [data-component="navbar"] [data-slot="actions"] {
     display: flex; gap: var(--sp-2); align-items: center;
+  }
+  [data-component="navbar"] [data-slot="menu-toggle"] {
+    display: none; align-items: center; justify-content: center;
+    width: 40px; height: 40px; padding: 0;
+    border: var(--border-w) var(--border-style) var(--line);
+    background: var(--surface);
+    cursor: pointer;
   }
 
   /* layout: footer */
@@ -341,12 +353,35 @@
     flex-wrap: wrap;
     gap: var(--sp-2);
   }
-  [data-component="navbar"] [data-slot="nav"] {
-    gap: var(--sp-3);
-    font-size: var(--t-xs);
+  [data-component="navbar"] [data-slot="menu-toggle"] {
+    display: flex;
+    order: 2;
   }
-  [data-component="navbar"] [data-slot="nav"] a:not(:last-child):not(:first-child) {
+  [data-component="navbar"] [data-slot="menu"] {
     display: none;
+    order: 3;
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-3);
+    padding: var(--sp-3) 0 var(--sp-2);
+    border-top: var(--border-w) var(--border-style) var(--line);
+  }
+  [data-component="navbar"] [data-slot="menu"].open {
+    display: flex;
+  }
+  [data-component="navbar"] [data-slot="nav"] {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    font-size: var(--t-sm);
+  }
+  [data-component="navbar"] [data-slot="nav"] a.nav-link-hide {
+    display: inline;
+  }
+  [data-component="navbar"] [data-slot="actions"] {
+    padding-top: var(--sp-3);
+    border-top: var(--border-w) var(--border-style) var(--line);
   }
 }
 

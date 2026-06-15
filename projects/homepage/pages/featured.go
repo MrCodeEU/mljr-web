@@ -27,12 +27,8 @@ func featuredSection(featured []hpdata.Project) g.Node {
 	cells := make([]g.Node, len(featured))
 	for i, p := range featured {
 		big := i == 0
-		span := "grid-row:span 1"
-		if big && len(featured) > 1 {
-			span = "grid-row:span 2"
-		}
 		cells[i] = h.Div(
-			h.Style(span+";display:flex;min-width:0;align-self:start"),
+			h.Style("display:flex;min-width:0;margin-bottom:var(--sp-4);break-inside:avoid"),
 			featuredCard(p, tones[i%len(tones)], big),
 		)
 	}
@@ -44,7 +40,7 @@ func featuredSection(featured []hpdata.Project) g.Node {
 			sectionHeader("02", "Featured work", "hand-picked", token.ToneYellow),
 			h.Div(
 				h.Class("featured-grid"),
-				h.Style("display:grid;grid-template-columns:1.25fr 1fr;grid-auto-rows:minmax(220px,auto);gap:var(--sp-4)"),
+				h.Style("column-count:2;column-gap:var(--sp-4)"),
 				g.Group(cells),
 			),
 		),

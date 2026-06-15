@@ -160,7 +160,7 @@ main > div:not(#logo-svg-hp-bg) {
 #opensource [data-component="heatmap-wrap"] svg { max-width: 100%; height: auto; }
 
 @media (max-width: 900px) {
-  .featured-grid { grid-template-columns: 1fr !important; }
+  .featured-grid { column-count: 1 !important; }
   .oss-grid { grid-template-columns: 1fr !important; }
   .hood-grid { grid-template-columns: 1fr !important; }
   .hood-grid > * { min-width: 0 !important; }

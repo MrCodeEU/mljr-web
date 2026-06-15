@@ -165,8 +165,9 @@
   [data-component="carousel"] [data-slot="prev"] { left:0; }
   [data-component="carousel"] [data-slot="next"] { right:0; }
   [data-component="carousel"] [data-slot="dots"] { position:absolute;bottom:var(--sp-2);left:50%;transform:translateX(-50%);display:flex;gap:var(--sp-2); }
-  [data-component="carousel"] [data-slot="dots"] button { width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,.6);background:transparent;cursor:pointer;padding:0; }
-  [data-component="carousel"] [data-slot="dots"] button[data-state="active"] { background:#fff; }
+  [data-component="carousel"] [data-slot="dots"] button { width:24px;height:24px;padding:0;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center; }
+  [data-component="carousel"] [data-slot="dots"] button::before { content:"";display:block;width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,.6);background:transparent; }
+  [data-component="carousel"] [data-slot="dots"] button[data-state="active"]::before { background:#fff; }
 
   /* data: pagination */
   [data-component="pagination"] { display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap; }

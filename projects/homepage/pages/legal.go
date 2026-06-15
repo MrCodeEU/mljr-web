@@ -153,6 +153,8 @@ func siteNavbar() g.Node {
 			h.Img(
 				h.Src("/static/img/logo/Logo-h.png"),
 				h.Alt("mljr.eu"),
+				h.Width("172"),
+				h.Height("32"),
 				h.Style("height:32px;width:auto"),
 			),
 		),
@@ -173,7 +175,11 @@ func siteNavbar() g.Node {
 				g.Attr("rel", "noopener noreferrer"),
 				g.Attr("aria-label", "GitHub"),
 				primitive.Button(
-					primitive.ButtonProps{Variant: token.Outline, Size: token.SizeIcon},
+					primitive.ButtonProps{
+						Variant: token.Outline,
+						Size:    token.SizeIcon,
+						Attrs:   []g.Node{g.Attr("aria-hidden", "true"), g.Attr("tabindex", "-1")},
+					},
 					icon.Icon("lucide:github"),
 				),
 			),
@@ -185,7 +191,7 @@ func siteFooter() g.Node {
 	return layout.Footer(layout.FooterProps{
 		Attrs: []g.Node{g.Attr("data-homepage-footer", "true")},
 		Brand: h.Div(
-			h.Img(h.Src("/static/img/logo/Logo-h.png"), h.Alt("mljr.eu"), h.Style("height:32px;width:auto")),
+			h.Img(h.Src("/static/img/logo/Logo-h.png"), h.Alt("mljr.eu"), h.Width("172"), h.Height("32"), h.Style("height:32px;width:auto")),
 		),
 		Tagline: "Go, security and self-hosted infrastructure. Every component on this site is a Go function — no JS framework, no CDN, no adtech tracking.",
 		Columns: []layout.FooterColumn{

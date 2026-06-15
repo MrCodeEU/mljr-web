@@ -69,7 +69,10 @@ func ReadProgress(p ReadProgressProps) g.Node {
 				"position:fixed;top:%s;left:0;height:%s;background:%s;z-index:%d;width:0;transition:width 0.1s linear",
 				p.Top, p.Height, p.Color, p.ZIndex,
 			)),
-			h.Aria("role", "progressbar"),
+			g.Attr("role", "progressbar"),
+			g.Attr("aria-label", "Reading progress"),
+			g.Attr("aria-valuemin", "0"),
+			g.Attr("aria-valuemax", "100"),
 		),
 		h.Script(g.Raw(script)),
 	}
