@@ -39,7 +39,7 @@ ifeq ($(UNAME_S),Darwin)
   endif
 endif
 
-.PHONY: help setup tailwind vendor-js air icons dev dev-showcase build check fmt vet lint test test-showcase vuln guard-classes docker upgrade-deps clean sync-assets data-update data-pull
+.PHONY: help setup tailwind vendor-js air icons dev dev-showcase dev-regex build check fmt vet lint test test-showcase vuln guard-classes docker upgrade-deps clean sync-assets data-update data-pull
 
 help:           ## list targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN{FS=":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -64,6 +64,7 @@ vendor-js: ## vendor datastar.js + altcha.js (ESM browser bundle) into every pro
 	curl -fsSL https://cdn.jsdelivr.net/gh/starfederation/datastar@v$(DATASTAR_VERSION)/bundles/datastar.js \
 		-o projects/homepage/assets/static/datastar.js
 	cp projects/homepage/assets/static/datastar.js projects/showcase/assets/static/datastar.js
+	cp projects/homepage/assets/static/datastar.js projects/regex/assets/static/datastar.js
 	# altcha: external ESM bundle plus the local SHA worker used by altcha-loader.js
 	curl -fsSL https://cdn.jsdelivr.net/npm/altcha@$(ALTCHA_VERSION)/dist/external/altcha.min.js \
 		-o projects/homepage/assets/static/altcha.js
@@ -113,6 +114,14 @@ dev-showcase: $(TAILWIND) $(AIR) ## run the catalogue (build tag: showcase)
 	  trap "kill $$TW 2>/dev/null" EXIT INT TERM; \
 	  if [ -f projects/showcase/.env ]; then set -a; . projects/showcase/.env; set +a; fi; \
 	  MLJR_ENV=dev PORT=8091 AIR_MAIN_PKG=./projects/showcase AIR_BUILD_TAGS=showcase \
+	    $(AIR) -c .air.toml
+
+dev-regex: $(TAILWIND) $(AIR) ## run the regex lab (port 8092)
+	$(TAILWIND) -i projects/regex/assets/css/input.css -o projects/regex/assets/static/app.css
+	@$(URL_LINE) 8092
+	@$(TAILWIND) -i projects/regex/assets/css/input.css -o projects/regex/assets/static/app.css --watch & TW=$$!; \
+	  trap "kill $$TW 2>/dev/null" EXIT INT TERM; \
+	  MLJR_ENV=dev PORT=8092 AIR_MAIN_PKG=./projects/regex AIR_BUILD_TAGS= \
 	    $(AIR) -c .air.toml
 
 build: $(TAILWIND) sync-assets ## static binary -> bin/$(PROJECT)

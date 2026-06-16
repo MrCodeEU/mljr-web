@@ -39,7 +39,8 @@ mljr-web/
 │   └── version/                 # ldflags-injected build info
 ├── projects/
 │   ├── homepage/                # portfolio binary (homelab/ = live-panel poller)
-│   └── showcase/                # component catalogue binary
+│   ├── showcase/                # component catalogue binary
+│   └── regex/                   # live RE2 regex tester (Datastar SSE, port 8092)
 └── tools/icongen/               # Iconify → Go SVG generator
 ```
 
@@ -81,6 +82,7 @@ Components:
 Projects:
 - **homepage**: hero + skills stub with `PageShell` showing both toggles
 - **showcase**: catalogue listing all components with live preview + theme/mode toggle
+- **regex**: live RE2 regex tester — pattern/input/flags via Datastar signals, highlights via SSE `PatchElements`, replace output
 
 Both projects buildable to static binary; showcase compiled with `-tags showcase`.
 
@@ -99,7 +101,8 @@ Both projects buildable to static binary; showcase compiled with `-tags showcase
 make setup        # tailwind binary + datastar.js + altcha.js + go mod tidy
 make icons        # regenerate ui/icon/icons_gen.go
 make dev PROJECT=homepage           # → :8090
-make dev-showcase                    # → :8091
+make dev-showcase                   # → :8091
+make dev-regex                      # → :8092
 make check        # full local gate
 make docker PROJECT=homepage TAG=v1
 ```

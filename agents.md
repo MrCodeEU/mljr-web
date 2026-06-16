@@ -69,6 +69,7 @@ func X(p XProps, children ...g.Node) g.Node {
 ```bash
 bin/tailwindcss -i projects/showcase/assets/css/input.css -o projects/showcase/assets/static/app.css
 bin/tailwindcss -i projects/homepage/assets/css/input.css  -o projects/homepage/assets/static/app.css
+bin/tailwindcss -i projects/regex/assets/css/input.css     -o projects/regex/assets/static/app.css
 ```
 In dev mode (`MLJR_ENV != "prod"`), the server reads CSS from disk — no server restart needed after rebuild. But the browser needs a hard reload (Ctrl+Shift+R) to bypass cache.
 
@@ -381,6 +382,7 @@ make setup                          # fetch tailwind + datastar.js + altcha.js +
 make icons                          # regen ui/icon/icons_gen.go
 make dev PROJECT=homepage           # tailwind --watch + air
 make dev-showcase                   # PROJECT=showcase with -tags showcase
+make dev-regex                      # regex lab on :8092
 make build PROJECT=homepage         # static binary → bin/homepage
 make check                          # fmt + vet + lint + guard-classes + test + vuln
 make guard-classes                  # enforce no class= in ui/
