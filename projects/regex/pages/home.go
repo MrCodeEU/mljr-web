@@ -35,7 +35,7 @@ func Home() g.Node {
 		h.Main(
 			h.Style("min-height:100vh;padding:var(--sp-8) 0 var(--sp-12)"),
 
-			layout.Container(layout.ContainerProps{},
+			layout.Container(layout.ContainerProps{Attrs: []g.Node{h.Style("padding-left:clamp(.75rem,2vw,1.5rem);padding-right:clamp(.75rem,2vw,1.5rem)")}},
 
 				// ── Header ────────────────────────────────────────────────────
 				h.Div(
@@ -397,14 +397,17 @@ const regexCSS = `
   gap: var(--sp-6);
   align-items: start;
 }
-.rx-ref { display: block; }
-.rx-ref--closed { display: none; }
-.rx-ref-toggle { display: none; }
 
+/* Large screens: reference always visible, ignore showRef signal state */
+@media (min-width: 1051px) {
+  .rx-ref { display: block !important; }
+  .rx-ref-toggle { display: none !important; }
+}
+
+/* Small screens: reference controlled by data-class toggle */
 @media (max-width: 1050px) {
   .rx-main-layout { grid-template-columns: 1fr; }
   .rx-ref { display: none; }
-  .rx-ref.rx-ref--closed { display: none; }
   .rx-ref:not(.rx-ref--closed) { display: block; }
   .rx-ref-toggle { display: inline-flex; align-items: center; gap: var(--sp-1); }
 }
