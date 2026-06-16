@@ -20,18 +20,58 @@
     "years_label": "Years coding"
   },
   "sections": {
-    "experience": { "title": "Experience", "thesis_view_pdf": "View PDF", "thesis_coming_soon": "Coming soon", "positions": "%d positions" },
-    "education": { "title": "Education", "degrees": "%d degrees" },
-    "papers": { "title": "Papers & Theses", "sub": "research work" },
-    "places": { "title": "Places", "sub": "work · education · home" },
-    "featured": { "title": "Featured work", "sub": "hand-picked" },
-    "projects": { "title": "Projects" },
-    "opensource": { "title": "Open Source" },
-    "homelab": { "title": "Homelab", "sub": "live via tailscale" },
-    "activity": { "title": "Activity" },
-    "skills": { "title": "Skills", "sub": "depth × breadth" },
-    "codeshowcase": { "title": "Under the hood", "sub": "this site, in code" },
-    "contact": { "title": "Get in touch", "sub": "Let's talk" }
+    "experience": {
+      "title": "Experience",
+      "thesis_view_pdf": "View PDF",
+      "thesis_coming_soon": "Coming soon",
+      "positions": "%d positions"
+    },
+    "education": {
+      "title": "Education",
+      "degrees": "%d degrees"
+    },
+    "papers": {
+      "title": "Papers & Theses",
+      "sub": "research work"
+    },
+    "places": {
+      "title": "Places",
+      "sub": "work · education · home"
+    },
+    "featured": {
+      "title": "Featured work",
+      "sub": "hand-picked"
+    },
+    "projects": {
+      "title": "Projects"
+    },
+    "opensource": {
+      "title": "Open Source"
+    },
+    "homelab": {
+      "title": "Homelab",
+      "sub": "live via tailscale"
+    },
+    "activity": {
+      "title": "Activity"
+    },
+    "skills": {
+      "title": "Skills",
+      "sub": "depth × breadth"
+    },
+    "codeshowcase": {
+      "title": "Under the hood",
+      "sub": "this site, in code"
+    },
+    "contact": {
+      "title": "Get in touch",
+      "sub": "Let's talk"
+    },
+    "livetools": {
+      "title": "Live Tools",
+      "count": "%d live tool",
+      "open": "Open Tool →"
+    }
   },
   "contact": {
     "currently": "Currently",

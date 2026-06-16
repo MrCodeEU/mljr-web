@@ -64,7 +64,7 @@ func githubSection(d hpdata.SiteData, lang string) g.Node {
 		h.ID("opensource"),
 		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink)"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("03", i18n.T(lang, "sections.opensource.title"), badge, token.ToneMint),
+			sectionHeader("04", i18n.T(lang, "sections.opensource.title"), badge, token.ToneMint),
 			h.Div(
 				h.Class("oss-grid"),
 				h.Style("display:grid;grid-template-columns:1.4fr 1fr;gap:var(--sp-5);align-items:stretch"),

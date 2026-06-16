@@ -20,18 +20,58 @@
     "years_label": "Jahre Coding"
   },
   "sections": {
-    "experience": { "title": "Erfahrung", "thesis_view_pdf": "PDF ansehen", "thesis_coming_soon": "Demnächst verfügbar", "positions": "%d Stellen" },
-    "education": { "title": "Ausbildung", "degrees": "%d Abschlüsse" },
-    "papers": { "title": "Arbeiten & Abschlussarbeiten", "sub": "Forschungsarbeiten" },
-    "places": { "title": "Orte", "sub": "Arbeit · Ausbildung · Zuhause" },
-    "featured": { "title": "Ausgewählte Projekte", "sub": "handverlesen" },
-    "projects": { "title": "Projekte" },
-    "opensource": { "title": "Open Source" },
-    "homelab": { "title": "Homelab", "sub": "live via Tailscale" },
-    "activity": { "title": "Aktivität" },
-    "skills": { "title": "Skills", "sub": "Tiefe × Breite" },
-    "codeshowcase": { "title": "Unter der Haube", "sub": "diese Seite, im Code" },
-    "contact": { "title": "Kontakt aufnehmen", "sub": "Lass uns reden" }
+    "experience": {
+      "title": "Erfahrung",
+      "thesis_view_pdf": "PDF ansehen",
+      "thesis_coming_soon": "Demnächst verfügbar",
+      "positions": "%d Stellen"
+    },
+    "education": {
+      "title": "Ausbildung",
+      "degrees": "%d Abschlüsse"
+    },
+    "papers": {
+      "title": "Arbeiten & Abschlussarbeiten",
+      "sub": "Forschungsarbeiten"
+    },
+    "places": {
+      "title": "Orte",
+      "sub": "Arbeit · Ausbildung · Zuhause"
+    },
+    "featured": {
+      "title": "Ausgewählte Projekte",
+      "sub": "handverlesen"
+    },
+    "projects": {
+      "title": "Projekte"
+    },
+    "opensource": {
+      "title": "Open Source"
+    },
+    "homelab": {
+      "title": "Homelab",
+      "sub": "live via Tailscale"
+    },
+    "activity": {
+      "title": "Aktivität"
+    },
+    "skills": {
+      "title": "Skills",
+      "sub": "Tiefe × Breite"
+    },
+    "codeshowcase": {
+      "title": "Unter der Haube",
+      "sub": "diese Seite, im Code"
+    },
+    "contact": {
+      "title": "Kontakt aufnehmen",
+      "sub": "Lass uns reden"
+    },
+    "livetools": {
+      "title": "Live-Tools",
+      "count": "%d Live-Tool",
+      "open": "Tool öffnen →"
+    }
   },
   "contact": {
     "currently": "Aktuell",

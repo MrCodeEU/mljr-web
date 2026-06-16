@@ -17,6 +17,7 @@ const perPage = 6
 
 func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot) g.Node {
 	featured := d.FeaturedProjects()
+	liveTools := d.LiveToolProjects()
 	rest := d.AllProjects()
 	// Featured projects get their own spotlight section; the grid shows the rest.
 	gridProjects := rest
@@ -61,6 +62,7 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 			statsSection(d),
 			featuredSection(featured, lang),
 			projectsSection(gridProjects, lang),
+			liveToolsSection(liveTools, lang),
 			githubSection(d, lang),
 			experienceSection(d, lang),
 			homelabSection(hl, lang),
@@ -90,6 +92,11 @@ main > section,
 main > div:not(#logo-svg-hp-bg) {
   position: relative;
   z-index: 1;
+}
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--sp-5);
 }
 #skills { overflow-x: hidden; }
 #skills [data-component="marquee"] {

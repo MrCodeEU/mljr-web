@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        project: [homepage, showcase]
+        project: [homepage, showcase, regex]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -66,8 +66,10 @@ jobs:
         run: |
           if [ "${{ matrix.project }}" == "showcase" ]; then
             echo "name=ui-showcase" >> "$GITHUB_OUTPUT"
-          else
+          elif [ "${{ matrix.project }}" == "homepage" ]; then
             echo "name=homepage" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${{ matrix.project }}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Trigger homelab deployment

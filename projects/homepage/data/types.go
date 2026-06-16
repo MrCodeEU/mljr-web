@@ -296,6 +296,17 @@ func (p Project) DescFor(lang string) string {
 	return p.Desc
 }
 
+// LiveURL returns the "Live" link URL if present (set from the curated
+// project's homepage field by the data generator).
+func (p Project) LiveURL() string {
+	for _, l := range p.Links {
+		if l.Name == "Live" {
+			return l.URL
+		}
+	}
+	return ""
+}
+
 type ProjectLink struct {
 	Name string `json:"name"`
 	URL  string `json:"url"`
@@ -498,6 +509,27 @@ func (d SiteData) FeaturedProjects() []Project {
 	for _, p := range d.GitHub {
 		if p.Featured && !strings.EqualFold(p.Name, "homepage") {
 			out = append(out, p)
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].Order != out[j].Order {
+			return out[i].Order < out[j].Order
+		}
+		return out[i].Name < out[j].Name
+	})
+	return out
+}
+
+// LiveToolProjects returns projects tagged with the "live-tool" topic,
+// ordered by the curated "order" field.
+func (d SiteData) LiveToolProjects() []Project {
+	var out []Project
+	for _, p := range d.GitHub {
+		for _, t := range p.Topics {
+			if strings.EqualFold(t, "live-tool") {
+				out = append(out, p)
+				break
+			}
 		}
 	}
 	sort.SliceStable(out, func(i, j int) bool {
