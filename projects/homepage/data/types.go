@@ -268,6 +268,7 @@ type School struct {
 type Project struct {
 	Name     string        `json:"name"`
 	Desc     string        `json:"description"`
+	DescDE   string        `json:"description_de,omitempty"`
 	URL      string        `json:"url"`
 	Stars    int           `json:"stars"`
 	Language string        `json:"language"`
@@ -276,6 +277,13 @@ type Project struct {
 	Featured bool          `json:"featured"`
 	Order    int           `json:"order,omitempty"`
 	Links    []ProjectLink `json:"links"`
+}
+
+func (p Project) DescFor(lang string) string {
+	if lang == "de" && p.DescDE != "" {
+		return p.DescDE
+	}
+	return p.Desc
 }
 
 type ProjectLink struct {

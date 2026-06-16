@@ -127,7 +127,7 @@ func featuredCard(p hpdata.Project, tone token.Tone, big bool, lang string) g.No
 				primitive.Tag(primitive.TagProps{Tone: token.ToneYellow}, g.Text(fmt.Sprintf("★ %d", p.Stars))),
 			),
 		),
-		h.P(h.Style("margin:0;font-size:var(--t-sm);line-height:1.55;opacity:.85"), g.Text(truncate(p.Desc, 160))),
+		h.P(h.Style("margin:0;font-size:var(--t-sm);line-height:1.55;opacity:.85"), g.Text(truncate(p.DescFor(lang), 350))),
 		h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-2)"),
 			g.If(p.Language != "", primitive.Tag(primitive.TagProps{Tone: token.ToneAccent}, g.Text(p.Language))),
 			g.Group(topicNodes),

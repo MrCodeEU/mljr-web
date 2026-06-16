@@ -124,7 +124,7 @@ func projectCard(p hpdata.Project, tone token.Tone, lang string) g.Node {
 						g.Text(fmt.Sprintf("★ %d", p.Stars))),
 				),
 			),
-			h.P(h.Style("margin:0;font-size:var(--t-sm)"), g.Text(truncate(p.Desc, 110))),
+			h.P(h.Style("margin:0;font-size:var(--t-sm)"), g.Text(truncate(p.DescFor(lang), 200))),
 			h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-2)"),
 				primitive.Tag(primitive.TagProps{Tone: token.ToneAccent}, g.Text(p.Language)),
 				g.Group(topicNodes),
