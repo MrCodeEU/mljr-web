@@ -12,13 +12,14 @@ import (
 
 // SnakeTimelineItem is one event in the snake timeline.
 type SnakeTimelineItem struct {
-	Period  string
-	Title   string
-	Org     string
-	OrgLogo string
-	Desc    string
-	Tags    []string
-	Tone    token.Tone
+	Period   string
+	Title    string
+	Org      string
+	OrgLogo  string
+	Desc     string
+	Tags     []string
+	TagNodes []g.Node // pre-built tag nodes with icons/tones; overrides Tags when set
+	Tone     token.Tone
 }
 
 type SnakeTimelineProps struct {
@@ -128,10 +129,13 @@ func OrgLogoChip(src, alt string) g.Node {
 }
 
 func snakeCard(item SnakeTimelineItem) g.Node {
-	tagNodes := make([]g.Node, 0, len(item.Tags))
-	for _, t := range item.Tags {
-		if t != "" {
-			tagNodes = append(tagNodes, primitive.Tag(primitive.TagProps{}, g.Text(t)))
+	tagNodes := item.TagNodes
+	if len(tagNodes) == 0 {
+		tagNodes = make([]g.Node, 0, len(item.Tags))
+		for _, t := range item.Tags {
+			if t != "" {
+				tagNodes = append(tagNodes, primitive.Tag(primitive.TagProps{}, g.Text(t)))
+			}
 		}
 	}
 

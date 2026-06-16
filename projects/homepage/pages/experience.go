@@ -32,23 +32,24 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 		} else if j.Summary != "" {
 			desc = j.Summary
 		}
+		tagNodes := buildTagNodes(j.Tags)
 		snakeItems = append(snakeItems, uidata.SnakeTimelineItem{
-			Period:  j.FormatPeriod() + " · " + j.FormatDuration(),
-			Title:   j.TitleFor(lang),
-			Org:     j.Organization,
-			OrgLogo: j.Logo,
-			Desc:    desc,
-			Tags:    j.Tags,
-			Tone:    tones[i%len(tones)],
+			Period:   j.FormatPeriod() + " · " + j.FormatDuration(),
+			Title:    j.TitleFor(lang),
+			Org:      j.Organization,
+			OrgLogo:  j.Logo,
+			Desc:     desc,
+			TagNodes: tagNodes,
+			Tone:     tones[i%len(tones)],
 		})
 		mobileItems = append(mobileItems, uidata.TimelineItem{
-			Period:  j.FormatPeriod() + " · " + j.FormatDuration(),
-			Title:   j.TitleFor(lang),
-			Org:     j.Organization,
-			OrgLogo: j.Logo,
-			Desc:    desc,
-			Tags:    j.Tags,
-			Tone:    tones[i%len(tones)],
+			Period:   j.FormatPeriod() + " · " + j.FormatDuration(),
+			Title:    j.TitleFor(lang),
+			Org:      j.Organization,
+			OrgLogo:  j.Logo,
+			Desc:     desc,
+			TagNodes: tagNodes,
+			Tone:     tones[i%len(tones)],
 		})
 	}
 
@@ -114,13 +115,11 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 								nodes := make([]g.Node, 0, len(thesis))
 								for _, t := range thesis {
 									nodes = append(nodes, primitive.Card(primitive.CardProps{Tone: thesisTone(t.Type)},
-										g.If(thesisLogo(t.Type) != "",
-											h.Div(h.Style("margin-bottom:var(--sp-3)"),
+										h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
+											g.If(thesisLogo(t.Type) != "",
 												uidata.OrgLogoChip(thesisLogo(t.Type), ""),
 											),
-										),
-										h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
-											h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35"), g.Text(t.Title)),
+											h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35;flex:1"), g.Text(t.Title)),
 											primitive.Tag(primitive.TagProps{}, g.Text(t.Type)),
 										),
 										h.P(h.Style("margin:0;font-size:var(--t-sm);line-height:1.55;opacity:.85"), g.Text(t.Description)),
@@ -251,6 +250,20 @@ func orgLocation2(org string) (orgLocation, bool) {
 	}
 	loc, ok := m[org]
 	return loc, ok
+}
+
+func buildTagNodes(tags []string) []g.Node {
+	nodes := make([]g.Node, 0, len(tags))
+	for _, t := range tags {
+		if t == "" {
+			continue
+		}
+		nodes = append(nodes, primitive.Tag(
+			primitive.TagProps{Icon: hpdata.TechIcon(t), Tone: hpdata.TagTone(t)},
+			g.Text(t),
+		))
+	}
+	return nodes
 }
 
 func thesisLogo(typ string) string {

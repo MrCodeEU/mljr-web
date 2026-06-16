@@ -9,14 +9,15 @@ import (
 )
 
 type TimelineItem struct {
-	Period  string
-	Title   string
-	Org     string
-	OrgLogo string // optional img src — rendered absolute top-right of card
-	Desc    string
-	Tags    []string
-	Tone    token.Tone
-	Attrs   []g.Node
+	Period   string
+	Title    string
+	Org      string
+	OrgLogo  string // optional img src — rendered absolute top-right of card
+	Desc     string
+	Tags     []string
+	TagNodes []g.Node // pre-built tag nodes with icons/tones; overrides Tags when set
+	Tone     token.Tone
+	Attrs    []g.Node
 }
 
 type TimelineProps struct {
@@ -34,9 +35,12 @@ func Timeline(p TimelineProps, items ...TimelineItem) g.Node {
 }
 
 func timelineItem(item TimelineItem) g.Node {
-	tagNodes := make([]g.Node, 0, len(item.Tags))
-	for _, t := range item.Tags {
-		tagNodes = append(tagNodes, primitive.Tag(primitive.TagProps{}, g.Text(t)))
+	tagNodes := item.TagNodes
+	if len(tagNodes) == 0 {
+		tagNodes = make([]g.Node, 0, len(item.Tags))
+		for _, t := range item.Tags {
+			tagNodes = append(tagNodes, primitive.Tag(primitive.TagProps{}, g.Text(t)))
+		}
 	}
 
 	cardChildren := []g.Node{
