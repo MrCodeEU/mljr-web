@@ -20,14 +20,15 @@ import (
 var seedJSON []byte
 
 type SiteData struct {
-	GitHub        []Project    `json:"github_projects"`
-	LinkedIn      LinkedInData `json:"linkedin_data"`
-	Strava        StravaData   `json:"strava_data"`
-	GitHubStats   *GitHubStats `json:"github_stats,omitempty"`
-	SchemaVersion string       `json:"schema_version,omitempty"`
-	GeneratedAt   string       `json:"generated_at,omitempty"`
+	GitHub        []Project      `json:"github_projects"`
+	LinkedIn      LinkedInData   `json:"linkedin_data"`
+	Strava        StravaData     `json:"strava_data"`
+	GitHubStats   *GitHubStats   `json:"github_stats,omitempty"`
+	SchemaVersion string         `json:"schema_version,omitempty"`
+	GeneratedAt   string         `json:"generated_at,omitempty"`
 	Content       map[string]SiteContent `json:"content"`
 	Thesis        map[string][]Thesis    `json:"thesis"`
+	Timeline      []TimelineItem `json:"timeline"`
 }
 
 // ContentFor returns the hand-authored copy for lang, falling back to
@@ -86,6 +87,112 @@ type Thesis struct {
 	Type        string `json:"type"`
 	Description string `json:"description"`
 	PDF         string `json:"pdf"`
+}
+
+// TimelineItem is a hand-authored experience/education entry from timeline.json,
+// embedded in site-data.json by the generator. Always in English.
+type TimelineItem struct {
+	ID           string   `json:"id"`
+	Kind         string   `json:"kind"` // "work", "education", "thesis"
+	Title        string   `json:"title"`
+	Organization string   `json:"organization"`
+	Start        string   `json:"start"` // "YYYY-MM" or "YYYY"
+	End          *string  `json:"end"`   // null = present
+	Location     string   `json:"location,omitempty"`
+	Summary      string   `json:"summary"`
+	Details      []string `json:"details,omitempty"`
+	Tags         []string `json:"tags,omitempty"`
+	Logo         string   `json:"logo,omitempty"`
+	Repo         string   `json:"repo,omitempty"`
+}
+
+// FormatPeriod returns a human-readable date range, e.g. "Nov 2025 – Present".
+func (t TimelineItem) FormatPeriod() string {
+	return formatYYYYMM(t.Start) + " – " + formatEndDate(t.End)
+}
+
+// FormatDuration returns an approximate duration string, e.g. "6 months", "3 years".
+func (t TimelineItem) FormatDuration() string {
+	start := parseYYYYMM(t.Start)
+	var end time.Time
+	if t.End == nil {
+		end = time.Now()
+	} else {
+		end = parseYYYYMM(*t.End)
+		// End month is inclusive — advance to end of month
+		end = end.AddDate(0, 1, 0)
+	}
+	months := int(end.Sub(start).Hours() / 24 / 30.44)
+	if months < 1 {
+		months = 1
+	}
+	if months < 12 {
+		if months == 1 {
+			return "1 month"
+		}
+		return fmt.Sprintf("%d months", months)
+	}
+	years := months / 12
+	rem := months % 12
+	if rem == 0 {
+		if years == 1 {
+			return "1 year"
+		}
+		return fmt.Sprintf("%d years", years)
+	}
+	if years == 1 {
+		return fmt.Sprintf("1 yr %d mo", rem)
+	}
+	return fmt.Sprintf("%d yrs %d mo", years, rem)
+}
+
+func parseYYYYMM(s string) time.Time {
+	if len(s) == 7 {
+		t, _ := time.Parse("2006-01", s)
+		return t
+	}
+	t, _ := time.Parse("2006", s)
+	return t
+}
+
+func formatYYYYMM(s string) string {
+	t := parseYYYYMM(s)
+	if t.IsZero() {
+		return s
+	}
+	if len(s) == 7 {
+		return t.Format("Jan 2006")
+	}
+	return t.Format("2006")
+}
+
+func formatEndDate(end *string) string {
+	if end == nil {
+		return "Present"
+	}
+	return formatYYYYMM(*end)
+}
+
+// WorkItems returns timeline items with kind == "work", in order.
+func (d SiteData) WorkItems() []TimelineItem {
+	var out []TimelineItem
+	for _, item := range d.Timeline {
+		if item.Kind == "work" {
+			out = append(out, item)
+		}
+	}
+	return out
+}
+
+// EduItems returns timeline items with kind == "education", in order.
+func (d SiteData) EduItems() []TimelineItem {
+	var out []TimelineItem
+	for _, item := range d.Timeline {
+		if item.Kind == "education" {
+			out = append(out, item)
+		}
+	}
+	return out
 }
 
 // GitHubStats holds contribution/heatmap data produced by the mljr-data

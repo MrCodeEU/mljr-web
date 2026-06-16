@@ -2,7 +2,6 @@ package pages
 
 import (
 	"fmt"
-	"strings"
 
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
@@ -18,50 +17,48 @@ import (
 )
 
 func experienceSection(d hpdata.SiteData, lang string) g.Node {
-	li := d.LinkedIn
-	jobs := li.RelevantExperience(100) // all positions
+	jobs := d.WorkItems()
+	edu := d.EduItems()
 
 	tones := []token.Tone{token.ToneCyan, token.ToneViolet, token.ToneLime, token.ToneSky, token.TonePink, token.ToneMint, token.ToneBlush, token.ToneYellow}
 
 	snakeItems := make([]uidata.SnakeTimelineItem, 0, len(jobs))
 	mobileItems := make([]uidata.TimelineItem, 0, len(jobs))
 	for i, j := range jobs {
-		desc := j.Desc
-		if len(desc) < 30 || strings.Contains(desc, "Österreich") || strings.Contains(desc, "sterreich") {
-			desc = ""
-		}
-		tags := []string{j.Type}
-		if j.Type == "" {
-			tags = nil
+		desc := ""
+		if len(j.Details) > 0 {
+			desc = j.Details[0]
+		} else if j.Summary != "" {
+			desc = j.Summary
 		}
 		snakeItems = append(snakeItems, uidata.SnakeTimelineItem{
-			Period:  j.Period + " · " + j.Duration,
+			Period:  j.FormatPeriod() + " · " + j.FormatDuration(),
 			Title:   j.Title,
-			Org:     j.Company,
-			OrgLogo: hpdata.LogoForCompany(j.Company),
+			Org:     j.Organization,
+			OrgLogo: j.Logo,
 			Desc:    desc,
-			Tags:    tags,
+			Tags:    j.Tags,
 			Tone:    tones[i%len(tones)],
 		})
 		mobileItems = append(mobileItems, uidata.TimelineItem{
-			Period:  j.Period + " · " + j.Duration,
+			Period:  j.FormatPeriod() + " · " + j.FormatDuration(),
 			Title:   j.Title,
-			Org:     j.Company,
-			OrgLogo: hpdata.LogoForCompany(j.Company),
+			Org:     j.Organization,
+			OrgLogo: j.Logo,
 			Desc:    desc,
-			Tags:    tags,
+			Tags:    j.Tags,
 			Tone:    tones[i%len(tones)],
 		})
 	}
 
-	eduItems := make([]uidata.TimelineItem, 0, len(li.Education))
 	eduTones := []token.Tone{token.ToneAccent, token.ToneSky, token.ToneMint}
-	for i, e := range li.Education {
+	eduItems := make([]uidata.TimelineItem, 0, len(edu))
+	for i, e := range edu {
 		eduItems = append(eduItems, uidata.TimelineItem{
-			Period:  e.Period,
-			Title:   e.Degree,
-			Org:     e.School,
-			OrgLogo: hpdata.LogoForSchool(e.School),
+			Period:  e.FormatPeriod(),
+			Title:   e.Title,
+			Org:     e.Organization,
+			OrgLogo: e.Logo,
 			Tone:    eduTones[i%len(eduTones)],
 		})
 	}
@@ -70,14 +67,14 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 		h.ID("experience"),
 		h.Style("padding:var(--sp-12) 0"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("01", i18n.T(lang, "sections.experience.title"), fmt.Sprintf("%d positions", len(jobs)), token.ToneCyan),
+			sectionHeader("01", i18n.T(lang, "sections.experience.title"), fmt.Sprintf(i18n.T(lang, "sections.experience.positions"), len(jobs)), token.ToneCyan),
 			// Snake timeline spans full width
 			h.Div(h.Class("experience-snake"), uidata.SnakeTimeline(uidata.SnakeTimelineProps{Cols: 3}, snakeItems...)),
 			h.Div(h.Class("experience-mobile-timeline"), uidata.Timeline(uidata.TimelineProps{}, mobileItems...)),
 			// Education row below
 			h.Div(
 				h.Style("margin-top:var(--sp-12)"),
-				sectionHeader("", i18n.T(lang, "sections.education.title"), fmt.Sprintf("%d degrees", len(li.Education)), token.ToneSky),
+				sectionHeader("", i18n.T(lang, "sections.education.title"), fmt.Sprintf(i18n.T(lang, "sections.education.degrees"), len(edu)), token.ToneSky),
 				h.Div(
 					h.Style("display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--sp-4)"),
 					g.Group(func() []g.Node {
@@ -134,7 +131,7 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 					),
 				),
 			),
-			experienceLocationMap(li, lang),
+			experienceLocationMap(d, lang),
 		),
 	)
 }
@@ -144,7 +141,7 @@ type orgLocation struct {
 	lng float64
 }
 
-func experienceLocationMap(li hpdata.LinkedInData, lang string) g.Node {
+func experienceLocationMap(d hpdata.SiteData, lang string) g.Node {
 	pins := []special.MapPin{
 		{Lat: 48.143, Lng: 14.461, Label: "Home · Thaling, Upper Austria", Popup: "<strong>Home · Thaling, Upper Austria</strong><br>Current base"},
 	}
@@ -153,13 +150,13 @@ func experienceLocationMap(li hpdata.LinkedInData, lang string) g.Node {
 	// fixed pixel-radius spokes (so they never get hidden behind a cluster
 	// bubble for their own siblings).
 	counts := map[orgLocation]int{}
-	for _, j := range li.RelevantExperience(100) {
-		if loc, ok := companyLocation(j.Company); ok {
+	for _, j := range d.WorkItems() {
+		if loc, ok := orgLocation2(j.Organization); ok {
 			counts[loc]++
 		}
 	}
-	for _, e := range li.Education {
-		if loc, ok := schoolLocation(e.School); ok {
+	for _, e := range d.EduItems() {
+		if loc, ok := orgLocation2(e.Organization); ok {
 			counts[loc]++
 		}
 	}
@@ -173,8 +170,8 @@ func experienceLocationMap(li hpdata.LinkedInData, lang string) g.Node {
 		return loc.lat, loc.lng, float64(n) * 2.399963, 22 + 18*float64(n) // golden angle, growing radius
 	}
 	idx := 1
-	for _, j := range li.RelevantExperience(100) {
-		loc, ok := companyLocation(j.Company)
+	for _, j := range d.WorkItems() {
+		loc, ok := orgLocation2(j.Organization)
 		if !ok {
 			continue
 		}
@@ -186,14 +183,14 @@ func experienceLocationMap(li hpdata.LinkedInData, lang string) g.Node {
 			LineLng:      lineLng,
 			SpreadAngle:  angle,
 			SpreadRadius: radius,
-			Label:        j.Company,
-			Popup:        orgPopup(idx, j.Company, hpdata.LogoForCompany(j.Company), j.Title, j.Period),
-			Icon:         hpdata.LogoForCompany(j.Company),
+			Label:        j.Organization,
+			Popup:        orgPopup(idx, j.Organization, j.Logo, j.Title, j.FormatPeriod()),
+			Icon:         j.Logo,
 		})
 		idx++
 	}
-	for _, e := range li.Education {
-		loc, ok := schoolLocation(e.School)
+	for _, e := range d.EduItems() {
+		loc, ok := orgLocation2(e.Organization)
 		if !ok {
 			continue
 		}
@@ -205,9 +202,9 @@ func experienceLocationMap(li hpdata.LinkedInData, lang string) g.Node {
 			LineLng:      lineLng,
 			SpreadAngle:  angle,
 			SpreadRadius: radius,
-			Label:        e.School,
-			Popup:        orgPopup(idx, e.School, hpdata.LogoForSchool(e.School), e.Degree, e.Period),
-			Icon:         hpdata.LogoForSchool(e.School),
+			Label:        e.Organization,
+			Popup:        orgPopup(idx, e.Organization, e.Logo, e.Title, e.FormatPeriod()),
+			Icon:         e.Logo,
 		})
 		idx++
 	}
@@ -225,26 +222,20 @@ func experienceLocationMap(li hpdata.LinkedInData, lang string) g.Node {
 	)
 }
 
-func companyLocation(company string) (orgLocation, bool) {
+// orgLocation2 maps organization names (EN or DE) to map coordinates.
+func orgLocation2(org string) (orgLocation, bool) {
 	m := map[string]orgLocation{
 		"Dynatrace":                        {48.3069, 14.2858},
+		"Johannes Kepler University Linz":  {48.3371, 14.3196},
 		"Johannes Kepler Universität Linz": {48.3371, 14.3196},
 		"ventopay gmbh":                    {48.3678, 14.5165},
 		"Bosch":                            {48.3069, 14.2858},
 		"Bosch Rexroth":                    {48.2462, 14.2348},
 		"ENGEL":                            {48.2735, 14.5861},
 		"HerzReha Bad Ischl":               {47.7111, 13.6239},
-	}
-	loc, ok := m[company]
-	return loc, ok
-}
-
-func schoolLocation(school string) (orgLocation, bool) {
-	m := map[string]orgLocation{
-		"Johannes Kepler Universität Linz": {48.3371, 14.3196},
 		"HTL Steyr":                        {48.0427, 14.4213},
 	}
-	loc, ok := m[school]
+	loc, ok := m[org]
 	return loc, ok
 }
 
