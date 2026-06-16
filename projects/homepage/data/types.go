@@ -95,15 +95,34 @@ type TimelineItem struct {
 	ID           string   `json:"id"`
 	Kind         string   `json:"kind"` // "work", "education", "thesis"
 	Title        string   `json:"title"`
+	TitleDE      string   `json:"title_de,omitempty"`
 	Organization string   `json:"organization"`
 	Start        string   `json:"start"` // "YYYY-MM" or "YYYY"
 	End          *string  `json:"end"`   // null = present
 	Location     string   `json:"location,omitempty"`
 	Summary      string   `json:"summary"`
+	SummaryDE    string   `json:"summary_de,omitempty"`
 	Details      []string `json:"details,omitempty"`
+	DetailsDE    []string `json:"details_de,omitempty"`
 	Tags         []string `json:"tags,omitempty"`
 	Logo         string   `json:"logo,omitempty"`
 	Repo         string   `json:"repo,omitempty"`
+}
+
+// TitleFor returns the localized title, falling back to English.
+func (t TimelineItem) TitleFor(lang string) string {
+	if lang == "de" && t.TitleDE != "" {
+		return t.TitleDE
+	}
+	return t.Title
+}
+
+// DetailsFor returns localized details, falling back to English.
+func (t TimelineItem) DetailsFor(lang string) []string {
+	if lang == "de" && len(t.DetailsDE) > 0 {
+		return t.DetailsDE
+	}
+	return t.Details
 }
 
 // FormatPeriod returns a human-readable date range, e.g. "Nov 2025 – Present".
@@ -122,7 +141,7 @@ func (t TimelineItem) FormatDuration() string {
 		// End month is inclusive — advance to end of month
 		end = end.AddDate(0, 1, 0)
 	}
-	months := int(end.Sub(start).Hours() / 24 / 30.44)
+	months := (end.Year()-start.Year())*12 + int(end.Month()) - int(start.Month())
 	if months < 1 {
 		months = 1
 	}

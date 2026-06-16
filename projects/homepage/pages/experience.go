@@ -25,15 +25,16 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 	snakeItems := make([]uidata.SnakeTimelineItem, 0, len(jobs))
 	mobileItems := make([]uidata.TimelineItem, 0, len(jobs))
 	for i, j := range jobs {
+		details := j.DetailsFor(lang)
 		desc := ""
-		if len(j.Details) > 0 {
-			desc = j.Details[0]
+		if len(details) > 0 {
+			desc = details[0]
 		} else if j.Summary != "" {
 			desc = j.Summary
 		}
 		snakeItems = append(snakeItems, uidata.SnakeTimelineItem{
 			Period:  j.FormatPeriod() + " · " + j.FormatDuration(),
-			Title:   j.Title,
+			Title:   j.TitleFor(lang),
 			Org:     j.Organization,
 			OrgLogo: j.Logo,
 			Desc:    desc,
@@ -42,7 +43,7 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 		})
 		mobileItems = append(mobileItems, uidata.TimelineItem{
 			Period:  j.FormatPeriod() + " · " + j.FormatDuration(),
-			Title:   j.Title,
+			Title:   j.TitleFor(lang),
 			Org:     j.Organization,
 			OrgLogo: j.Logo,
 			Desc:    desc,
@@ -56,7 +57,7 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 	for i, e := range edu {
 		eduItems = append(eduItems, uidata.TimelineItem{
 			Period:  e.FormatPeriod(),
-			Title:   e.Title,
+			Title:   e.TitleFor(lang),
 			Org:     e.Organization,
 			OrgLogo: e.Logo,
 			Tone:    eduTones[i%len(eduTones)],
