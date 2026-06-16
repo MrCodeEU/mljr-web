@@ -40,7 +40,6 @@ func main() {
 		if err := datastar.ReadSignals(c.Request(), &s); err != nil {
 			return err
 		}
-
 		result := pages.EvalRegex(pages.EvalInput{
 			Pattern: s.Pattern,
 			FlagI:   s.FlagI,
@@ -49,8 +48,45 @@ func main() {
 			Input:   s.Input,
 			Replace: s.Replace,
 		})
+		sse := datastar.NewSSE(c.Response().Writer, c.Request())
+		return sse.PatchElements(web.RenderToString(pages.OutputFragment(result)))
+	})
+
+	e.POST("/api/example", func(c echo.Context) error {
+		var s struct {
+			Example string `json:"example"`
+		}
+		if err := datastar.ReadSignals(c.Request(), &s); err != nil {
+			return err
+		}
+		ex, ok := pages.FindExample(s.Example)
+		if !ok {
+			return c.NoContent(204)
+		}
 
 		sse := datastar.NewSSE(c.Response().Writer, c.Request())
+
+		// Update all input signals so the inputs reflect the example.
+		if err := sse.MarshalAndPatchSignals(struct {
+			Pattern string `json:"pattern"`
+			FlagI   bool   `json:"flagI"`
+			FlagM   bool   `json:"flagM"`
+			FlagS   bool   `json:"flagS"`
+			Input   string `json:"input"`
+			Replace string `json:"replace"`
+		}{ex.Pattern, ex.FlagI, ex.FlagM, ex.FlagS, ex.Input, ex.Replace}); err != nil {
+			return err
+		}
+
+		// Evaluate and patch output.
+		result := pages.EvalRegex(pages.EvalInput{
+			Pattern: ex.Pattern,
+			FlagI:   ex.FlagI,
+			FlagM:   ex.FlagM,
+			FlagS:   ex.FlagS,
+			Input:   ex.Input,
+			Replace: ex.Replace,
+		})
 		return sse.PatchElements(web.RenderToString(pages.OutputFragment(result)))
 	})
 

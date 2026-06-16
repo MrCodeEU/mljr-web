@@ -2,11 +2,12 @@ package pages
 
 import (
 	"html"
-	"regexp"
 	"strings"
+	"time"
+
+	"github.com/dlclark/regexp2/v2"
 )
 
-// EvalInput holds signals from the client.
 type EvalInput struct {
 	Pattern string
 	FlagI   bool
@@ -16,7 +17,6 @@ type EvalInput struct {
 	Replace string
 }
 
-// MatchInfo describes one match and its captured groups.
 type MatchInfo struct {
 	Index  int
 	Value  string
@@ -25,20 +25,17 @@ type MatchInfo struct {
 	Groups []string
 }
 
-// EvalResult is returned by EvalRegex.
 type EvalResult struct {
 	Err            string
 	MatchCount     int
-	Highlighted    string // HTML-safe: non-match text escaped, matches in <mark>
+	Highlighted    string // HTML-safe: plain text escaped, matches in <mark>
 	Matches        []MatchInfo
 	Replaced       string
-	ReplaceApplied bool // true when Replace field was non-empty
+	ReplaceApplied bool
 	InputRaw       string
-	PatternEmpty   bool // true when Pattern was ""
+	PatternEmpty   bool
 }
 
-// EvalRegex compiles the pattern (with flag prefixes), finds all matches, and
-// builds the highlighted HTML. It never panics.
 func EvalRegex(inp EvalInput) EvalResult {
 	if inp.Pattern == "" {
 		return EvalResult{
@@ -48,18 +45,18 @@ func EvalRegex(inp EvalInput) EvalResult {
 		}
 	}
 
-	prefix := ""
+	var flags regexp2.RegexOptions
 	if inp.FlagI {
-		prefix += "(?i)"
+		flags |= regexp2.IgnoreCase
 	}
 	if inp.FlagM {
-		prefix += "(?m)"
+		flags |= regexp2.Multiline
 	}
 	if inp.FlagS {
-		prefix += "(?s)"
+		flags |= regexp2.Singleline
 	}
 
-	re, err := regexp.Compile(prefix + inp.Pattern)
+	re, err := regexp2.Compile(inp.Pattern, flags)
 	if err != nil {
 		return EvalResult{
 			Err:         err.Error(),
@@ -67,37 +64,61 @@ func EvalRegex(inp EvalInput) EvalResult {
 			InputRaw:    inp.Input,
 		}
 	}
+	re.MatchTimeout = 500 * time.Millisecond
 
-	allIdx := re.FindAllStringSubmatchIndex(inp.Input, -1)
-	highlighted := buildHighlight(inp.Input, allIdx)
+	var spans [][2]int
+	var matches []MatchInfo
+	idx := 0
 
-	matches := make([]MatchInfo, 0, len(allIdx))
-	for i, m := range allIdx {
-		val := ""
-		if m[0] >= 0 && m[1] >= 0 {
-			val = inp.Input[m[0]:m[1]]
+	m, err := re.FindStringMatch(inp.Input)
+	if err != nil {
+		return EvalResult{
+			Err:         "match error: " + err.Error(),
+			Highlighted: html.EscapeString(inp.Input),
+			InputRaw:    inp.Input,
 		}
-		groups := make([]string, 0)
-		for j := 2; j+1 < len(m); j += 2 {
-			g := ""
-			if m[j] >= 0 && m[j+1] >= 0 {
-				g = inp.Input[m[j]:m[j+1]]
-			}
-			groups = append(groups, g)
+	}
+	for m != nil {
+		bstart, blen := m.ByteRange()
+		end := bstart + blen
+		spans = append(spans, [2]int{bstart, end})
+
+		groups := m.Groups()
+		var groupStrs []string
+		for _, g := range groups[1:] { // groups[0] = full match
+			groupStrs = append(groupStrs, g.String())
 		}
+
 		matches = append(matches, MatchInfo{
-			Index:  i,
-			Value:  val,
-			Start:  m[0],
-			End:    m[1],
-			Groups: groups,
+			Index:  idx,
+			Value:  m.String(),
+			Start:  bstart,
+			End:    end,
+			Groups: groupStrs,
 		})
+		idx++
+
+		m, err = re.FindNextMatch(m)
+		if err != nil {
+			return EvalResult{
+				Err:         "match error: " + err.Error(),
+				Highlighted: html.EscapeString(inp.Input),
+				InputRaw:    inp.Input,
+			}
+		}
 	}
 
-	replaced := re.ReplaceAllString(inp.Input, inp.Replace)
+	highlighted := buildHighlight(inp.Input, spans)
+
+	replaced := inp.Input
+	if inp.Replace != "" {
+		if r, rerr := re.Replace(inp.Input, inp.Replace, -1, -1); rerr == nil {
+			replaced = r
+		}
+	}
 
 	return EvalResult{
-		MatchCount:     len(allIdx),
+		MatchCount:     len(matches),
 		Highlighted:    highlighted,
 		Matches:        matches,
 		Replaced:       replaced,
@@ -106,23 +127,23 @@ func EvalRegex(inp EvalInput) EvalResult {
 	}
 }
 
-func buildHighlight(input string, allIdx [][]int) string {
-	if len(allIdx) == 0 {
+func buildHighlight(input string, spans [][2]int) string {
+	if len(spans) == 0 {
 		return html.EscapeString(input)
 	}
 	var sb strings.Builder
 	pos := 0
-	for _, m := range allIdx {
-		if m[0] < 0 || m[1] < 0 {
+	for _, sp := range spans {
+		if sp[0] < pos {
 			continue
 		}
-		if pos < m[0] {
-			sb.WriteString(html.EscapeString(input[pos:m[0]]))
+		if pos < sp[0] {
+			sb.WriteString(html.EscapeString(input[pos:sp[0]]))
 		}
 		sb.WriteString(`<mark class="rx-match">`)
-		sb.WriteString(html.EscapeString(input[m[0]:m[1]]))
+		sb.WriteString(html.EscapeString(input[sp[0]:sp[1]]))
 		sb.WriteString(`</mark>`)
-		pos = m[1]
+		pos = sp[1]
 	}
 	if pos < len(input) {
 		sb.WriteString(html.EscapeString(input[pos:]))
