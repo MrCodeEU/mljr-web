@@ -134,3 +134,6 @@ simple-icons:dotnet
 simple-icons:victoriametrics
 simple-icons:postgresql
 simple-icons:sqlite
+# flag icons for language toggle
+circle-flags:de
+circle-flags:gb

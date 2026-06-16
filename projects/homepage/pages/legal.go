@@ -174,8 +174,8 @@ func siteNavbar(lang string) g.Node {
 		g.Group{
 			special.LanguageToggle(special.LanguageToggleProps{
 				Languages: []special.Language{
-					{Code: "en", Label: "EN", Title: "English"},
-					{Code: "de", Label: "DE", Title: "Deutsch"},
+					{Code: "en", Label: "EN", Title: "English", Flag: "circle-flags:gb"},
+					{Code: "de", Label: "DE", Title: "Deutsch", Flag: "circle-flags:de"},
 				},
 				Current:        lang,
 				ReloadOnChange: true,

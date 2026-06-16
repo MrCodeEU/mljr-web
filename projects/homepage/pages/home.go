@@ -25,7 +25,6 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 	}
 	totalProjects := len(d.GitHub)
 	headExtra := append([]g.Node{
-		h.Script(h.Src("/static/motion.min.js")),
 		g.El("style", g.Raw(homepageCSS)),
 	}, AnalyticsHead(a)...)
 
@@ -65,19 +64,6 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 		overlay.Toaster(overlay.ToasterProps{}),
 		overlay.Portal("portal"),
 
-		h.Script(g.Raw(`(function(){
-  if(typeof Motion==='undefined') return;
-  var sections=['#experience','#featured','#projects','#opensource','#homelab','#activity','#skills','#under-the-hood','#contact'];
-  sections.forEach(function(sel){
-    var el=document.querySelector(sel);
-    if(!el) return;
-    var children=Array.from(el.querySelectorAll('[data-component="card"],[data-component="timeline"],[data-component="timeline-item"]'));
-    if(!children.length) children=[el];
-    Motion.inView(el,function(){
-      Motion.animate(children,{opacity:[0,1],y:[18,0]},{delay:Motion.stagger(0.06),duration:0.4,easing:[0.25,0.46,0.45,0.94]});
-    },{margin:'-80px'});
-  });
-})();`)),
 	)
 }
 
