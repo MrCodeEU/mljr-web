@@ -60,6 +60,7 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 			Title:   e.TitleFor(lang),
 			Org:     e.Organization,
 			OrgLogo: e.Logo,
+			Desc:    e.SummaryFor(lang),
 			Tone:    eduTones[i%len(eduTones)],
 		})
 	}
@@ -93,10 +94,13 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 									),
 								),
 								h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35"), g.Text(edu.Title)),
-							)
-						}
-						return nodes
-					}()),
+							g.If(edu.Desc != "",
+								h.P(h.Style("margin:var(--sp-2) 0 0;font-size:var(--t-sm);line-height:1.5;opacity:.8"), g.Text(edu.Desc)),
+							),
+						)
+					}
+					return nodes
+				}()),
 				),
 				// Thesis section
 				g.If(len(d.ThesisFor(lang)) > 0,
@@ -110,6 +114,11 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 								nodes := make([]g.Node, 0, len(thesis))
 								for _, t := range thesis {
 									nodes = append(nodes, primitive.Card(primitive.CardProps{Tone: thesisTone(t.Type)},
+										g.If(thesisLogo(t.Type) != "",
+											h.Div(h.Style("margin-bottom:var(--sp-3)"),
+												uidata.OrgLogoChip(thesisLogo(t.Type), ""),
+											),
+										),
 										h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
 											h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35"), g.Text(t.Title)),
 											primitive.Tag(primitive.TagProps{}, g.Text(t.Type)),
@@ -242,6 +251,16 @@ func orgLocation2(org string) (orgLocation, bool) {
 	}
 	loc, ok := m[org]
 	return loc, ok
+}
+
+func thesisLogo(typ string) string {
+	switch typ {
+	case "HTL":
+		return "/static/logos/htl-steyr.png"
+	case "Bachelor", "Master", "Project", "Projekt":
+		return "/static/logos/jku.jpg"
+	}
+	return ""
 }
 
 func thesisTone(typ string) token.Tone {

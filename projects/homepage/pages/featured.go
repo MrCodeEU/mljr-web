@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"strings"
 
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
@@ -81,13 +82,26 @@ func featuredCard(p hpdata.Project, tone token.Tone, big bool, lang string) g.No
 		titleSize = "clamp(1.8rem,3vw,2.6rem)"
 	}
 
-	topicNodes := make([]g.Node, 0, 4)
+	// Deduplicate: language first, then unique topics (case-insensitive)
+	seen := map[string]bool{}
+	allTags := make([]string, 0, len(p.Topics)+1)
+	if p.Language != "" {
+		allTags = append(allTags, p.Language)
+		seen[strings.ToLower(p.Language)] = true
+	}
 	for _, t := range p.Topics {
-		if len(topicNodes) >= 4 {
+		if !seen[strings.ToLower(t)] {
+			allTags = append(allTags, t)
+			seen[strings.ToLower(t)] = true
+		}
+	}
+	topicNodes := make([]g.Node, 0, 5)
+	for _, t := range allTags {
+		if len(topicNodes) >= 5 {
 			break
 		}
 		topicNodes = append(topicNodes, primitive.Tag(
-			primitive.TagProps{Icon: hpdata.TechIcon(t)}, g.Text(t),
+			primitive.TagProps{Icon: hpdata.TechIcon(t), Tone: hpdata.TagTone(t)}, g.Text(t),
 		))
 	}
 
@@ -129,7 +143,6 @@ func featuredCard(p hpdata.Project, tone token.Tone, big bool, lang string) g.No
 		),
 		h.P(h.Style("margin:0;font-size:var(--t-sm);line-height:1.55;opacity:.85"), g.Text(truncate(p.DescFor(lang), 350))),
 		h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-2)"),
-			g.If(p.Language != "", primitive.Tag(primitive.TagProps{Tone: token.ToneAccent}, g.Text(p.Language))),
 			g.Group(topicNodes),
 		),
 		ghLink,

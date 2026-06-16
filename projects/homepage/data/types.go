@@ -14,6 +14,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"mljr-web/ui/token"
 )
 
 //go:embed seed-cache.json
@@ -115,6 +117,14 @@ func (t TimelineItem) TitleFor(lang string) string {
 		return t.TitleDE
 	}
 	return t.Title
+}
+
+// SummaryFor returns the localized summary, falling back to English.
+func (t TimelineItem) SummaryFor(lang string) string {
+	if lang == "de" && t.SummaryDE != "" {
+		return t.SummaryDE
+	}
+	return t.Summary
 }
 
 // DetailsFor returns localized details, falling back to English.
@@ -812,6 +822,16 @@ func TechIcon(keyword string) string {
 		"mobile":     "lucide:cpu",
 		"wails":      "simple-icons:go",
 		"github":     "simple-icons:github",
+		// ── experience / education ────────────────────────────────────
+		"tailwind":      "simple-icons:tailwindcss",
+		"teaching":      "lucide:graduation-cap",
+		"electronics":   "lucide:cpu",
+		"architecture":  "lucide:layers",
+		"hardware":      "lucide:cpu",
+		"hydraulics":    "lucide:activity",
+		"rest":          "lucide:network",
+		"ui/ux":         "lucide:layout-grid",
+		"manufacturing": "lucide:boxes",
 		// ── linkedin exported names (German) ─────────────────────────
 		"it-infrastruktur":            "lucide:server",
 		"it-management":               "lucide:user-check",
@@ -820,4 +840,18 @@ func TechIcon(keyword string) string {
 		"netzwerkadministration":      "lucide:network",
 	}
 	return m[strings.ToLower(keyword)]
+}
+
+// TagTone returns a deterministic, visually varied tone for a tag string
+// using a simple hash so the same tag always gets the same color.
+func TagTone(s string) token.Tone {
+	tones := []token.Tone{
+		token.ToneCyan, token.ToneYellow, token.ToneSky, token.ToneMint,
+		token.ToneViolet, token.ToneLime, token.TonePink, token.ToneBlush,
+	}
+	var h uint32
+	for _, c := range s {
+		h = h*31 + uint32(c)
+	}
+	return tones[h%uint32(len(tones))]
 }

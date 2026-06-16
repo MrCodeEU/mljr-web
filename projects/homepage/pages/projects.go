@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"strings"
 
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
@@ -102,13 +103,25 @@ func projectCard(p hpdata.Project, tone token.Tone, lang string) g.Node {
 		)
 	}
 
-	topicNodes := make([]g.Node, 0, 4)
+	seen := map[string]bool{}
+	allTags := make([]string, 0, len(p.Topics)+1)
+	if p.Language != "" {
+		allTags = append(allTags, p.Language)
+		seen[strings.ToLower(p.Language)] = true
+	}
 	for _, t := range p.Topics {
+		if !seen[strings.ToLower(t)] {
+			allTags = append(allTags, t)
+			seen[strings.ToLower(t)] = true
+		}
+	}
+	topicNodes := make([]g.Node, 0, 4)
+	for _, t := range allTags {
 		if len(topicNodes) >= 4 {
 			break
 		}
 		topicNodes = append(topicNodes, primitive.Tag(
-			primitive.TagProps{Icon: hpdata.TechIcon(t)},
+			primitive.TagProps{Icon: hpdata.TechIcon(t), Tone: hpdata.TagTone(t)},
 			g.Text(t),
 		))
 	}
@@ -126,7 +139,6 @@ func projectCard(p hpdata.Project, tone token.Tone, lang string) g.Node {
 			),
 			h.P(h.Style("margin:0;font-size:var(--t-sm)"), g.Text(truncate(p.DescFor(lang), 200))),
 			h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-2)"),
-				primitive.Tag(primitive.TagProps{Tone: token.ToneAccent}, g.Text(p.Language)),
 				g.Group(topicNodes),
 			),
 			g.If(len(linkNodes) > 0,
