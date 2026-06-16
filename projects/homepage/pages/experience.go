@@ -16,7 +16,7 @@ import (
 	"mljr-web/ui/token"
 )
 
-func experienceSection(d hpdata.SiteData, lang string) g.Node {
+func experienceSection(num string, d hpdata.SiteData, lang string) g.Node {
 	jobs := d.WorkItems()
 	edu := d.EduItems()
 
@@ -70,7 +70,7 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 		h.ID("experience"),
 		h.Style("padding:var(--sp-12) 0"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("05", i18n.T(lang, "sections.experience.title"), fmt.Sprintf(i18n.T(lang, "sections.experience.positions"), len(jobs)), token.ToneCyan),
+			sectionHeader(num, i18n.T(lang, "sections.experience.title"), fmt.Sprintf(i18n.T(lang, "sections.experience.positions"), len(jobs)), token.ToneCyan),
 			// Snake timeline spans full width
 			h.Div(h.Class("experience-snake"), uidata.SnakeTimeline(uidata.SnakeTimelineProps{Cols: 3}, snakeItems...)),
 			h.Div(h.Class("experience-mobile-timeline"), uidata.Timeline(uidata.TimelineProps{}, mobileItems...)),

@@ -16,7 +16,7 @@ import (
 // sketch on the left, a paged carousel of real source excerpts on the right
 // (highlighted server-side with chroma, paged by the same PaginatedPages
 // component example #3 shows).
-func codeShowcaseSection(lang string) g.Node {
+func codeShowcaseSection(num string, lang string) g.Node {
 	examples := []struct {
 		Caption  string
 		Filename string
@@ -47,7 +47,7 @@ func codeShowcaseSection(lang string) g.Node {
 		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink)"),
 		uidata.PaginationSignals("hood", 1),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("08", i18n.T(lang, "sections.codeshowcase.title"), i18n.T(lang, "sections.codeshowcase.sub"), token.ToneSky),
+			sectionHeader(num, i18n.T(lang, "sections.codeshowcase.title"), i18n.T(lang, "sections.codeshowcase.sub"), token.ToneSky),
 			h.Div(
 				h.Class("hood-grid"),
 				h.Style("display:grid;grid-template-columns:1fr 1.2fr;gap:var(--sp-6);align-items:start"),

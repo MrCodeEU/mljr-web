@@ -19,7 +19,7 @@ import (
 // featuredSection renders a spotlight grid of featured projects. The first
 // project gets a double-height hero cell; the rest stack beside it — an
 // asymmetric editorial layout.
-func featuredSection(featured []hpdata.Project, lang string) g.Node {
+func featuredSection(num string, featured []hpdata.Project, lang string) g.Node {
 	if len(featured) == 0 {
 		return nil
 	}
@@ -39,7 +39,7 @@ func featuredSection(featured []hpdata.Project, lang string) g.Node {
 		h.ID("featured"),
 		h.Style("padding:var(--sp-12) 0"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("01", i18n.T(lang, "sections.featured.title"), i18n.T(lang, "sections.featured.sub"), token.ToneYellow),
+			sectionHeader(num, i18n.T(lang, "sections.featured.title"), i18n.T(lang, "sections.featured.sub"), token.ToneYellow),
 			h.Div(
 				h.Class("featured-grid"),
 				h.Style("column-count:2;column-gap:var(--sp-4)"),

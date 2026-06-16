@@ -15,7 +15,7 @@ import (
 	"mljr-web/ui/token"
 )
 
-func stravaSection(d hpdata.SiteData, lang string) g.Node {
+func stravaSection(num string, d hpdata.SiteData, lang string) g.Node {
 	if !d.HasStrava() {
 		return nil
 	}
@@ -30,7 +30,7 @@ func stravaSection(d hpdata.SiteData, lang string) g.Node {
 		h.ID("activity"),
 		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink);border-bottom:var(--bw-2) solid var(--ink)"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("06", i18n.T(lang, "sections.activity.title"), publicActivityBadge(s), token.ToneAccent),
+			sectionHeader(num, i18n.T(lang, "sections.activity.title"), publicActivityBadge(s), token.ToneAccent),
 			h.Div(
 				h.Class("activity-grid"),
 				h.Style("display:flex;flex-direction:column;gap:var(--sp-5)"),

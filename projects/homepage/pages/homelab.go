@@ -19,13 +19,13 @@ import (
 
 // homelabSection renders the live infrastructure panel. The inner panel
 // (#homelab-panel) is re-fetched every 60s via Datastar and patched in place.
-func homelabSection(snap homelab.Snapshot, lang string) g.Node {
+func homelabSection(num string, snap homelab.Snapshot, lang string) g.Node {
 	return h.Section(
 		h.ID("homelab"),
 		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink)"),
 		g.Attr("data-on-interval__duration.60s", "@get('/api/homelab')"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("05", i18n.T(lang, "sections.homelab.title"), i18n.T(lang, "sections.homelab.sub"), token.ToneBlush),
+			sectionHeader(num, i18n.T(lang, "sections.homelab.title"), i18n.T(lang, "sections.homelab.sub"), token.ToneBlush),
 			HomelabPanel(snap),
 			archCard(),
 		),

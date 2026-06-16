@@ -14,7 +14,7 @@ import (
 	"mljr-web/ui/token"
 )
 
-func liveToolsSection(tools []hpdata.Project, lang string) g.Node {
+func liveToolsSection(num string, tools []hpdata.Project, lang string) g.Node {
 	if len(tools) == 0 {
 		return nil
 	}
@@ -30,7 +30,7 @@ func liveToolsSection(tools []hpdata.Project, lang string) g.Node {
 		h.ID("tools"),
 		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink)"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("03", i18n.T(lang, "sections.livetools.title"), subtitle, token.ToneAccent),
+			sectionHeader(num, i18n.T(lang, "sections.livetools.title"), subtitle, token.ToneAccent),
 			h.Div(
 				h.Class("tools-grid"),
 				g.Group(cards),

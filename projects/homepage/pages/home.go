@@ -1,6 +1,8 @@
 package pages
 
 import (
+	"fmt"
+
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
@@ -55,22 +57,41 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 
 		siteNavbar(lang),
 
-		h.Main(
-			h.Style("position:relative"),
-			AnimatedLogoBackground(),
-			heroSection(d, lang, totalProjects),
-			statsSection(d),
-			featuredSection(featured, lang),
-			projectsSection(gridProjects, lang),
-			liveToolsSection(liveTools, lang),
-			githubSection(d, lang),
-			experienceSection(d, lang),
-			homelabSection(hl, lang),
-			stravaSection(d, lang),
-			skillsSection(lang),
-			codeShowcaseSection(lang),
-			contactSection(d.ContentFor(lang).Contact, lang),
-		),
+		func() g.Node {
+			secN := 0
+			nextSec := func() string { secN++; return fmt.Sprintf("%02d", secN) }
+
+			featuredNode := featuredSection(nextSec(), featured, lang)
+			projectsNode := projectsSection(nextSec(), gridProjects, lang)
+			var liveNode g.Node
+			if len(liveTools) > 0 {
+				liveNode = liveToolsSection(nextSec(), liveTools, lang)
+			}
+			githubNode := githubSection(nextSec(), d, lang)
+			experienceNode := experienceSection(nextSec(), d, lang)
+			homelabNode := homelabSection(nextSec(), hl, lang)
+			stravaNode := stravaSection(nextSec(), d, lang)
+			skillsNode := skillsSection(nextSec(), lang)
+			codeNode := codeShowcaseSection(nextSec(), lang)
+			contactNode := contactSection(nextSec(), d.ContentFor(lang).Contact, lang)
+
+			return h.Main(
+				h.Style("position:relative"),
+				AnimatedLogoBackground(),
+				heroSection(d, lang, totalProjects),
+				statsSection(d),
+				featuredNode,
+				projectsNode,
+				liveNode,
+				githubNode,
+				experienceNode,
+				homelabNode,
+				stravaNode,
+				skillsNode,
+				codeNode,
+				contactNode,
+			)
+		}(),
 
 		siteFooter(lang),
 
