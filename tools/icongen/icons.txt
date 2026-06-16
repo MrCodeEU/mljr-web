@@ -134,6 +134,12 @@ simple-icons:dotnet
 simple-icons:victoriametrics
 simple-icons:postgresql
 simple-icons:sqlite
+simple-icons:flutter
+simple-icons:pytorch
+simple-icons:discord
+simple-icons:homeassistant
+simple-icons:cplusplus
+simple-icons:opengl
 # flag icons for language toggle
 circle-flags:de
 circle-flags:gb
