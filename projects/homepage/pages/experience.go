@@ -100,34 +100,38 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 				// Thesis section
 				g.If(len(d.ThesisFor(lang)) > 0,
 					h.Div(
-						h.Style("margin-top:var(--sp-4);display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--sp-4)"),
-						g.Group(func() []g.Node {
-							thesis := d.ThesisFor(lang)
-							nodes := make([]g.Node, 0, len(thesis))
-							for _, t := range thesis {
-								nodes = append(nodes, primitive.Card(primitive.CardProps{Tone: token.ToneAccent},
-									h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
-										h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35"), g.Text(t.Title)),
-										primitive.Tag(primitive.TagProps{}, g.Text(t.Type)),
-									),
-									h.P(h.Style("margin:0;font-size:var(--t-sm);line-height:1.55;opacity:.85"), g.Text(t.Description)),
-									g.If(t.PDF != "",
-										h.A(h.Href(t.PDF), g.Attr("target", "_blank"), g.Attr("rel", "noopener"), h.Style("margin-top:var(--sp-3);display:block"),
-											primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
-												icon.Icon("lucide:file-text"),
-												g.Text(i18n.T(lang, "sections.experience.thesis_view_pdf")),
+						h.Style("margin-top:var(--sp-10)"),
+						sectionHeader("", i18n.T(lang, "sections.papers.title"), i18n.T(lang, "sections.papers.sub"), token.ToneViolet),
+						h.Div(
+							h.Style("display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--sp-4)"),
+							g.Group(func() []g.Node {
+								thesis := d.ThesisFor(lang)
+								nodes := make([]g.Node, 0, len(thesis))
+								for _, t := range thesis {
+									nodes = append(nodes, primitive.Card(primitive.CardProps{Tone: thesisTone(t.Type)},
+										h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
+											h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35"), g.Text(t.Title)),
+											primitive.Tag(primitive.TagProps{}, g.Text(t.Type)),
+										),
+										h.P(h.Style("margin:0;font-size:var(--t-sm);line-height:1.55;opacity:.85"), g.Text(t.Description)),
+										g.If(t.PDF != "",
+											h.A(h.Href(t.PDF), g.Attr("target", "_blank"), g.Attr("rel", "noopener"), h.Style("margin-top:var(--sp-3);display:block"),
+												primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
+													icon.Icon("lucide:file-text"),
+													g.Text(i18n.T(lang, "sections.experience.thesis_view_pdf")),
+												),
 											),
 										),
-									),
-									g.If(t.PDF == "",
-										h.Div(h.Style("margin-top:var(--sp-3)"),
-											primitive.Tag(primitive.TagProps{}, icon.Icon("lucide:clock"), g.Text(i18n.T(lang, "sections.experience.thesis_coming_soon"))),
+										g.If(t.PDF == "",
+											h.Div(h.Style("margin-top:var(--sp-3)"),
+												primitive.Tag(primitive.TagProps{}, icon.Icon("lucide:clock"), g.Text(i18n.T(lang, "sections.experience.thesis_coming_soon"))),
+											),
 										),
-									),
-								))
-							}
-							return nodes
-						}()),
+									))
+								}
+								return nodes
+							}()),
+						),
 					),
 				),
 			),
@@ -237,6 +241,19 @@ func orgLocation2(org string) (orgLocation, bool) {
 	}
 	loc, ok := m[org]
 	return loc, ok
+}
+
+func thesisTone(typ string) token.Tone {
+	switch typ {
+	case "BACHELOR", "Bachelor":
+		return token.ToneSky
+	case "MASTER", "Master":
+		return token.ToneViolet
+	case "PROJEKT", "PROJECT", "Projekt", "Project":
+		return token.ToneLime
+	default:
+		return token.ToneAccent
+	}
 }
 
 func orgPopup(n int, org, logo, title, period string) string {

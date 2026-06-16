@@ -21,6 +21,7 @@
   "sections": {
     "experience": { "title": "Erfahrung", "thesis_view_pdf": "PDF ansehen", "thesis_coming_soon": "Demnächst verfügbar", "positions": "%d Stellen" },
     "education": { "title": "Ausbildung", "degrees": "%d Abschlüsse" },
+    "papers": { "title": "Arbeiten & Abschlussarbeiten", "sub": "Forschungsarbeiten" },
     "places": { "title": "Orte", "sub": "Arbeit · Ausbildung · Zuhause" },
     "featured": { "title": "Ausgewählte Projekte", "sub": "handverlesen" },
     "projects": { "title": "Projekte" },

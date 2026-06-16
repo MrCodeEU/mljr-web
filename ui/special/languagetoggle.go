@@ -74,16 +74,17 @@ func LanguageToggle(p LanguageToggleProps) g.Node {
 	return primitive.Button(
 		primitive.ButtonProps{
 			Variant: token.Outline,
+			Size:    token.SizeIcon,
 			Attrs: []g.Node{
 				g.Attr("aria-label", ariaLabel),
 				g.Attr("title", ariaLabel),
 				g.Attr("onclick", clickExpr),
-				g.Attr("style", "display:inline-flex;align-items:center;gap:.35rem;padding:.55rem .75rem;"),
+				g.Attr("style", "aspect-ratio:unset;padding:.55rem .75rem;display:inline-flex;align-items:center;gap:.4rem;"),
 			},
 		},
 		g.If(current.Flag != "",
-			h.Span(h.Style("display:inline-flex;align-items:center;flex-shrink:0;width:1.1em;height:1.1em"),
-				icon.Icon(current.Flag),
+			h.Span(h.Style("display:inline-flex;align-items:center;flex-shrink:0;line-height:0;"),
+				icon.Icon(current.Flag, icon.Props{Size: "1em"}),
 			),
 		),
 		h.Span(h.Style("font-size:var(--t-xs);font-weight:900;letter-spacing:.06em;font-family:var(--font-display);line-height:1"),

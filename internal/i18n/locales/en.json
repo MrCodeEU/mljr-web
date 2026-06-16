@@ -21,6 +21,7 @@
   "sections": {
     "experience": { "title": "Experience", "thesis_view_pdf": "View PDF", "thesis_coming_soon": "Coming soon", "positions": "%d positions" },
     "education": { "title": "Education", "degrees": "%d degrees" },
+    "papers": { "title": "Papers & Theses", "sub": "research work" },
     "places": { "title": "Places", "sub": "work · education · home" },
     "featured": { "title": "Featured work", "sub": "hand-picked" },
     "projects": { "title": "Projects" },
