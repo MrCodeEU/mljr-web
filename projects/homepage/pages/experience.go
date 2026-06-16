@@ -119,7 +119,7 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 											g.If(thesisLogo(t.Type) != "",
 												uidata.OrgLogoChip(thesisLogo(t.Type), ""),
 											),
-											h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35;flex:1"), g.Text(t.Title)),
+											h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis"), g.Text(t.Title)),
 											primitive.Tag(primitive.TagProps{}, g.Text(t.Type)),
 										),
 										h.P(h.Style("margin:0;font-size:var(--t-sm);line-height:1.55;opacity:.85"), g.Text(t.Description)),

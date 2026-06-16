@@ -26,6 +26,7 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 	totalProjects := len(d.GitHub)
 	ogDescription := "Networks & IT Security · Go · self-hosted — no JS framework, no CDN, no adtech tracking."
 	headExtra := append([]g.Node{
+		h.Script(h.Src("/static/motion.min.js")),
 		g.El("style", g.Raw(homepageCSS)),
 		g.El("meta", g.Attr("property", "og:title"), g.Attr("content", "Michael Reinegger — Portfolio")),
 		g.El("meta", g.Attr("property", "og:description"), g.Attr("content", ogDescription)),
