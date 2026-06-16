@@ -97,7 +97,7 @@ icons: ## regenerate ui/icon/icons_gen.go from tools/icongen/icons.txt
 	go run ./tools/icongen
 
 # --- dev / build ---------------------------------------------------------------
-dev: $(TAILWIND) $(AIR) sync-assets ## hot-reload a project:  make dev PROJECT=homepage
+dev: $(TAILWIND) $(AIR) sync-assets data-update ## hot-reload a project:  make dev PROJECT=homepage
 	$(TAILWIND) -i $(CSS_IN) -o $(CSS_OUT)
 	@$(URL_LINE) $(PORT)
 	@$(TAILWIND) -i $(CSS_IN) -o $(CSS_OUT) --watch & TW=$$!; \
@@ -123,12 +123,14 @@ docker: ## per-project image:  make docker PROJECT=homepage TAG=v1
 	docker build -f projects/$(PROJECT)/Dockerfile -t mljr/$(PROJECT):$(TAG) .
 
 # --- data ------------------------------------------------------------------
-data-update: ## regenerate mljr-data/generated/site-data.json (needs GITHUB_TOKEN, optional STRAVA_* in projects/homepage/.env)
+data-update: ## regenerate mljr-data/generated/site-data.json + update seed-cache (needs GITHUB_TOKEN)
 	@if [ -f projects/homepage/.env ]; then set -a; . projects/homepage/.env; set +a; fi; \
 	  cd mljr-data/generator && \
 	  GITHUB_TOKEN="$$GITHUB_TOKEN" GITHUB_USER="$${GITHUB_USERNAME:-MrCodeEU}" \
 	  STRAVA_CLIENT_ID="$$STRAVA_CLIENT_ID" STRAVA_CLIENT_SECRET="$$STRAVA_CLIENT_SECRET" STRAVA_REFRESH_TOKEN="$$STRAVA_REFRESH_TOKEN" \
 	  go run ./cmd/generate
+	@cp mljr-data/generated/site-data.json projects/homepage/data/seed-cache.json
+	@echo "seed-cache.json updated"
 
 data-pull: ## fetch latest mljr-data submodule from origin
 	git submodule update --remote --merge mljr-data
