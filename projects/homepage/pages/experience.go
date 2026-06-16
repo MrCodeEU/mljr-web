@@ -114,13 +114,16 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 								thesis := d.ThesisFor(lang)
 								nodes := make([]g.Node, 0, len(thesis))
 								for _, t := range thesis {
-									nodes = append(nodes, primitive.Card(primitive.CardProps{Tone: thesisTone(t.Type)},
+									nodes = append(nodes, primitive.Card(primitive.CardProps{Tone: thesisTone(t.Type), Attrs: []g.Node{h.Style("position:relative")}},
+										// Corner badge: center of tag sits at top-right card corner
+										h.Div(h.Style("position:absolute;top:0;right:0;transform:translate(50%,-50%);z-index:2"),
+											primitive.Tag(primitive.TagProps{}, g.Text(t.Type)),
+										),
 										h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
 											g.If(thesisLogo(t.Type) != "",
 												uidata.OrgLogoChip(thesisLogo(t.Type), ""),
 											),
-											h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis"), g.Text(t.Title)),
-											primitive.Tag(primitive.TagProps{}, g.Text(t.Type)),
+											h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35"), g.Text(t.Title)),
 										),
 										h.P(h.Style("margin:0;font-size:var(--t-sm);line-height:1.55;opacity:.85"), g.Text(t.Description)),
 										g.If(t.PDF != "",
