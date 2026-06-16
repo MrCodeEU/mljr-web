@@ -87,6 +87,7 @@ func statTile(label string, p primitive.NumberTickerProps) g.Node {
 	if p.Duration == 0 {
 		p.Duration = 2500
 	}
+	p.From = p.Value
 	return h.Div(
 		h.Class("hero-stat-tile"),
 		h.Style("text-align:center;padding:var(--sp-6) var(--sp-4);display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:var(--bw-1) solid var(--line)"),

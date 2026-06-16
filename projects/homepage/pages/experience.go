@@ -70,7 +70,7 @@ func experienceSection(d hpdata.SiteData, lang string) g.Node {
 		h.ID("experience"),
 		h.Style("padding:var(--sp-12) 0"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("01", i18n.T(lang, "sections.experience.title"), fmt.Sprintf(i18n.T(lang, "sections.experience.positions"), len(jobs)), token.ToneCyan),
+			sectionHeader("04", i18n.T(lang, "sections.experience.title"), fmt.Sprintf(i18n.T(lang, "sections.experience.positions"), len(jobs)), token.ToneCyan),
 			// Snake timeline spans full width
 			h.Div(h.Class("experience-snake"), uidata.SnakeTimeline(uidata.SnakeTimelineProps{Cols: 3}, snakeItems...)),
 			h.Div(h.Class("experience-mobile-timeline"), uidata.Timeline(uidata.TimelineProps{}, mobileItems...)),

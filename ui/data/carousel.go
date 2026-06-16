@@ -72,8 +72,8 @@ func Carousel(p CarouselProps) g.Node {
 	}
 	attrs = append(attrs,
 		h.Div(g.Attr("data-slot", "track"), g.Group(trackChildren)),
-		h.Button(g.Attr("data-slot", "prev"), ui.On("click", prevExpr), g.Text("‹")),
-		h.Button(g.Attr("data-slot", "next"), ui.On("click", nextExpr), g.Text("›")),
+		h.Button(g.Attr("data-slot", "prev"), g.Attr("aria-label", "Previous slide"), ui.On("click", prevExpr), g.Text("‹")),
+		h.Button(g.Attr("data-slot", "next"), g.Attr("aria-label", "Next slide"), ui.On("click", nextExpr), g.Text("›")),
 		h.Div(g.Attr("data-slot", "dots"), g.Group(dotChildren)),
 	)
 	return h.Div(attrs...)

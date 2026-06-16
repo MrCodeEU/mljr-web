@@ -39,7 +39,7 @@ func featuredSection(featured []hpdata.Project, lang string) g.Node {
 		h.ID("featured"),
 		h.Style("padding:var(--sp-12) 0"),
 		layout.Container(layout.ContainerProps{},
-			sectionHeader("02", i18n.T(lang, "sections.featured.title"), i18n.T(lang, "sections.featured.sub"), token.ToneYellow),
+			sectionHeader("01", i18n.T(lang, "sections.featured.title"), i18n.T(lang, "sections.featured.sub"), token.ToneYellow),
 			h.Div(
 				h.Class("featured-grid"),
 				h.Style("column-count:2;column-gap:var(--sp-4)"),

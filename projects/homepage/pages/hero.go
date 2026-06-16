@@ -14,6 +14,13 @@ import (
 	"mljr-web/ui/token"
 )
 
+func cvPath(lang string) string {
+	if lang == "de" {
+		return "/static/cv/lebenslauf.pdf"
+	}
+	return "/static/cv/lebenslauf_eng.pdf"
+}
+
 func heroSection(d hpdata.SiteData, lang string, projectCount int) g.Node {
 	li := d.LinkedIn
 	hero := d.ContentFor(lang).Hero
@@ -84,6 +91,16 @@ func heroSection(d hpdata.SiteData, lang string, projectCount int) g.Node {
 							primitive.Button(primitive.ButtonProps{Variant: token.Ghost, Size: token.SizeLG},
 								icon.Icon("simple-icons:github", icon.Props{Size: "1.1rem"}),
 								g.Text(i18n.T(lang, "hero.cta_github")),
+							),
+						),
+						h.A(
+							h.Href(cvPath(lang)),
+							g.Attr("download", ""),
+							g.Attr("target", "_blank"),
+							g.Attr("rel", "noopener"),
+							primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeLG},
+								icon.Icon("lucide:download", icon.Props{Size: "1.1rem"}),
+								g.Text(i18n.T(lang, "hero.cta_download_cv")),
 							),
 						),
 					),
@@ -177,7 +194,7 @@ func heroBento(li hpdata.LinkedInData, hero hpdata.HeroContent, lang string, pro
 			h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2);height:100%"),
 				icon.Icon("lucide:folder-git-2", icon.Props{Size: "1.4rem"}),
 				h.Div(h.Style(numStyle+";margin-top:auto"),
-					primitive.NumberTicker(primitive.NumberTickerProps{Value: float64(projectCount), TriggerOnView: true, ID: "nt-proj", Duration: 3200}),
+					primitive.NumberTicker(primitive.NumberTickerProps{Value: float64(projectCount), From: float64(projectCount), TriggerOnView: true, ID: "nt-proj", Duration: 3200}),
 				),
 				h.Div(h.Style(labelStyle), g.Text(i18n.T(lang, "hero.projects_label"))),
 			),
@@ -188,7 +205,7 @@ func heroBento(li hpdata.LinkedInData, hero hpdata.HeroContent, lang string, pro
 			h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2);height:100%"),
 				icon.Icon("lucide:code-2", icon.Props{Size: "1.4rem"}),
 				h.Div(h.Style(numStyle+";margin-top:auto"),
-					primitive.NumberTicker(primitive.NumberTickerProps{Value: float64(time.Now().Year() - 2015), Suffix: "+", TriggerOnView: true, ID: "nt-yrs", Duration: 2800}),
+					primitive.NumberTicker(primitive.NumberTickerProps{Value: float64(time.Now().Year() - 2015), From: float64(time.Now().Year() - 2015), Suffix: "+", TriggerOnView: true, ID: "nt-yrs", Duration: 2800}),
 				),
 				h.Div(h.Style(labelStyle), g.Text(i18n.T(lang, "hero.years_label"))),
 			),

@@ -24,8 +24,18 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 		gridProjects = append(featured, rest...)
 	}
 	totalProjects := len(d.GitHub)
+	ogDescription := "Networks & IT Security · Go · self-hosted — no JS framework, no CDN, no adtech tracking."
 	headExtra := append([]g.Node{
 		g.El("style", g.Raw(homepageCSS)),
+		g.El("meta", g.Attr("property", "og:title"), g.Attr("content", "Michael Reinegger — Portfolio")),
+		g.El("meta", g.Attr("property", "og:description"), g.Attr("content", ogDescription)),
+		g.El("meta", g.Attr("property", "og:type"), g.Attr("content", "website")),
+		g.El("meta", g.Attr("property", "og:url"), g.Attr("content", "https://mljr.eu")),
+		g.El("meta", g.Attr("property", "og:image"), g.Attr("content", "https://mljr.eu/assets/portfolio/mljr-web/0.webp")),
+		g.El("meta", g.Attr("name", "twitter:card"), g.Attr("content", "summary_large_image")),
+		g.El("meta", g.Attr("name", "twitter:title"), g.Attr("content", "Michael Reinegger — Portfolio")),
+		g.El("meta", g.Attr("name", "twitter:description"), g.Attr("content", ogDescription)),
+		g.El("meta", g.Attr("name", "twitter:image"), g.Attr("content", "https://mljr.eu/assets/portfolio/mljr-web/0.webp")),
 	}, AnalyticsHead(a)...)
 
 	return layout.PageShell(
@@ -48,10 +58,10 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 			AnimatedLogoBackground(),
 			heroSection(d, lang, totalProjects),
 			statsSection(d),
-			experienceSection(d, lang),
 			featuredSection(featured, lang),
 			projectsSection(gridProjects, lang),
 			githubSection(d, lang),
+			experienceSection(d, lang),
 			homelabSection(hl, lang),
 			stravaSection(d, lang),
 			skillsSection(lang),
