@@ -4,7 +4,12 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      projects:
+        description: 'Projects to build (comma-separated, or "all")'
+        required: false
+        default: 'all'
   # Triggered by mljr-data's CI after it commits a fresh generated/site-data.json,
   # so the homepage image gets rebuilt with the new embedded data.
   repository_dispatch:
@@ -19,11 +24,77 @@ env:
   IMAGE_BASE: ghcr.io/mrcodeeu/mljr-web
 
 jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine projects to build
+        id: set
+        run: |
+          ALL='["homepage","showcase","regex","cron","codec"]'
+
+          # mljr-data updated: only homepage embeds that data
+          if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            echo "matrix=[\"homepage\"]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Tag push or manual dispatch: honour input or build all
+          if [ "${{ github.ref_type }}" == "tag" ]; then
+            echo "matrix=$ALL" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            INPUT="${{ inputs.projects }}"
+            if [ -z "$INPUT" ] || [ "$INPUT" == "all" ]; then
+              echo "matrix=$ALL" >> "$GITHUB_OUTPUT"
+            else
+              MATRIX=$(echo "$INPUT" | tr ',' '\n' | sed 's/[[:space:]]//g' | jq -R . | jq -sc .)
+              echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+            fi
+            exit 0
+          fi
+
+          # Push event: diff against parent; fallback to all on first commit
+          if ! CHANGED=$(git diff --name-only HEAD^ HEAD 2>/dev/null); then
+            echo "matrix=$ALL" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Any change outside projects/ touches shared libs/assets → rebuild all
+          if echo "$CHANGED" | grep -qvE '^projects/'; then
+            echo "matrix=$ALL" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Collect only the affected project(s)
+          PROJECTS=()
+          for proj in homepage showcase regex cron codec; do
+            if echo "$CHANGED" | grep -q "^projects/$proj/"; then
+              PROJECTS+=("\"$proj\"")
+            fi
+          done
+
+          if [ ${#PROJECTS[@]} -eq 0 ]; then
+            echo "matrix=[]" >> "$GITHUB_OUTPUT"
+          else
+            echo "matrix=[$(IFS=,; echo "${PROJECTS[*]}")]" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: detect
+    if: needs.detect.outputs.matrix != '[]'
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: 2
       matrix:
-        project: [homepage, showcase, regex, cron, codec]
+        project: ${{ fromJson(needs.detect.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -73,7 +144,7 @@ jobs:
           fi
 
       - name: Trigger homelab deployment
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.event_name == 'repository_dispatch'
         run: |
           curl -X POST \
             -H "Authorization: token ${{ secrets.DISPATCH_TOKEN }}" \
