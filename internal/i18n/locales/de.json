@@ -93,7 +93,8 @@
     "success_body": "Ich melde mich so schnell wie möglich bei dir."
   },
   "projects": {
-    "source": "Quelle"
+    "source": "Quelle",
+    "details": "Details"
   },
   "footer": {
     "tagline": "Go, Sicherheit und selbst gehostete Infrastruktur. Jede Komponente dieser Seite ist eine Go-Funktion — kein JS-Framework, kein CDN, kein Adtech-Tracking.",

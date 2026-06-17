@@ -78,6 +78,16 @@ func projectCard(p hpdata.Project, tone token.Tone, lang string) g.Node {
 	}
 
 	var linkNodes []g.Node
+	if HasProjectDetail(p.ID) {
+		linkNodes = append(linkNodes,
+			h.A(h.Href("/projects/"+p.ID),
+				primitive.Button(primitive.ButtonProps{Variant: token.Primary, Size: token.SizeSM},
+					g.Text(i18n.T(lang, "projects.details")),
+					icon.Icon("lucide:arrow-right"),
+				),
+			),
+		)
+	}
 	if p.URL != "" {
 		linkNodes = append(linkNodes,
 			h.A(h.Href(p.URL), g.Attr("target", "_blank"), g.Attr("rel", "noopener"),

@@ -276,6 +276,7 @@ type School struct {
 }
 
 type Project struct {
+	ID       string        `json:"id"`
 	Name     string        `json:"name"`
 	Desc     string        `json:"description"`
 	DescDE   string        `json:"description_de,omitempty"`
@@ -500,6 +501,16 @@ func (s *Store) reloadIfChanged(force bool) error {
 	s.lastMod = info.ModTime()
 	log.Printf("data: loaded %s", s.path)
 	return nil
+}
+
+// ProjectByID returns the project whose curated id matches, if any.
+func (d SiteData) ProjectByID(id string) (Project, bool) {
+	for _, p := range d.GitHub {
+		if p.ID == id {
+			return p, true
+		}
+	}
+	return Project{}, false
 }
 
 // FeaturedProjects returns projects marked featured, excluding meta-entries,

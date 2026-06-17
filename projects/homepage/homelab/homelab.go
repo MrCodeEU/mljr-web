@@ -368,7 +368,7 @@ func (p *Poller) fetchProm(ctx context.Context, s *Snapshot) {
 		for _, pt := range pts {
 			day := time.Unix(int64(pt[0]), 0)
 			key := day.Format("2006-01-02")
-			if pt[1] > 0 && !seenDay[key] {
+			if !seenDay[key] {
 				seenDay[key] = true
 				s.AttackDays = append(s.AttackDays, DayValue{Date: day, Count: int(pt[1])})
 			}

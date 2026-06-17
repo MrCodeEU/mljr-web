@@ -10,6 +10,7 @@ import (
 	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/primitive"
+	"mljr-web/ui/special"
 	"mljr-web/ui/token"
 )
 
@@ -26,6 +27,9 @@ func Home() g.Node {
 				g.El("style", g.Raw(codecCSS)),
 			},
 		},
+		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
+		special.ToolNavbar("codec"),
+
 		h.Main(
 			h.Style("min-height:100vh;padding:var(--sp-8) 0 var(--sp-12)"),
 

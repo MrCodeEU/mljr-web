@@ -57,6 +57,14 @@ func main() {
 	e.GET("/datenschutz", func(c echo.Context) error {
 		return web.Render(c, 200, pages.Datenschutz(web.Lang(c), analytics))
 	})
+	e.GET("/projects/:id", func(c echo.Context) error {
+		d := dataStore.Current()
+		p, ok := d.ProjectByID(c.Param("id"))
+		if !ok || !pages.HasProjectDetail(p.ID) {
+			return c.NoContent(404)
+		}
+		return web.Render(c, 200, pages.ProjectDetail(d, p, web.Lang(c), analytics))
+	})
 	e.GET("/robots.txt", func(c echo.Context) error {
 		return c.String(200, "User-agent: *\nAllow: /\nSitemap: https://mljr.eu/sitemap.xml\n")
 	})

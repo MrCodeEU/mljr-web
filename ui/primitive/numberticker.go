@@ -38,7 +38,10 @@ func NumberTicker(p NumberTickerProps) g.Node {
 		p.ID = "ntick"
 	}
 
-	initial := p.Prefix + fmt.Sprintf("%."+fmt.Sprintf("%d", p.Decimals)+"f", p.From) + p.Suffix
+	// Server-rendered text shows the final value so no-JS clients, crawlers,
+	// and snapshots taken before the viewport animation fires never see a
+	// stale "0" — the script below still animates from p.From on trigger.
+	initial := p.Prefix + fmt.Sprintf("%."+fmt.Sprintf("%d", p.Decimals)+"f", p.Value) + p.Suffix
 
 	locale := "true"
 	if !p.Locale {

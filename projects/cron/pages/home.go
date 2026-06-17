@@ -11,6 +11,7 @@ import (
 	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/primitive"
+	"mljr-web/ui/special"
 	"mljr-web/ui/token"
 )
 
@@ -29,6 +30,9 @@ func Home() g.Node {
 				g.El("style", g.Raw(cronCSS)),
 			},
 		},
+		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
+		special.ToolNavbar("cron"),
+
 		h.Main(
 			h.Style("min-height:100vh;padding:var(--sp-8) 0 var(--sp-12)"),
 

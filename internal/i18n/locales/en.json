@@ -93,7 +93,8 @@
     "success_body": "I'll get back to you as soon as possible."
   },
   "projects": {
-    "source": "Source"
+    "source": "Source",
+    "details": "Details"
   },
   "footer": {
     "tagline": "Go, security and self-hosted infrastructure. Every component on this site is a Go function — no JS framework, no CDN, no adtech tracking.",
