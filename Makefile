@@ -60,7 +60,8 @@ $(TAILWIND):
 	chmod +x $(TAILWIND)
 
 vendor-js: ## vendor datastar.js + altcha.js (ESM browser bundle) into every project's assets/static
-	@mkdir -p projects/homepage/assets/static/altcha-workers projects/showcase/assets/static
+	@mkdir -p projects/homepage/assets/static/altcha-workers projects/showcase/assets/static \
+	  projects/regex/assets/static projects/cron/assets/static projects/codec/assets/static
 	curl -fsSL https://cdn.jsdelivr.net/gh/starfederation/datastar@v$(DATASTAR_VERSION)/bundles/datastar.js \
 		-o projects/homepage/assets/static/datastar.js
 	cp projects/homepage/assets/static/datastar.js projects/showcase/assets/static/datastar.js
