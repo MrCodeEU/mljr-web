@@ -6,6 +6,7 @@ DATASTAR_VERSION ?= 1.0.2
 ALTCHA_VERSION   ?= 3.0.11
 LEAFLET_VERSION  ?= 1.9.4
 LEAFLET_MARKERCLUSTER_VERSION ?= 1.5.3
+MERMAID_VERSION  ?= 11.4.0
 
 # --- paths ---------------------------------------------------------------------
 PROJECT ?= homepage
@@ -91,6 +92,9 @@ vendor-js: ## vendor datastar.js + altcha.js (ESM browser bundle) into every pro
 	         projects/homepage/assets/static/leaflet.markercluster.js projects/showcase/assets/static/leaflet.markercluster.js; do \
 	  sed -i -e '/sourceMappingURL/d' $$f; \
 	done
+	# mermaid: vendored UMD bundle (globalThis.mermaid) for project-detail arch diagrams
+	curl -fsSL https://cdn.jsdelivr.net/npm/mermaid@$(MERMAID_VERSION)/dist/mermaid.min.js \
+		-o projects/homepage/assets/static/mermaid.min.js
 
 upgrade-deps: ## re-fetch tailwind + datastar + altcha at the version pins
 	rm -f $(TAILWIND)

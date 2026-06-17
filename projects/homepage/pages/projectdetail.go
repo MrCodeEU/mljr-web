@@ -58,7 +58,9 @@ func ProjectDetail(d hpdata.SiteData, p hpdata.Project, lang string, a Analytics
 	imgs := p.LocalImages()
 	var hero g.Node
 	if len(imgs) > 1 {
-		hero = uidata.Carousel(uidata.CarouselProps{ID: "pd-" + p.ID, Images: imgs, Alt: p.Name})
+		hero = h.Div(h.Class("pd-hero-carousel"),
+			uidata.Carousel(uidata.CarouselProps{ID: "pd-" + p.ID, Images: imgs, Alt: p.Name}),
+		)
 	} else if len(imgs) == 1 {
 		hero = h.Img(h.Src(imgs[0]), h.Alt(p.Name), g.Attr("loading", "lazy"),
 			h.Style("width:100%;aspect-ratio:16/9;object-fit:contain;background:var(--surface-2);border:var(--bw-2) solid var(--ink)"))
@@ -97,11 +99,14 @@ func ProjectDetail(d hpdata.SiteData, p hpdata.Project, lang string, a Analytics
 	}
 
 	headExtra := append([]g.Node{
-		g.El("style", g.Raw(homepageCSS + legalCSS)),
+		g.El("style", g.Raw(homepageCSS + legalCSS + projectDetailCSS)),
 	}, AnalyticsHead(a)...)
 	if det.Diagram != "" {
+		// Self-hosted (CSP is script-src 'self', no CDN imports allowed).
+		// mermaid.min.js is the UMD bundle; it sets globalThis.mermaid.
 		headExtra = append(headExtra,
-			h.Script(h.Type("module"), g.Raw(`import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';mermaid.initialize({startOnLoad:true,theme:'neutral'});`)),
+			h.Script(h.Src("/static/mermaid.min.js")),
+			h.Script(g.Raw(`mermaid.initialize({startOnLoad:true,theme:'neutral'});`)),
 		)
 	}
 
@@ -150,3 +155,13 @@ func ProjectDetail(d hpdata.SiteData, p hpdata.Project, lang string, a Analytics
 		siteFooter(lang),
 	)
 }
+
+// The shared carousel component fixes its track at 220px tall, sized for
+// compact project-grid cards. The detail-page hero is much wider (up to
+// 920px), so the same height letterboxes screenshots badly — override it
+// here with a taller, more cinematic track just for this context.
+const projectDetailCSS = `
+.pd-hero-carousel [data-component="carousel"] [data-slot="track"] {
+  height: clamp(280px, 45vw, 480px);
+}
+`
