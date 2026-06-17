@@ -711,7 +711,7 @@ func (a StravaActivity) DisplayDate() string {
 	for _, layout := range []string{time.RFC3339, "2006-01-02T15:04:05Z07:00", "2006-01-02"} {
 		t, err := time.Parse(layout, raw)
 		if err == nil {
-			return t.Format("Jan 2006")
+			return t.Format("02.01.2006")
 		}
 	}
 	if len(raw) >= 7 {
