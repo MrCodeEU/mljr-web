@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"embed"
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"mljr-web/internal/config"
@@ -71,12 +73,20 @@ func main() {
 	e.HEAD("/robots.txt", func(c echo.Context) error { return c.NoContent(200) })
 	e.GET("/sitemap.xml", func(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "application/xml; charset=utf-8")
-		return c.String(200, `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://mljr.eu/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://mljr.eu/impressum</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://mljr.eu/datenschutz</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
-</urlset>`)
+		var b strings.Builder
+		b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
+		b.WriteString(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` + "\n")
+		b.WriteString(`  <url><loc>https://mljr.eu/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>` + "\n")
+		b.WriteString(`  <url><loc>https://mljr.eu/impressum</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>` + "\n")
+		b.WriteString(`  <url><loc>https://mljr.eu/datenschutz</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>` + "\n")
+		for _, p := range dataStore.Current().GitHub {
+			if !p.HasDetailPage() {
+				continue
+			}
+			fmt.Fprintf(&b, "  <url><loc>https://mljr.eu/projects/%s</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n", p.ID)
+		}
+		b.WriteString(`</urlset>`)
+		return c.String(200, b.String())
 	})
 	e.HEAD("/sitemap.xml", func(c echo.Context) error { return c.NoContent(200) })
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "ok") })
