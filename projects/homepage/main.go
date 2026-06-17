@@ -57,6 +57,18 @@ func main() {
 	e.GET("/datenschutz", func(c echo.Context) error {
 		return web.Render(c, 200, pages.Datenschutz(web.Lang(c), analytics))
 	})
+	e.GET("/robots.txt", func(c echo.Context) error {
+		return c.String(200, "User-agent: *\nAllow: /\nSitemap: https://mljr.eu/sitemap.xml\n")
+	})
+	e.GET("/sitemap.xml", func(c echo.Context) error {
+		c.Response().Header().Set("Content-Type", "application/xml; charset=utf-8")
+		return c.String(200, `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://mljr.eu/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://mljr.eu/impressum</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://mljr.eu/datenschutz</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+</urlset>`)
+	})
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "ok") })
 	e.GET("/favicon.ico", func(c echo.Context) error { return c.NoContent(204) })
 
