@@ -60,6 +60,7 @@ func main() {
 	e.GET("/robots.txt", func(c echo.Context) error {
 		return c.String(200, "User-agent: *\nAllow: /\nSitemap: https://mljr.eu/sitemap.xml\n")
 	})
+	e.HEAD("/robots.txt", func(c echo.Context) error { return c.NoContent(200) })
 	e.GET("/sitemap.xml", func(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "application/xml; charset=utf-8")
 		return c.String(200, `<?xml version="1.0" encoding="UTF-8"?>
@@ -69,6 +70,7 @@ func main() {
   <url><loc>https://mljr.eu/datenschutz</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
 </urlset>`)
 	})
+	e.HEAD("/sitemap.xml", func(c echo.Context) error { return c.NoContent(200) })
 	e.GET("/healthz", func(c echo.Context) error { return c.String(200, "ok") })
 	e.GET("/favicon.ico", func(c echo.Context) error { return c.NoContent(204) })
 
