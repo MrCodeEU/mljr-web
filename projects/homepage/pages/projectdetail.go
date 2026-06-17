@@ -14,46 +14,17 @@ import (
 	"mljr-web/ui/token"
 )
 
-type projectSnippet struct {
-	Caption  string
-	Filename string
-	Language string
-	Code     string
-}
-
-type projectDetailContent struct {
-	LongDesc   string
-	LongDescDE string
-	Diagram    string // Mermaid graph definition
-	Snippets   []projectSnippet
-}
-
-// projectDetails holds deep-dive content for flagship projects, keyed by
-// curated project id. Cards for ids present here link to /projects/<id>;
-// everything else stays a card-only entry.
-var projectDetails = map[string]projectDetailContent{
-	"godrive":            godriveDetail,
-	"homelab-automation": homelabAutomationDetail,
-	"mljr-web":           mljrWebDetail,
-	"nightscout-tray":    nightscoutTrayDetail,
-}
-
 // HasProjectDetail reports whether a project has a dedicated detail page.
-func HasProjectDetail(id string) bool {
-	_, ok := projectDetails[id]
-	return ok
+func HasProjectDetail(p hpdata.Project) bool {
+	return p.HasDetailPage()
 }
 
 // ProjectDetail renders the full architecture deep-dive page for one project.
+// All content (long description, Mermaid diagram, code snippets) is
+// authored in mljr-data/projects.json and flows through hpdata.Project —
+// this page has no hardcoded per-project content of its own.
 func ProjectDetail(d hpdata.SiteData, p hpdata.Project, lang string, a AnalyticsConfig) g.Node {
-	det, ok := projectDetails[p.ID]
-	if !ok {
-		det = projectDetailContent{LongDesc: p.DescFor(lang)}
-	}
-	longDesc := det.LongDesc
-	if lang == "de" && det.LongDescDE != "" {
-		longDesc = det.LongDescDE
-	}
+	longDesc := p.LongDescFor(lang)
 
 	imgs := p.LocalImages()
 	var hero g.Node
@@ -84,7 +55,7 @@ func ProjectDetail(d hpdata.SiteData, p hpdata.Project, lang string, a Analytics
 	}
 
 	var snippetNodes []g.Node
-	for _, s := range det.Snippets {
+	for _, s := range p.Snippets {
 		snippetNodes = append(snippetNodes,
 			h.Div(h.Style("margin-bottom:var(--sp-6)"),
 				h.P(h.Style("margin:0 0 var(--sp-3);font-size:var(--t-sm);font-weight:700;color:var(--muted);line-height:1.5"),
@@ -99,9 +70,9 @@ func ProjectDetail(d hpdata.SiteData, p hpdata.Project, lang string, a Analytics
 	}
 
 	headExtra := append([]g.Node{
-		g.El("style", g.Raw(homepageCSS + legalCSS + projectDetailCSS)),
+		g.El("style", g.Raw(homepageCSS+legalCSS+projectDetailCSS)),
 	}, AnalyticsHead(a)...)
-	if det.Diagram != "" {
+	if p.Diagram != "" {
 		// Self-hosted (CSP is script-src 'self', no CDN imports allowed).
 		// mermaid.min.js is the UMD bundle; it sets globalThis.mermaid.
 		headExtra = append(headExtra,
@@ -137,10 +108,10 @@ func ProjectDetail(d hpdata.SiteData, p hpdata.Project, lang string, a Analytics
 				g.If(hero != nil, h.Div(h.Style("margin-bottom:var(--sp-8)"), hero)),
 				h.Div(h.Class("legal-shell"),
 					h.P(h.Style("font-size:var(--t-md);line-height:1.7;max-width:none;margin:0 0 var(--sp-8)"), g.Text(longDesc)),
-					g.If(det.Diagram != "",
+					g.If(p.Diagram != "",
 						h.Div(h.Style("margin-bottom:var(--sp-8)"),
 							h.H2(g.Text("Architecture")),
-							h.Pre(h.Class("mermaid"), g.Raw(det.Diagram)),
+							h.Pre(h.Class("mermaid"), g.Raw(p.Diagram)),
 						),
 					),
 					g.If(len(snippetNodes) > 0,

@@ -60,7 +60,7 @@ func main() {
 	e.GET("/projects/:id", func(c echo.Context) error {
 		d := dataStore.Current()
 		p, ok := d.ProjectByID(c.Param("id"))
-		if !ok || !pages.HasProjectDetail(p.ID) {
+		if !ok || !pages.HasProjectDetail(p) {
 			return c.NoContent(404)
 		}
 		return web.Render(c, 200, pages.ProjectDetail(d, p, web.Lang(c), analytics))

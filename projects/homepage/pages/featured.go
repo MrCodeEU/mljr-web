@@ -106,7 +106,7 @@ func featuredCard(p hpdata.Project, tone token.Tone, big bool, lang string) g.No
 	}
 
 	var linkNodes []g.Node
-	if HasProjectDetail(p.ID) {
+	if HasProjectDetail(p) {
 		linkNodes = append(linkNodes,
 			h.A(h.Href("/projects/"+p.ID),
 				primitive.Button(primitive.ButtonProps{Variant: token.Primary, Size: token.SizeSM},

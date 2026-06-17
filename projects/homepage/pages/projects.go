@@ -78,7 +78,7 @@ func projectCard(p hpdata.Project, tone token.Tone, lang string) g.Node {
 	}
 
 	var linkNodes []g.Node
-	if HasProjectDetail(p.ID) {
+	if HasProjectDetail(p) {
 		linkNodes = append(linkNodes,
 			h.A(h.Href("/projects/"+p.ID),
 				primitive.Button(primitive.ButtonProps{Variant: token.Primary, Size: token.SizeSM},
