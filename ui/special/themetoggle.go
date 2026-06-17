@@ -62,8 +62,10 @@ func ModeToggle() g.Node {
 		},
 		// line-height:0 — the wrapping spans (needed for data-show) must not add
 		// inline line-box height on top of the icon, or the button grows taller
-		// than its SizeIcon siblings.
-		h.Span(h.Class("mode-toggle-icon-moon"), h.Style("line-height:0"), g.Attr("data-show", "$mode === 'light'"), icon.Icon("lucide:moon")),
-		h.Span(h.Class("mode-toggle-icon-sun"), h.Style("line-height:0"), g.Attr("data-show", "$mode === 'dark'"), icon.Icon("lucide:sun")),
+		// than its SizeIcon siblings. display:none is the pre-Datastar-boot
+		// default so both icons don't flash stacked on top of each other before
+		// data-show takes over.
+		h.Span(h.Class("mode-toggle-icon-moon"), h.Style("line-height:0;display:none"), g.Attr("data-show", "$mode === 'light'"), icon.Icon("lucide:moon")),
+		h.Span(h.Class("mode-toggle-icon-sun"), h.Style("line-height:0;display:none"), g.Attr("data-show", "$mode === 'dark'"), icon.Icon("lucide:sun")),
 	)
 }

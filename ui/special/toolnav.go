@@ -37,7 +37,13 @@ func ToolNavbar(current string) g.Node {
 
 	return layout.Navbar(layout.NavbarProps{},
 		h.A(h.Href("https://mljr.eu"),
-			h.Span(h.Style("font-weight:900;font-size:var(--t-lg);letter-spacing:-.02em"), g.Text("mljr.eu")),
+			h.Img(
+				h.Src("/static/img/logo/Logo-h.png"),
+				h.Alt("mljr.eu"),
+				h.Width("172"),
+				h.Height("32"),
+				h.Style("height:32px;width:auto"),
+			),
 		),
 		g.Group(navLinks),
 		g.Group{

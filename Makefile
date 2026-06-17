@@ -95,6 +95,11 @@ vendor-js: ## vendor datastar.js + altcha.js (ESM browser bundle) into every pro
 	# mermaid: vendored UMD bundle (globalThis.mermaid) for project-detail arch diagrams
 	curl -fsSL https://cdn.jsdelivr.net/npm/mermaid@$(MERMAID_VERSION)/dist/mermaid.min.js \
 		-o projects/homepage/assets/static/mermaid.min.js
+	# brand logo: shared by the tool navbar (ToolNavbar) on regex/cron/codec, same asset homepage uses
+	@mkdir -p projects/regex/assets/static/img/logo projects/cron/assets/static/img/logo projects/codec/assets/static/img/logo
+	cp projects/homepage/assets/static/img/logo/Logo-h.png projects/regex/assets/static/img/logo/Logo-h.png
+	cp projects/homepage/assets/static/img/logo/Logo-h.png projects/cron/assets/static/img/logo/Logo-h.png
+	cp projects/homepage/assets/static/img/logo/Logo-h.png projects/codec/assets/static/img/logo/Logo-h.png
 
 upgrade-deps: ## re-fetch tailwind + datastar + altcha at the version pins
 	rm -f $(TAILWIND)

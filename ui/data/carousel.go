@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"strings"
 
 	"mljr-web/ui"
 
@@ -26,7 +27,11 @@ func Carousel(p CarouselProps) g.Node {
 	if interval == "" {
 		interval = "4s"
 	}
-	sig := id + "Idx"
+	// Datastar signal names must be valid JS identifiers; ids like
+	// project slugs ("pd-homelab-automation") contain hyphens that would
+	// otherwise produce invalid generated expressions (e.g. unquoted object
+	// keys with a "-" in them).
+	sig := strings.ReplaceAll(id, "-", "_") + "Idx"
 	n := len(p.Images)
 	if n == 0 {
 		return g.Raw("")
