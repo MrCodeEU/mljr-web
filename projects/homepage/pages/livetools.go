@@ -19,9 +19,10 @@ func liveToolsSection(num string, tools []hpdata.Project, lang string) g.Node {
 		return nil
 	}
 
+	tones := []token.Tone{token.ToneViolet, token.ToneCyan, token.ToneLime, token.ToneYellow, token.TonePink, token.ToneMint}
 	cards := make([]g.Node, 0, len(tools))
-	for _, t := range tools {
-		cards = append(cards, liveToolCard(t, lang))
+	for i, t := range tools {
+		cards = append(cards, liveToolCard(t, lang, tones[i%len(tones)]))
 	}
 
 	subtitle := fmt.Sprintf(i18n.T(lang, "sections.livetools.count"), len(tools))
@@ -39,7 +40,7 @@ func liveToolsSection(num string, tools []hpdata.Project, lang string) g.Node {
 	)
 }
 
-func liveToolCard(p hpdata.Project, lang string) g.Node {
+func liveToolCard(p hpdata.Project, lang string, tone token.Tone) g.Node {
 	liveURL := p.LiveURL()
 
 	tagNodes := make([]g.Node, 0, len(p.Topics))
@@ -54,7 +55,7 @@ func liveToolCard(p hpdata.Project, lang string) g.Node {
 	}
 
 	return primitive.Card(primitive.CardProps{
-		Tone:  token.ToneAccent,
+		Tone:  tone,
 		Attrs: []g.Node{h.Style("display:flex;flex-direction:column;gap:var(--sp-4);height:100%")},
 	},
 		// Header row: name + live badge

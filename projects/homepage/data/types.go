@@ -541,12 +541,22 @@ func (d SiteData) LiveToolProjects() []Project {
 	return out
 }
 
-// AllProjects returns all non-featured, non-meta projects, ordered by the
-// curated "order" field (ascending, lower = shown first), then by name.
+// AllProjects returns all non-featured, non-live-tool, non-meta projects,
+// ordered by the curated "order" field (ascending, lower = shown first), then by name.
 func (d SiteData) AllProjects() []Project {
 	var out []Project
 	for _, p := range d.GitHub {
-		if !p.Featured && !strings.EqualFold(p.Name, "homepage") {
+		if p.Featured || strings.EqualFold(p.Name, "homepage") {
+			continue
+		}
+		isLiveTool := false
+		for _, t := range p.Topics {
+			if strings.EqualFold(t, "live-tool") {
+				isLiveTool = true
+				break
+			}
+		}
+		if !isLiveTool {
 			out = append(out, p)
 		}
 	}
