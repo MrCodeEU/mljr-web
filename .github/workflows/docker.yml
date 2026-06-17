@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        project: [homepage, showcase, regex]
+        project: [homepage, showcase, regex, cron, codec]
     steps:
       - uses: actions/checkout@v4
         with:
