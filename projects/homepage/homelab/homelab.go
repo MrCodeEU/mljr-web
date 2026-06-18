@@ -363,8 +363,10 @@ func (p *Poller) fetchProm(ctx context.Context, s *Snapshot) {
 			start, end, 24*time.Hour,
 		)
 		if err != nil {
+			log.Printf("homelab: attack-days chunk %d (%s..%s) failed: %v", chunk, start.Format("2006-01-02"), end.Format("2006-01-02"), err)
 			continue // empty chunks are expected until a year of data exists
 		}
+		log.Printf("homelab: attack-days chunk %d (%s..%s) got %d points", chunk, start.Format("2006-01-02"), end.Format("2006-01-02"), len(pts))
 		for _, pt := range pts {
 			day := time.Unix(int64(pt[0]), 0)
 			key := day.Format("2006-01-02")
