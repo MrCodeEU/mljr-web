@@ -59,13 +59,17 @@ func Heatmap(p HeatmapProps, cells []HeatmapCell) g.Node {
 		maxVal = 1
 	}
 
-	// Find start date: (Weeks) weeks ago, aligned to Sunday
+	// Anchor the grid on the Saturday on/after today so the current
+	// (possibly incomplete) week is always included, then walk back
+	// Weeks full Sun–Sat weeks. Aligning only the start (and not the
+	// end) would shift the whole window earlier on any day but
+	// Saturday, silently dropping the most recent days.
 	now := time.Now()
-	start := now.AddDate(0, 0, -(p.Weeks*7 - 1))
-	// Align to Sunday
-	for start.Weekday() != time.Sunday {
-		start = start.AddDate(0, 0, -1)
+	end := now
+	for end.Weekday() != time.Saturday {
+		end = end.AddDate(0, 0, 1)
 	}
+	start := end.AddDate(0, 0, -(p.Weeks*7 - 1))
 
 	step := p.CellSize + p.Gap
 	leftPad := 0
