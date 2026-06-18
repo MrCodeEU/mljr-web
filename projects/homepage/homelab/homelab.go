@@ -376,6 +376,7 @@ func (p *Poller) fetchProm(ctx context.Context, s *Snapshot) {
 			}
 		}
 	}
+	log.Printf("homelab: attack-days total after chunk loop: %d", len(s.AttackDays))
 
 	// Avg CPU across hosts, last 24h, 30-minute resolution.
 	if pts, err := p.promQueryRange(ctx,
