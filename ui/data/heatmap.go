@@ -30,6 +30,9 @@ type HeatmapProps struct {
 	ShowMonthLabels bool
 	// ShowDayLabels renders Mon/Wed/Fri on the left.
 	ShowDayLabels bool
+	// Now overrides the reference "today" (default time.Now()); exposed
+	// for tests so grid-alignment behavior can be checked across weekdays.
+	Now time.Time
 }
 
 // Heatmap renders a GitHub-style contribution heatmap as an SVG.
@@ -64,7 +67,10 @@ func Heatmap(p HeatmapProps, cells []HeatmapCell) g.Node {
 	// Weeks full Sun–Sat weeks. Aligning only the start (and not the
 	// end) would shift the whole window earlier on any day but
 	// Saturday, silently dropping the most recent days.
-	now := time.Now()
+	now := p.Now
+	if now.IsZero() {
+		now = time.Now()
+	}
 	end := now
 	for end.Weekday() != time.Saturday {
 		end = end.AddDate(0, 0, 1)

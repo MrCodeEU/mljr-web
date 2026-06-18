@@ -9,6 +9,7 @@ require (
 	github.com/labstack/echo/v4 v4.15.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/starfederation/datastar-go v1.2.2
+	gopkg.in/yaml.v3 v3.0.1
 	maragu.dev/gomponents v1.3.0
 )
 

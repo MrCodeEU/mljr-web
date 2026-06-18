@@ -54,6 +54,7 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 			h.Div(
 				h.Style("display:flex;flex-direction:column;gap:var(--sp-4);min-width:0"),
 				servicesCard(snap, total),
+				meshCard(snap),
 				attacksHeatmapCard(snap),
 			),
 			h.Div(
@@ -234,6 +235,47 @@ func cpuCard(snap homelab.Snapshot) g.Node {
 				Fill:   true,
 			}},
 		}),
+	)
+}
+
+func meshCard(snap homelab.Snapshot) g.Node {
+	if !snap.MeshOK || len(snap.Mesh) == 0 {
+		return nil
+	}
+	nodes := make([]uidata.MeshNode, len(snap.Mesh))
+	online := 0
+	for i, m := range snap.Mesh {
+		names := make([]string, len(m.Services))
+		for j, svc := range m.Services {
+			names[j] = svc.Name
+		}
+		nodes[i] = uidata.MeshNode{
+			Name:     m.Name,
+			OS:       m.OS,
+			Online:   m.Online,
+			Relay:    m.Relay,
+			Services: names,
+		}
+		if m.Online {
+			online++
+		}
+	}
+
+	onlineTone := token.ToneLime
+	if online < len(snap.Mesh) {
+		onlineTone = token.ToneYellow
+	}
+
+	return primitive.Card(primitive.CardProps{Tone: token.ToneSky},
+		h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3);flex-wrap:wrap"),
+			h.Div(
+				h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("Tailscale mesh")),
+				h.H3(h.Style("font-size:var(--t-lg);font-weight:900;margin:var(--sp-1) 0 0"), g.Text("Live infra topology")),
+			),
+			primitive.Tag(primitive.TagProps{Tone: onlineTone},
+				g.Text(fmt.Sprintf("%d / %d online", online, len(snap.Mesh)))),
+		),
+		uidata.Mesh(uidata.MeshProps{}, nodes),
 	)
 }
 

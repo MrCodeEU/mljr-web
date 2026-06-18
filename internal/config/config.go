@@ -19,6 +19,21 @@ type HomelabConfig struct {
 	KumaURL  string // Uptime Kuma base URL (public status page API, no auth)
 	KumaSlug string // status page slug (default "all")
 	PromURL  string // Prometheus/VictoriaMetrics base URL via Tailscale; empty disables PromQL stats
+
+	TailscaleAPIKey  string // Tailscale API key (read-only, devices scope); empty disables mesh panel
+	TailscaleTailnet string // tailnet name, e.g. "example.ts.net" or "-" for the default tailnet
+
+	// InventoryURL points at the public homelab-automation repo's Ansible
+	// inventory (raw GitHub URL), used to filter the Tailscale device list
+	// down to infra hosts and to learn each host's tailscale_ip.
+	InventoryURL string
+	// ServicesURL points at the public group_vars file listing each
+	// service's domain/port/host/description, used to build the mesh's
+	// service badges without hand-maintaining a mapping.
+	ServicesURL string
+
+	NtfyURL   string // ntfy server base URL for ops alerts
+	NtfyTopic string // ntfy topic for ops alerts
 }
 
 type SMTPConfig struct {
@@ -66,6 +81,15 @@ func Load() Config {
 			KumaURL:  envOr("HOMELAB_KUMA_URL", "https://uptime.mljr.eu"),
 			KumaSlug: envOr("HOMELAB_KUMA_SLUG", "all"),
 			PromURL:  os.Getenv("HOMELAB_PROM_URL"),
+
+			TailscaleAPIKey:  os.Getenv("TAILSCALE_API_KEY"),
+			TailscaleTailnet: envOr("TAILSCALE_TAILNET", "-"),
+
+			InventoryURL: envOr("HOMELAB_INVENTORY_URL", "https://raw.githubusercontent.com/MrCodeEU/homelab-automation/main/ansible/inventory/hosts.yml"),
+			ServicesURL:  envOr("HOMELAB_SERVICES_URL", "https://raw.githubusercontent.com/MrCodeEU/homelab-automation/main/ansible/inventory/group_vars/all/all.yml"),
+
+			NtfyURL:   envOr("NTFY_URL", "https://ntfy.mljr.eu"),
+			NtfyTopic: envOr("NTFY_TOPIC", "homepage"),
 		},
 		Data: DataConfig{
 			File:          envOr("HOMEPAGE_DATA_FILE", "mljr-data/generated/site-data.json"),

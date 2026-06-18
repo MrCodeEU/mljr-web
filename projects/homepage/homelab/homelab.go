@@ -52,6 +52,29 @@ type Snapshot struct {
 	AttackDays []DayValue // attacks blocked per day, oldest→newest (≤365)
 	CPUUtil    []float64  // avg CPU % across hosts, last 24h, oldest→newest
 	CPULabels  []string   // hour labels aligned to CPUUtil
+
+	// Tailscale mesh, filtered to infra hosts listed in the public
+	// homelab-automation inventory (personal devices never appear here).
+	MeshOK bool
+	Mesh   []MeshHost
+}
+
+// MeshHost is one infra host in the Tailscale mesh view.
+type MeshHost struct {
+	Name        string // inventory hostname, e.g. "mljr"
+	TailscaleIP string
+	OS          string // OS family only (linux/windows/macOS/...), no version
+	Online      bool
+	Relay       bool // true if this host is currently reachable only via a DERP relay
+	Services    []MeshService
+}
+
+// MeshService is one service hosted on a MeshHost (from the public
+// homelab-automation service registry).
+type MeshService struct {
+	Name        string
+	Domain      string
+	Description string
 }
 
 // NameValue is a labeled counter (e.g. threat category → active bans).
@@ -100,6 +123,25 @@ func Sample() Snapshot {
 		AttackDays: sampleAttackDays(),
 		CPUUtil:    []float64{12, 14, 11, 18, 22, 19, 15, 13, 24, 31, 28, 21, 17, 14, 16, 19, 23, 26, 20, 15, 13, 12, 14, 17},
 		CPULabels:  sampleHourLabels(24),
+		MeshOK:     true,
+		Mesh:       sampleMesh(),
+	}
+}
+
+func sampleMesh() []MeshHost {
+	return []MeshHost{
+		{Name: "mljr", TailscaleIP: "100.100.20.1", OS: "linux", Online: true, Services: []MeshService{
+			{Name: "authelia", Domain: "auth.mljr.eu", Description: "Authelia SSO"},
+			{Name: "ntfy", Domain: "ntfy.mljr.eu", Description: "Push Notifications"},
+		}},
+		{Name: "nuc", TailscaleIP: "100.100.10.1", OS: "linux", Online: true, Services: []MeshService{
+			{Name: "uptime-kuma", Domain: "uptime.mljr.eu", Description: "Uptime Monitoring"},
+			{Name: "grafana", Domain: "grafana.mljr.eu", Description: "Monitoring"},
+		}},
+		{Name: "nas", TailscaleIP: "100.100.10.2", OS: "linux", Online: true, Relay: true},
+		{Name: "homeassistant", TailscaleIP: "100.100.10.200", OS: "linux", Online: false, Services: []MeshService{
+			{Name: "home-assistant", Domain: "home.mljr.eu", Description: "Home Automation"},
+		}},
 	}
 }
 
@@ -131,26 +173,69 @@ func sampleHourLabels(n int) []string {
 	return out
 }
 
+// Options configures a Poller. Each data source is independently optional;
+// the panel degrades gracefully when a source's fields are left empty.
+type Options struct {
+	KumaURL  string
+	KumaSlug string
+	PromURL  string
+
+	TailscaleAPIKey  string // empty disables the mesh panel entirely
+	TailscaleTailnet string
+
+	InventoryURL string // public homelab-automation Ansible inventory (raw YAML)
+	ServicesURL  string // public homelab-automation service registry (raw YAML)
+
+	NtfyURL   string // ops alert target, e.g. failed Tailscale API auth
+	NtfyTopic string
+}
+
 type Poller struct {
 	kumaURL  string
 	kumaSlug string
 	promURL  string
-	client   *http.Client
+
+	tsAPIKey     string
+	tsTailnet    string
+	inventoryURL string
+	servicesURL  string
+	ntfyURL      string
+	ntfyTopic    string
+
+	client *http.Client
+
+	// Inventory/service-registry caches and mesh-alert throttle state are
+	// only ever touched from the single poll() goroutine — no locking needed.
+	invCache      map[string]string // inventory hostname -> tailscale_ip
+	invFetchedAt  time.Time
+	svcCache      []ServiceEntry
+	svcFetchedAt  time.Time
+	lastTSAlertAt time.Time
 
 	mu   sync.RWMutex
 	snap Snapshot
 }
 
-// New creates a poller. Empty kumaURL or promURL disables that source.
-func New(kumaURL, kumaSlug, promURL string) *Poller {
-	if kumaSlug == "" {
-		kumaSlug = "all"
+// New creates a poller. Empty KumaURL or PromURL disables that source;
+// empty TailscaleAPIKey disables the mesh panel.
+func New(opts Options) *Poller {
+	if opts.KumaSlug == "" {
+		opts.KumaSlug = "all"
+	}
+	if opts.TailscaleTailnet == "" {
+		opts.TailscaleTailnet = "-"
 	}
 	return &Poller{
-		kumaURL:  kumaURL,
-		kumaSlug: kumaSlug,
-		promURL:  promURL,
-		client:   &http.Client{Timeout: 10 * time.Second},
+		kumaURL:      opts.KumaURL,
+		kumaSlug:     opts.KumaSlug,
+		promURL:      opts.PromURL,
+		tsAPIKey:     opts.TailscaleAPIKey,
+		tsTailnet:    opts.TailscaleTailnet,
+		inventoryURL: opts.InventoryURL,
+		servicesURL:  opts.ServicesURL,
+		ntfyURL:      opts.NtfyURL,
+		ntfyTopic:    opts.NtfyTopic,
+		client:       &http.Client{Timeout: 10 * time.Second},
 	}
 }
 
@@ -197,6 +282,9 @@ func (p *Poller) poll(ctx context.Context) {
 	if p.promURL != "" {
 		p.fetchProm(ctx, &next)
 	}
+	if p.tsAPIKey != "" {
+		p.fetchTailscale(ctx, &next)
+	}
 
 	p.mu.Lock()
 	prev := p.snap
@@ -207,6 +295,12 @@ func (p *Poller) poll(ctx context.Context) {
 		next.UpCount = prev.UpCount
 		next.PingHistory = prev.PingHistory
 		next.FetchedAt = prev.FetchedAt
+	}
+	// Same for the mesh: a transient Tailscale API hiccup shouldn't blank
+	// out the panel (the ntfy alert already covers persistent failures).
+	if !next.MeshOK && prev.MeshOK {
+		next.MeshOK = true
+		next.Mesh = prev.Mesh
 	}
 	p.snap = next
 	p.mu.Unlock()

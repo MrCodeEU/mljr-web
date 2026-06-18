@@ -40,7 +40,19 @@ func main() {
 		UmamiDomains:   cfg.Analytics.UmamiDomains,
 	}
 	// Live homelab panel: background poller, 60s cadence.
-	hlPoller := homelab.New(cfg.Homelab.KumaURL, cfg.Homelab.KumaSlug, cfg.Homelab.PromURL)
+	hlPoller := homelab.New(homelab.Options{
+		KumaURL:  cfg.Homelab.KumaURL,
+		KumaSlug: cfg.Homelab.KumaSlug,
+		PromURL:  cfg.Homelab.PromURL,
+
+		TailscaleAPIKey:  cfg.Homelab.TailscaleAPIKey,
+		TailscaleTailnet: cfg.Homelab.TailscaleTailnet,
+		InventoryURL:     cfg.Homelab.InventoryURL,
+		ServicesURL:      cfg.Homelab.ServicesURL,
+
+		NtfyURL:   cfg.Homelab.NtfyURL,
+		NtfyTopic: cfg.Homelab.NtfyTopic,
+	})
 	hlPoller.Start(context.Background(), 60*time.Second)
 	hlSnapshot := func() homelab.Snapshot {
 		snap := hlPoller.Snapshot()
