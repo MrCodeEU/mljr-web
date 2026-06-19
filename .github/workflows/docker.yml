@@ -67,6 +67,12 @@ jobs:
             exit 0
           fi
 
+          # mljr-data submodule bump only affects homepage, same as repository_dispatch
+          if [ "$(echo "$CHANGED" | grep -vE '^projects/')" == "mljr-data" ]; then
+            echo "matrix=[\"homepage\"]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           # Any change outside projects/ touches shared libs/assets → rebuild all
           if echo "$CHANGED" | grep -qvE '^projects/'; then
             echo "matrix=$ALL" >> "$GITHUB_OUTPUT"
