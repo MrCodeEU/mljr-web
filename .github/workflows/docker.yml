@@ -36,7 +36,7 @@ jobs:
       - name: Determine projects to build
         id: set
         run: |
-          ALL='["homepage","showcase","regex","cron","codec"]'
+          ALL='["homepage","showcase","regex","cron","codec","newsletter"]'
 
           # mljr-data updated: only homepage embeds that data
           if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
@@ -81,7 +81,7 @@ jobs:
 
           # Collect only the affected project(s)
           PROJECTS=()
-          for proj in homepage showcase regex cron codec; do
+          for proj in homepage showcase regex cron codec newsletter; do
             if echo "$CHANGED" | grep -q "^projects/$proj/"; then
               PROJECTS+=("\"$proj\"")
             fi

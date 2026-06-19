@@ -44,8 +44,9 @@ Config knobs (`internal/config/config.go`, `NewsletterConfig`):
 - `NEWSLETTER_DATA_DIR` (default `pb_data`) — PocketBase's SQLite + file
   storage directory. **This is the first project in the repo with a real
   persistent-data requirement** — a prod deploy needs a mounted volume here
-  or every redeploy loses all groups/editions/answers/images. Not yet
-  coordinated with homelab-automation (see Known gaps).
+  or every redeploy loses all groups/editions/answers/images. CI builds the
+  image (see Known gaps), but the homelab-automation volume mount is not yet
+  coordinated — confirm before the first prod deploy.
 - `NEWSLETTER_PUBLIC_URL` (default `http://localhost:8095`) — base URL used
   to build links inside emails (invite links, edition links). Must match
   whatever the deployed origin actually is, or emailed links will be wrong.
@@ -403,12 +404,15 @@ green as of Phase 5; run with `go test ./projects/newsletter/...`.
   instead). The edition archive page is still the bare `ListEditions` list
   from earlier phases; no richer per-edition summary/thumbnail view was
   added in Phase 5.
-- **Phase 6 (not started)**: this project is **not yet in
-  `.github/workflows/docker.yml`'s `ALL` build matrix** — CI doesn't build
-  or publish a newsletter image yet. Also not yet coordinated with
-  homelab-automation for a persistent volume on `NEWSLETTER_DATA_DIR` (see
-  Running it above) — deploying without that volume loses all data on every
-  redeploy.
+- **Phase 6 (in progress)**: `newsletter` is now in
+  `.github/workflows/docker.yml`'s `ALL` build matrix and the per-project
+  change-detection loop — CI builds and publishes the image and dispatches
+  a homelab-automation deploy like every other project. **Still
+  outstanding**: homelab-automation itself needs a persistent volume
+  mounted for the `newsletter` service's `NEWSLETTER_DATA_DIR` before the
+  first prod deploy — without it, every redeploy wipes all groups, editions,
+  answers, and images. This must be coordinated in the homelab-automation
+  repo, not here.
 - Image answers have no email-digest representation (placeholder text only,
   see Scheduling above).
 - No avatar upload yet — `pages/shell.go`'s `avatarTone`/`initials` generate
