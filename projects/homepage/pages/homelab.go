@@ -55,7 +55,6 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 				h.Style("display:flex;flex-direction:column;gap:var(--sp-4);min-width:0"),
 				servicesCard(snap, total),
 				meshCard(snap),
-				attacksHeatmapCard(snap),
 			),
 			h.Div(
 				h.Style("display:flex;flex-direction:column;gap:var(--sp-4);min-width:0"),
@@ -63,6 +62,7 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 				cpuCard(snap),
 				crowdsecCard(snap),
 				threatsCard(snap),
+				attacksHeatmapCard(snap),
 			),
 		),
 		h.Div(
