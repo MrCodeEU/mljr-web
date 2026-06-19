@@ -36,8 +36,11 @@
     outline-offset:2px;
   }
   [data-component="input"][data-state="error"],
-  [data-component="textarea"][data-state="error"] {
+  [data-component="textarea"][data-state="error"],
+  [data-component="input"]:user-invalid,
+  [data-component="textarea"]:user-invalid {
     border-color:var(--danger);
+    box-shadow:0 0 0 var(--bw-2) color-mix(in srgb,var(--danger) 35%,transparent);
   }
 
   /* select */

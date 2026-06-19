@@ -32,16 +32,18 @@ func Checkbox(p CheckboxProps, attrs ...g.Node) g.Node {
 }
 
 type RadioOption struct {
-	Value string
-	Label string
+	Value   string
+	Label   string
+	Checked bool
 }
 
 type RadioProps struct {
-	Label  string
-	Value  string
-	Signal string
-	Name   string
-	Attrs  []g.Node
+	Label   string
+	Value   string
+	Signal  string
+	Name    string
+	Checked bool
+	Attrs   []g.Node
 }
 
 // Radio renders a single styled radio button. Group multiple with RadioGroup.
@@ -53,6 +55,7 @@ func Radio(p RadioProps, attrs ...g.Node) g.Node {
 			g.If(p.Value != "", h.Value(p.Value)),
 			g.If(p.Signal != "", g.Attr("data-bind:"+p.Signal)),
 			g.If(p.Name != "", h.Name(p.Name)),
+			g.If(p.Checked, g.Attr("checked")),
 			g.Group(p.Attrs),
 			g.Group(attrs),
 		),
@@ -73,10 +76,11 @@ func RadioGroup(p RadioGroupProps, attrs ...g.Node) g.Node {
 	opts := make([]g.Node, len(p.Options))
 	for i, o := range p.Options {
 		opts[i] = Radio(RadioProps{
-			Label:  o.Label,
-			Value:  o.Value,
-			Signal: p.Signal,
-			Name:   p.Name,
+			Label:   o.Label,
+			Value:   o.Value,
+			Signal:  p.Signal,
+			Name:    p.Name,
+			Checked: o.Checked,
 		})
 	}
 	return h.Div(

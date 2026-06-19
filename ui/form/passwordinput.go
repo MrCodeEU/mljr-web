@@ -1,6 +1,8 @@
 package form
 
 import (
+	"strconv"
+
 	"mljr-web/ui/icon"
 
 	g "maragu.dev/gomponents"
@@ -13,6 +15,11 @@ type PasswordInputProps struct {
 	Placeholder  string
 	Value        string
 	Autocomplete string // e.g. "current-password", "new-password"
+	Required     bool
+	MinLength    int
+	// Attrs is appended to the underlying <input>, e.g. for a strength-meter
+	// hook (data-on:input, data-bind, etc.).
+	Attrs []g.Node
 }
 
 // PasswordInput renders a password field with a show/hide toggle button.
@@ -45,6 +52,9 @@ func PasswordInput(p PasswordInputProps) g.Node {
 			h.Placeholder(p.Placeholder),
 			h.Value(p.Value),
 			g.Attr("autocomplete", p.Autocomplete),
+			g.If(p.Required, g.Attr("required")),
+			g.If(p.MinLength > 0, g.Attr("minlength", strconv.Itoa(p.MinLength))),
+			g.Group(p.Attrs),
 		),
 		h.Button(
 			g.Attr("data-slot", "toggle"),

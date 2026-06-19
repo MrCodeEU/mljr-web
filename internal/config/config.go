@@ -8,9 +8,16 @@ type Config struct {
 	AltchaKey string // HMAC key for altcha challenge signing; generate with: openssl rand -hex 32
 	SMTP      SMTPConfig
 	ContactTo string
-	Analytics AnalyticsConfig
-	Homelab   HomelabConfig
-	Data      DataConfig
+	Analytics  AnalyticsConfig
+	Homelab    HomelabConfig
+	Data       DataConfig
+	Newsletter NewsletterConfig
+}
+
+// NewsletterConfig configures the projects/newsletter PocketBase server.
+type NewsletterConfig struct {
+	DataDir      string // PocketBase pb_data directory
+	PublicAppURL string // base URL used in emails for links (invites, editions)
 }
 
 // HomelabConfig points the live homelab panel at its data sources.
@@ -94,6 +101,10 @@ func Load() Config {
 		Data: DataConfig{
 			File:          envOr("HOMEPAGE_DATA_FILE", "mljr-data/generated/site-data.json"),
 			ReloadSeconds: envOr("HOMEPAGE_DATA_RELOAD_SECONDS", "300"),
+		},
+		Newsletter: NewsletterConfig{
+			DataDir:      envOr("NEWSLETTER_DATA_DIR", "pb_data"),
+			PublicAppURL: envOr("NEWSLETTER_PUBLIC_URL", "http://localhost:8095"),
 		},
 	}
 }

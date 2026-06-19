@@ -14,3 +14,5 @@ projects/homepage/assets/static/portfolio/
 .DS_Store
 .playwright-mcp/
 .env
+projects/newsletter/pb_data/
+/pb_data/

@@ -2,6 +2,8 @@
 
 This file tells future Claude/agent runs **how to extend this repo without breaking its invariants.** Read `PLAN.md` first for the high-level architecture.
 
+> **`projects/newsletter` is architecturally different from everything below**: it embeds PocketBase as the actual server (not Echo), with its own auth/DB/scheduling. See [`projects/newsletter/agents.md`](projects/newsletter/agents.md) before working in that directory — most of this file's Echo-specific guidance does not apply there (the `ui/` component rules still do).
+
 ## Hard invariants (CI-enforced)
 
 1. **`ui/**.go` MUST NOT contain `Class(` or `class=`.** Components emit `data-component`, `data-variant`, `data-size`, `data-tone`, `data-state` — all visual styling lives in `ui/css/core.css`. Enforced by `make guard-classes`.

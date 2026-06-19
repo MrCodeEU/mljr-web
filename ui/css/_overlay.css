@@ -143,9 +143,14 @@
     border:var(--border-w) solid var(--line);
     border-radius:var(--radius); box-shadow:var(--shadow);
     min-width:180px;
+    max-width:min(320px, calc(100vw - var(--sp-6)));
     animation:mljr-pop var(--press);
   }
   [data-component="dropdown-menu"][data-align="right"] { left:auto; right:0; }
+
+  @media (max-width:480px) {
+    [data-component="navbar"] [data-component="dropdown-menu"] { left:auto; right:0; }
+  }
   [data-component="dropdown-item"] {
     display:flex; align-items:center; gap:var(--sp-2);
     padding:var(--sp-2) var(--sp-4);

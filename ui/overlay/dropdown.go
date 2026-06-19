@@ -14,6 +14,7 @@ type DropdownItem struct {
 	Href    string // if set, renders <a>; otherwise <button>
 	OnClick string // Datastar expression
 	Icon    string // icon name (e.g. "lucide:edit")
+	Content g.Node // overrides Icon+Label rendering when set (e.g. avatar + name row)
 	Variant string // "danger" for destructive items
 	Divider bool   // render a divider before this item
 }
@@ -40,9 +41,15 @@ func Dropdown(p DropdownProps, trigger g.Node, items ...DropdownItem) g.Node {
 		if item.Divider {
 			menuItems = append(menuItems, h.Div(g.Attr("data-component", "dropdown-divider")))
 		}
-		var iconNode g.Node
-		if item.Icon != "" {
-			iconNode = icon.Icon(item.Icon)
+		var body g.Node
+		if item.Content != nil {
+			body = item.Content
+		} else {
+			var iconNode g.Node
+			if item.Icon != "" {
+				iconNode = icon.Icon(item.Icon)
+			}
+			body = g.Group([]g.Node{iconNode, g.Text(item.Label)})
 		}
 		attrs := []g.Node{
 			g.Attr("data-component", "dropdown-item"),
@@ -53,7 +60,7 @@ func Dropdown(p DropdownProps, trigger g.Node, items ...DropdownItem) g.Node {
 			if item.OnClick != "" {
 				attrs = append(attrs, g.Attr("data-on:click", item.OnClick+";"+closeExpr))
 			}
-			attrs = append(attrs, iconNode, g.Text(item.Label))
+			attrs = append(attrs, body)
 			menuItems = append(menuItems, h.A(attrs...))
 		} else {
 			expr := item.OnClick
@@ -63,7 +70,7 @@ func Dropdown(p DropdownProps, trigger g.Node, items ...DropdownItem) g.Node {
 				expr = closeExpr
 			}
 			attrs = append(attrs, g.Attr("data-on:click", expr), h.Type("button"))
-			attrs = append(attrs, iconNode, g.Text(item.Label))
+			attrs = append(attrs, body)
 			menuItems = append(menuItems, h.Button(attrs...))
 		}
 	}

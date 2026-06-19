@@ -40,7 +40,7 @@ ifeq ($(UNAME_S),Darwin)
   endif
 endif
 
-.PHONY: help setup tailwind vendor-js air icons dev dev-showcase dev-regex dev-cron dev-codec build check fmt vet lint test test-showcase vuln guard-classes docker upgrade-deps clean sync-assets data-update data-pull
+.PHONY: help setup tailwind vendor-js air icons dev dev-showcase dev-regex dev-cron dev-codec dev-newsletter build check fmt vet lint test test-showcase vuln guard-classes docker upgrade-deps clean sync-assets data-update data-pull
 
 help:           ## list targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN{FS=":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -62,13 +62,14 @@ $(TAILWIND):
 
 vendor-js: ## vendor datastar.js + altcha.js (ESM browser bundle) into every project's assets/static
 	@mkdir -p projects/homepage/assets/static/altcha-workers projects/showcase/assets/static \
-	  projects/regex/assets/static projects/cron/assets/static projects/codec/assets/static
+	  projects/regex/assets/static projects/cron/assets/static projects/codec/assets/static projects/newsletter/assets/static
 	curl -fsSL https://cdn.jsdelivr.net/gh/starfederation/datastar@v$(DATASTAR_VERSION)/bundles/datastar.js \
 		-o projects/homepage/assets/static/datastar.js
 	cp projects/homepage/assets/static/datastar.js projects/showcase/assets/static/datastar.js
 	cp projects/homepage/assets/static/datastar.js projects/regex/assets/static/datastar.js
 	cp projects/homepage/assets/static/datastar.js projects/cron/assets/static/datastar.js
 	cp projects/homepage/assets/static/datastar.js projects/codec/assets/static/datastar.js
+	cp projects/homepage/assets/static/datastar.js projects/newsletter/assets/static/datastar.js
 	# altcha: external ESM bundle plus the local SHA worker used by altcha-loader.js
 	curl -fsSL https://cdn.jsdelivr.net/npm/altcha@$(ALTCHA_VERSION)/dist/external/altcha.min.js \
 		-o projects/homepage/assets/static/altcha.js
@@ -150,6 +151,15 @@ dev-codec: $(TAILWIND) $(AIR) ## run the codec tool (port 8094)
 	@$(TAILWIND) -i projects/codec/assets/css/input.css -o projects/codec/assets/static/app.css --watch & TW=$$!; \
 	  trap "kill $$TW 2>/dev/null" EXIT INT TERM; \
 	  MLJR_ENV=dev PORT=8094 AIR_MAIN_PKG=./projects/codec AIR_BUILD_TAGS= \
+	    $(AIR) -c .air.toml
+
+dev-newsletter: $(TAILWIND) $(AIR) ## run the newsletter app (port 8096)
+	$(TAILWIND) -i projects/newsletter/assets/css/input.css -o projects/newsletter/assets/static/app.css
+	@$(URL_LINE) 8096
+	@$(TAILWIND) -i projects/newsletter/assets/css/input.css -o projects/newsletter/assets/static/app.css --watch & TW=$$!; \
+	  trap "kill $$TW 2>/dev/null" EXIT INT TERM; \
+	  if [ -f projects/newsletter/.env ]; then set -a; . projects/newsletter/.env; set +a; fi; \
+	  MLJR_ENV=dev PORT=8096 AIR_MAIN_PKG=./projects/newsletter AIR_BUILD_TAGS= \
 	    $(AIR) -c .air.toml
 
 build: $(TAILWIND) sync-assets ## static binary -> bin/$(PROJECT)

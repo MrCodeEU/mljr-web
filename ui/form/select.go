@@ -6,8 +6,9 @@ import (
 )
 
 type SelectOption struct {
-	Value string
-	Label string
+	Value    string
+	Label    string
+	Selected bool
 }
 
 type SelectProps struct {
@@ -22,7 +23,7 @@ type SelectProps struct {
 func Select(p SelectProps, attrs ...g.Node) g.Node {
 	opts := make([]g.Node, len(p.Options))
 	for i, o := range p.Options {
-		opts[i] = h.Option(h.Value(o.Value), g.Text(o.Label))
+		opts[i] = h.Option(h.Value(o.Value), g.If(o.Selected, h.Selected()), g.Text(o.Label))
 	}
 	return h.Div(
 		g.Attr("data-component", "select-wrap"),

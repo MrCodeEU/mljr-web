@@ -85,7 +85,8 @@ func init() {
 							),
 							primitive.Button(primitive.ButtonProps{
 								Variant: token.Primary,
-								Attrs:   []g.Node{h.Type("submit"), h.Style("width:100%;margin-top:var(--sp-4)")},
+								Type:    "submit",
+								Attrs:   []g.Node{h.Style("width:100%;margin-top:var(--sp-4)")},
 							}, g.Text("Create account")),
 						),
 						h.Div(g.Attr("data-slot", "footer"),
