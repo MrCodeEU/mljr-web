@@ -72,6 +72,7 @@ truth).
 | `1700000001_invites_notifications.go` | `group_invites`, `notifications` |
 | `1700000002_questions_editions.go` | `question_bank`, `newsletter_editions`, `edition_questions`, `answers`, `answer_images` (+ seeds ~12 global questions, one/two per type) |
 | `1700000003_email_log.go` | `email_log` |
+| `1700000004_engagement.go` | `question_suggestions`, `question_suggestion_votes`, `emoji_reactions`, `comments` |
 
 Key fields per collection (see the migration files for the authoritative
 field list/types/API rules — this is a summary, not a substitute):
@@ -115,6 +116,31 @@ field list/types/API rules — this is a summary, not a substitute):
   `recipient_email`, `status` (sent/failed), `error`. No API rules — only
   ever touched from backend code (the cron scanner), never exposed over
   PocketBase's REST API.
+- **`question_suggestions`**: `group`, `suggested_by`, `type` (same 6 values
+  as `question_bank.type`), `prompt`, `options` (JSONField), `status`
+  (pending/approved/rejected). Any member can propose one
+  (`HandleCreateSuggestion`); an owner/admin can `HandleApproveSuggestion`
+  it, which copies it into `question_bank` as a `scope=group`,
+  `is_active=true` row and flips status to `approved` — or
+  `HandleRejectSuggestion`. There's no automatic promotion tied to vote
+  count or scheduling; `edition_questions.vote_count` is still unused (it
+  was added to the schema ahead of this feature but ranking only currently
+  drives display order on `/g/{slug}/suggestions`, not bank inclusion).
+- **`question_suggestion_votes`**: `suggestion`, `user`, unique on
+  (`suggestion`,`user`) — a plain toggle (`HandleToggleVote`: vote exists →
+  delete it, else create it), not a count column on the suggestion itself.
+- **`emoji_reactions`**: `answer`, `user`, `emoji` (free-text, not
+  constrained to a fixed enum), unique on (`answer`,`user`,`emoji`) — toggle
+  semantics identical to votes. `pages/reactions.go`'s
+  `defaultReactionEmojis` (`👍,❤️,😂,😮,😢,🎉`) is just the picker shown for
+  emojis not yet used on an answer; any string the form posts is accepted
+  (e.g. a previously-used custom emoji still renders as an existing badge).
+- **`comments`**: `answer`, `author`, `body`, `parent` (self-relation,
+  nullable — added to the collection in a second `app.Save` call in the
+  migration since a self-relation needs the collection's own `Id`, which
+  doesn't exist until after the first save). Threading is exactly one level:
+  `HandleCreateComment` rejects a `parent` that itself already has a
+  `parent` (`pages/comments.go`).
 
 API access rules on group-scoped collections gate via membership filters
 like `group.group_memberships_via_group.user ?= @request.auth.id`, with
@@ -174,7 +200,14 @@ import cycle); don't try to deduplicate the two without checking that first.
 | `GET/POST /g/{slug}/editions` | `pages.ListEditions` / `HandleCreateEdition` | create is owner/admin only, no-ops if an edition is already open |
 | `GET/POST /g/{slug}/editions/{id}` | `pages.EditionAnswer` / `HandleSubmitAnswers` | multipart form (image uploads); 400 if edition isn't `open` |
 | `POST /g/{slug}/editions/{id}/close` | `pages.HandleCloseEdition` | manual close path, owner/admin only — the real path is the scheduler |
-| `GET /g/{slug}/editions/{id}/view` | `pages.EditionView` | only for `sent`/`archived` editions |
+| `GET /g/{slug}/editions/{id}/view` | `pages.EditionView` | only for `sent`/`archived` editions; renders reaction bar + comment threads per answer |
+| `POST /g/{slug}/editions/{id}/answers/{answerID}/react` | `pages.HandleToggleReaction` | toggle own reaction on/off; notifies answer owner |
+| `POST /g/{slug}/editions/{id}/answers/{answerID}/comments` | `pages.HandleCreateComment` | optional `parent` form field for a single-level reply; notifies answer owner + parent author |
+| `GET/POST /g/{slug}/suggestions` | `pages.ListSuggestions` / `HandleCreateSuggestion` | any member can list/propose |
+| `POST /g/{slug}/suggestions/{id}/vote` | `pages.HandleToggleVote` | any member, toggle |
+| `POST /g/{slug}/suggestions/{id}/approve` | `pages.HandleApproveSuggestion` | owner/admin only — promotes into `question_bank` |
+| `POST /g/{slug}/suggestions/{id}/reject` | `pages.HandleRejectSuggestion` | owner/admin only |
+| `GET /g/{slug}/recap` | `pages.Recap` | current user's own answers across their last 5 sent/archived editions |
 | `GET /healthz` | inline 200 | liveness probe |
 
 `pages.RegisterHooks(app)` (in `pages/hooks.go`) is bound separately from
@@ -351,20 +384,25 @@ Current coverage: `pages/pages_http_test.go` (10 tests, every `pages/*.go`
 handler that's reachable gets at least one case — login, dashboard auth
 gate, group create, group-home 403-for-non-member, invite create/permission,
 invite accept (existing user), question create+toggle, edition
-create→answer→close→view); `scheduler/scheduler_test.go` (full lifecycle
+create→answer→close→view); `pages/pages_engagement_test.go` (2 tests —
+`TestSuggestionCreateVoteApprove`: propose→vote→toggle-off→approve-403-for-
+member→approve-by-owner→promoted into `question_bank`;
+`TestReactionToggleAndComments`: react→notify→toggle-off, comment, single-
+level reply, asserts both render on the edition view and the answer surfaces
+on `/recap`); `scheduler/scheduler_test.go` (full lifecycle
 scheduled→open→reminder_sent→sent, reminder-skips-members-who-answered,
 invite expiry) + `scheduler/anchor_test.go` (pure date-math cases). All
-green as of Phase 4.5; run with `go test ./projects/newsletter/...`.
+green as of Phase 5; run with `go test ./projects/newsletter/...`.
 
 ## Known gaps / explicitly deferred
 
-- **Phase 5 (not started)**: `question_suggestions` + 
-  `question_suggestion_votes` (voting on next-edition questions — note
-  `edition_questions.vote_count` already exists in the schema but is unused
-  until this lands), past-answer recap, `emoji_reactions` (toggle
-  reactions on an answer), `comments` (flat + single-level reply via a
-  self-relation `parent` field), and an edition archive page beyond the
-  current bare `ListEditions` list.
+- **Phase 5 follow-ups**: approved suggestions are promoted straight into
+  `question_bank`; they aren't auto-attached to a specific upcoming edition,
+  so `edition_questions.vote_count` is still unused (no UI currently
+  increments it — voting happens pre-approval on `question_suggestion_votes`
+  instead). The edition archive page is still the bare `ListEditions` list
+  from earlier phases; no richer per-edition summary/thumbnail view was
+  added in Phase 5.
 - **Phase 6 (not started)**: this project is **not yet in
   `.github/workflows/docker.yml`'s `ALL` build matrix** — CI doesn't build
   or publish a newsletter image yet. Also not yet coordinated with

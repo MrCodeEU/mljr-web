@@ -497,6 +497,7 @@ func EditionView(re *core.RequestEvent) error {
 	if err != nil {
 		return err
 	}
+	resolveUser := userDisplayNameCache(re)
 
 	var sections []g.Node
 	for _, eq := range eqs {
@@ -514,6 +515,8 @@ func EditionView(re *core.RequestEvent) error {
 			rows = append(rows, h.Div(h.Style("padding:var(--sp-2) 0;border-bottom:var(--border-w) var(--border-style) var(--line)"),
 				h.Span(h.Style("font-weight:600;margin-right:var(--sp-2)"), g.Text(displayName(u)+":")),
 				renderAnswerValue(re, q, a),
+				renderReactionBar(slug, edition.Id, a, reactionCounts(re, a.Id, user.Id)),
+				renderCommentThreads(slug, edition.Id, a, commentThreads(re, a.Id), resolveUser),
 			))
 		}
 		sections = append(sections, primitive.Card(primitive.CardProps{Attrs: []g.Node{h.Style("padding:var(--sp-4);margin-bottom:var(--sp-4)")}},

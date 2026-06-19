@@ -92,6 +92,30 @@ func RegisterRoutes(e *core.ServeEvent) error {
 	e.Router.GET("/g/{slug}/editions/{id}/view", func(re *core.RequestEvent) error {
 		return EditionView(re)
 	})
+	e.Router.POST("/g/{slug}/editions/{id}/answers/{answerID}/react", func(re *core.RequestEvent) error {
+		return HandleToggleReaction(re)
+	})
+	e.Router.POST("/g/{slug}/editions/{id}/answers/{answerID}/comments", func(re *core.RequestEvent) error {
+		return HandleCreateComment(re)
+	})
+	e.Router.GET("/g/{slug}/suggestions", func(re *core.RequestEvent) error {
+		return ListSuggestions(re)
+	})
+	e.Router.POST("/g/{slug}/suggestions", func(re *core.RequestEvent) error {
+		return HandleCreateSuggestion(re)
+	})
+	e.Router.POST("/g/{slug}/suggestions/{id}/vote", func(re *core.RequestEvent) error {
+		return HandleToggleVote(re)
+	})
+	e.Router.POST("/g/{slug}/suggestions/{id}/approve", func(re *core.RequestEvent) error {
+		return HandleApproveSuggestion(re)
+	})
+	e.Router.POST("/g/{slug}/suggestions/{id}/reject", func(re *core.RequestEvent) error {
+		return HandleRejectSuggestion(re)
+	})
+	e.Router.GET("/g/{slug}/recap", func(re *core.RequestEvent) error {
+		return Recap(re)
+	})
 	e.Router.GET("/healthz", func(re *core.RequestEvent) error {
 		return re.String(200, "ok")
 	})
