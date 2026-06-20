@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -398,6 +399,14 @@ func answerControl(re *core.RequestEvent, q *core.Record, name string, existing 
 
 func answerFieldNameSuffix(q *core.Record) string { return q.Id }
 
+// hexColorPattern guards color_pick answers, which get concatenated
+// directly into a style="background:..." attribute (editions.go's
+// renderAnswerValue) — without this, a value like "red;position:fixed..."
+// would inject arbitrary CSS declarations into other members' pages.
+var hexColorPattern = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
+
+func isValidHexColor(s string) bool { return hexColorPattern.MatchString(s) }
+
 func upsertAnswer(re *core.RequestEvent, editionID, questionID, userID string, value any, skipped bool) (*core.Record, error) {
 	answer, err := findAnswer(re, editionID, questionID, userID)
 	if err != nil {
@@ -484,8 +493,16 @@ func HandleSubmitAnswers(re *core.RequestEvent) error {
 			if _, err := upsertAnswer(re, edition.Id, q.Id, user.Id, n, val == ""); err != nil {
 				return err
 			}
-		case "date", "color_pick":
+		case "date":
 			val := strings.TrimSpace(re.Request.FormValue(name))
+			if _, err := upsertAnswer(re, edition.Id, q.Id, user.Id, val, val == ""); err != nil {
+				return err
+			}
+		case "color_pick":
+			val := strings.TrimSpace(re.Request.FormValue(name))
+			if val != "" && !isValidHexColor(val) {
+				return re.BadRequestError("invalid color value", nil)
+			}
 			if _, err := upsertAnswer(re, edition.Id, q.Id, user.Id, val, val == ""); err != nil {
 				return err
 			}
@@ -665,6 +682,9 @@ func renderAnswerValue(re *core.RequestEvent, q *core.Record, a *core.Record) g.
 		return g.Text(valueAsString(answerValue(a, "value")))
 	case "color_pick":
 		hex := valueAsString(answerValue(a, "value"))
+		if !isValidHexColor(hex) {
+			hex = "#000000"
+		}
 		return h.Span(h.Style("display:inline-block;width:1.2em;height:1.2em;border-radius:50%;vertical-align:middle;margin-right:var(--sp-2);background:"+hex), h.Title(hex))
 	default:
 		return g.Text("")
