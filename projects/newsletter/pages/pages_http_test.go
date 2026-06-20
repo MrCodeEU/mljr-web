@@ -2,10 +2,22 @@ package pages
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"mljr-web/projects/newsletter/internal/testutil"
+
+	"github.com/pocketbase/pocketbase/core"
 )
+
+func authHeader(t *testing.T, user *core.Record) map[string]string {
+	t.Helper()
+	token, err := user.NewAuthToken()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return map[string]string{"Authorization": token}
+}
 
 func TestLoginPageRenders(t *testing.T) {
 	app := newTestApp(t)
@@ -29,10 +41,101 @@ func TestHandleLoginSuccess(t *testing.T) {
 	for _, c := range res.Cookies() {
 		if c.Name == "nl_session" && c.Value != "" {
 			found = true
+			if !c.Secure {
+				t.Error("expected nl_session cookie to be Secure")
+			}
 		}
 	}
 	if !found {
 		t.Error("expected nl_session cookie to be set")
+	}
+}
+
+func TestExpiredInviteCannotBeAcceptedByPost(t *testing.T) {
+	app := newTestApp(t)
+	owner := testutil.CreateUser(t, app.app, "expired-owner@example.com", "password123")
+	invitee := testutil.CreateUser(t, app.app, "expired-invitee@example.com", "password123")
+	group := testutil.CreateGroup(t, app.app, "Expired Crew", "expired-crew", owner.Id)
+
+	invitesCol, err := app.app.FindCollectionByNameOrId("group_invites")
+	if err != nil {
+		t.Fatal(err)
+	}
+	invite := newRecordHelper(t, app.app, invitesCol, map[string]any{
+		"group":        group.Id,
+		"invited_by":   owner.Id,
+		"email":        invitee.Email(),
+		"invited_user": invitee.Id,
+		"token":        "expired-post-token",
+		"role":         "member",
+		"status":       "pending",
+		"expires_at":   "2000-01-01 00:00:00.000Z",
+	})
+
+	res := app.do(t, http.MethodPost, "/invites/"+invite.GetString("token")+"/accept", nil, cookieHeader(t, invitee))
+	expectStatus(t, res, http.StatusNotFound)
+
+	memberships, err := app.app.FindRecordsByFilter("group_memberships",
+		"group = {:group} && user = {:user}", "", 0, 0,
+		map[string]any{"group": group.Id, "user": invitee.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(memberships) != 0 {
+		t.Fatalf("expected no membership for expired invite, got %d", len(memberships))
+	}
+	invite, err = app.app.FindRecordById("group_invites", invite.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if invite.GetString("status") != "expired" {
+		t.Fatalf("expected invite to be marked expired, got %q", invite.GetString("status"))
+	}
+}
+
+func TestExpiredInviteCannotAutoAcceptDuringSignup(t *testing.T) {
+	app := newTestApp(t)
+	owner := testutil.CreateUser(t, app.app, "expired-signup-owner@example.com", "password123")
+	group := testutil.CreateGroup(t, app.app, "Expired Signup Crew", "expired-signup-crew", owner.Id)
+
+	invitesCol, err := app.app.FindCollectionByNameOrId("group_invites")
+	if err != nil {
+		t.Fatal(err)
+	}
+	invite := newRecordHelper(t, app.app, invitesCol, map[string]any{
+		"group":      group.Id,
+		"invited_by": owner.Id,
+		"email":      "late-signup@example.com",
+		"token":      "expired-signup-token",
+		"role":       "member",
+		"status":     "pending",
+		"expires_at": "2000-01-01 00:00:00.000Z",
+	})
+
+	body, ct := formBody(map[string]string{
+		"email":    "late-signup@example.com",
+		"password": "password123",
+		"name":     "Late User",
+		"invite":   invite.GetString("token"),
+	})
+	res := app.do(t, http.MethodPost, "/signup", body, map[string]string{"content-type": ct})
+	expectStatus(t, res, http.StatusSeeOther)
+	if loc := res.Header.Get("Location"); loc != "/" {
+		t.Fatalf("expected expired invite signup to redirect to /, got %q", loc)
+	}
+
+	user, err := app.app.FindAuthRecordByEmail("users", "late-signup@example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	memberships, err := app.app.FindRecordsByFilter("group_memberships",
+		"group = {:group} && user = {:user}", "", 0, 0,
+		map[string]any{"group": group.Id, "user": user.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(memberships) != 0 {
+		t.Fatalf("expected no membership for expired signup invite, got %d", len(memberships))
 	}
 }
 
@@ -128,6 +231,52 @@ func TestHandleCreateInvitePermissions(t *testing.T) {
 	}
 	if invites[0].GetString("email") != "newperson@example.com" {
 		t.Errorf("unexpected invite email %q", invites[0].GetString("email"))
+	}
+}
+
+func TestPocketBaseAPIDeniesMemberInviteAndMembershipMutation(t *testing.T) {
+	app := newTestApp(t)
+	owner := testutil.CreateUser(t, app.app, "api-owner@example.com", "password123")
+	member := testutil.CreateUser(t, app.app, "api-member@example.com", "password123")
+	outsider := testutil.CreateUser(t, app.app, "api-outsider@example.com", "password123")
+	group := testutil.CreateGroup(t, app.app, "API Crew", "api-crew", owner.Id)
+	testutil.CreateMembership(t, app.app, group.Id, member.Id, "member")
+
+	inviteJSON := `{"group":"` + group.Id + `","invited_by":"` + member.Id + `","email":"outsider@example.com","token":"member-api-token","role":"admin","status":"pending","expires_at":"2999-01-01 00:00:00.000Z"}`
+	res := app.do(t, http.MethodPost, "/api/collections/group_invites/records", strings.NewReader(inviteJSON), authHeader(t, member))
+	if res.StatusCode < 400 {
+		t.Fatalf("expected member invite API write to be rejected, got %d: %s", res.StatusCode, res.Body)
+	}
+
+	ownerInviteJSON := `{"group":"` + group.Id + `","invited_by":"` + owner.Id + `","email":"owner-created@example.com","token":"owner-api-token","role":"member","status":"pending","expires_at":"2999-01-01 00:00:00.000Z"}`
+	res = app.do(t, http.MethodPost, "/api/collections/group_invites/records", strings.NewReader(ownerInviteJSON), authHeader(t, owner))
+	if res.StatusCode >= 400 {
+		t.Fatalf("expected owner invite API write to be accepted, got %d: %s", res.StatusCode, res.Body)
+	}
+
+	membershipJSON := `{"group":"` + group.Id + `","user":"` + outsider.Id + `","role":"admin"}`
+	res = app.do(t, http.MethodPost, "/api/collections/group_memberships/records", strings.NewReader(membershipJSON), authHeader(t, member))
+	if res.StatusCode < 400 {
+		t.Fatalf("expected member membership API write to be rejected, got %d: %s", res.StatusCode, res.Body)
+	}
+}
+
+func TestPocketBaseAPIDeniesGlobalQuestionCreation(t *testing.T) {
+	app := newTestApp(t)
+	user := testutil.CreateUser(t, app.app, "api-question@example.com", "password123")
+	owner := testutil.CreateUser(t, app.app, "api-question-owner@example.com", "password123")
+	group := testutil.CreateGroup(t, app.app, "API Question Crew", "api-question-crew", owner.Id)
+
+	questionJSON := `{"scope":"global","author":"` + user.Id + `","type":"text","prompt":"Injected global question?","is_active":true}`
+	res := app.do(t, http.MethodPost, "/api/collections/question_bank/records", strings.NewReader(questionJSON), authHeader(t, user))
+	if res.StatusCode < 400 {
+		t.Fatalf("expected global question API write to be rejected, got %d: %s", res.StatusCode, res.Body)
+	}
+
+	groupQuestionJSON := `{"scope":"group","group":"` + group.Id + `","author":"` + owner.Id + `","type":"text","prompt":"Owner-scoped question","is_active":true}`
+	res = app.do(t, http.MethodPost, "/api/collections/question_bank/records", strings.NewReader(groupQuestionJSON), authHeader(t, owner))
+	if res.StatusCode >= 400 {
+		t.Fatalf("expected owner group question API write to be accepted, got %d: %s", res.StatusCode, res.Body)
 	}
 }
 

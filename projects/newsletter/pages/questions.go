@@ -189,7 +189,7 @@ func HandleToggleQuestion(re *core.RequestEvent) error {
 	if err != nil {
 		return re.NotFoundError("group not found", err)
 	}
-	if _, err := requireAdminMembership(re, group, user); err != nil {
+	if err := requireAdminMembership(re, group, user); err != nil {
 		return err
 	}
 

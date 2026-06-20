@@ -114,12 +114,12 @@ func createGroupMembershipsCollection(app core.App, groups *core.Collection) err
 	memberships.AddIndex("idx_group_memberships_unique", true, "group, user", "")
 
 	selfOrGroupmate := "user = @request.auth.id || group.group_memberships_via_group.user ?= @request.auth.id"
-	adminOnly := "group.owner = @request.auth.id || (group.group_memberships_via_group.user ?= @request.auth.id && group.group_memberships_via_group.role ?= \"admin\")"
+	ownerOnly := "group.owner = @request.auth.id"
 	memberships.ListRule = types.Pointer(selfOrGroupmate)
 	memberships.ViewRule = types.Pointer(selfOrGroupmate)
-	memberships.CreateRule = types.Pointer(adminOnly)
-	memberships.UpdateRule = types.Pointer(adminOnly)
-	memberships.DeleteRule = types.Pointer("user = @request.auth.id || " + adminOnly)
+	memberships.CreateRule = types.Pointer(ownerOnly)
+	memberships.UpdateRule = types.Pointer(ownerOnly)
+	memberships.DeleteRule = types.Pointer(ownerOnly)
 
 	return app.Save(memberships)
 }

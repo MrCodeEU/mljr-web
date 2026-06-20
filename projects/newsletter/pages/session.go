@@ -27,6 +27,7 @@ func setSession(re *core.RequestEvent, user *core.Record) error {
 		Value:    token,
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
@@ -39,6 +40,8 @@ func clearSession(re *core.RequestEvent) {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
 		MaxAge:   -1,
 	})
 }

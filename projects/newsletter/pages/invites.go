@@ -18,12 +18,12 @@ import (
 
 const inviteValidDays = 7
 
-func requireAdminMembership(re *core.RequestEvent, group *core.Record, user *core.Record) (*core.Record, error) {
+func requireAdminMembership(re *core.RequestEvent, group *core.Record, user *core.Record) error {
 	membership, err := findMembership(re, group.Id, user.Id)
 	if err != nil || (membership.GetString("role") != "owner" && membership.GetString("role") != "admin") {
-		return nil, re.ForbiddenError("only group owners/admins can manage invites", nil)
+		return re.ForbiddenError("only group owners/admins can manage invites", nil)
 	}
-	return membership, nil
+	return nil
 }
 
 // ListInvites shows pending invites + a form to create new ones (owner/admin only).
@@ -38,7 +38,7 @@ func ListInvites(re *core.RequestEvent) error {
 	if err != nil {
 		return re.NotFoundError("group not found", err)
 	}
-	if _, err := requireAdminMembership(re, group, user); err != nil {
+	if err := requireAdminMembership(re, group, user); err != nil {
 		return err
 	}
 
@@ -106,7 +106,7 @@ func HandleCreateInvite(re *core.RequestEvent) error {
 	if err != nil {
 		return re.NotFoundError("group not found", err)
 	}
-	if _, err := requireAdminMembership(re, group, user); err != nil {
+	if err := requireAdminMembership(re, group, user); err != nil {
 		return err
 	}
 
@@ -175,7 +175,7 @@ func HandleRevokeInvite(re *core.RequestEvent) error {
 	if err != nil {
 		return re.NotFoundError("group not found", err)
 	}
-	if _, err := requireAdminMembership(re, group, user); err != nil {
+	if err := requireAdminMembership(re, group, user); err != nil {
 		return err
 	}
 
@@ -194,6 +194,26 @@ func HandleRevokeInvite(re *core.RequestEvent) error {
 
 func findInviteByToken(re *core.RequestEvent, token string) (*core.Record, error) {
 	return re.App.FindFirstRecordByFilter("group_invites", "token = {:token}", map[string]any{"token": token})
+}
+
+func inviteIsExpired(invite *core.Record) bool {
+	return invite.GetDateTime("expires_at").Time().Before(types.NowDateTime().Time())
+}
+
+func expireInvite(re *core.RequestEvent, invite *core.Record) {
+	invite.Set("status", "expired")
+	_ = re.App.Save(invite)
+}
+
+func inviteIsPending(re *core.RequestEvent, invite *core.Record) bool {
+	if invite.GetString("status") != "pending" {
+		return false
+	}
+	if inviteIsExpired(invite) {
+		expireInvite(re, invite)
+		return false
+	}
+	return true
 }
 
 // inviteTargetsUser reports whether invite was sent to user, by account
@@ -220,9 +240,8 @@ func InviteAccept(re *core.RequestEvent) error {
 			h.P(h.Style("color:var(--muted);margin-top:var(--sp-2)"), g.Text("It may have already been used or revoked.")),
 		))
 	}
-	if invite.GetDateTime("expires_at").Time().Before(types.NowDateTime().Time()) {
-		invite.Set("status", "expired")
-		_ = re.App.Save(invite)
+	if inviteIsExpired(invite) {
+		expireInvite(re, invite)
 		return renderPage(re, 410, authPage(re, "Invite expired",
 			primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text("This invite has expired")),
 			h.P(h.Style("color:var(--muted);margin-top:var(--sp-2)"), g.Text("Ask whoever invited you to send a new one.")),
@@ -273,6 +292,10 @@ func InviteAccept(re *core.RequestEvent) error {
 // notifies the group's admins. Shared by HandleAcceptInvite and the
 // signup-via-invite path.
 func acceptInvite(re *core.RequestEvent, invite, user *core.Record) (*core.Record, error) {
+	if !inviteIsPending(re, invite) {
+		return nil, re.NotFoundError("invite not found or already used", nil)
+	}
+
 	group, err := re.App.FindRecordById("groups", invite.GetString("group"))
 	if err != nil {
 		return nil, err
@@ -313,7 +336,7 @@ func HandleAcceptInvite(re *core.RequestEvent) error {
 	}
 
 	invite, err := findInviteByToken(re, re.Request.PathValue("token"))
-	if err != nil || invite.GetString("status") != "pending" {
+	if err != nil || !inviteIsPending(re, invite) {
 		return re.NotFoundError("invite not found or already used", err)
 	}
 	if !inviteTargetsUser(invite, user) {

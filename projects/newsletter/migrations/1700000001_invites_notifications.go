@@ -61,12 +61,12 @@ func createGroupInvitesCollection(app core.App, groups, users *core.Collection) 
 	)
 	invites.AddIndex("idx_group_invites_token", true, "token", "")
 
-	adminOnly := "group.owner = @request.auth.id || (group.group_memberships_via_group.user ?= @request.auth.id && group.group_memberships_via_group.role ?= \"admin\")"
-	invites.ListRule = types.Pointer(adminOnly)
-	invites.ViewRule = types.Pointer(adminOnly + " || invited_user = @request.auth.id")
-	invites.CreateRule = types.Pointer(adminOnly)
-	invites.UpdateRule = types.Pointer(adminOnly)
-	invites.DeleteRule = types.Pointer(adminOnly)
+	ownerOnly := "group.owner = @request.auth.id"
+	invites.ListRule = types.Pointer(ownerOnly)
+	invites.ViewRule = types.Pointer(ownerOnly + " || invited_user = @request.auth.id")
+	invites.CreateRule = types.Pointer(ownerOnly)
+	invites.UpdateRule = types.Pointer(ownerOnly)
+	invites.DeleteRule = types.Pointer(ownerOnly)
 
 	if err := app.Save(invites); err != nil {
 		return nil, err

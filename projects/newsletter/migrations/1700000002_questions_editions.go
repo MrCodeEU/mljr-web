@@ -50,8 +50,6 @@ func init() {
 	})
 }
 
-const questionTypes = "text,single_select,multi_select,image,rating,emoji_reaction"
-
 func createQuestionBankCollection(app core.App, groups, users *core.Collection) (*core.Collection, error) {
 	questions := core.NewBaseCollection("question_bank")
 	questions.Fields.Add(
@@ -70,12 +68,12 @@ func createQuestionBankCollection(app core.App, groups, users *core.Collection) 
 
 	groupMember := "group.group_memberships_via_group.user ?= @request.auth.id"
 	visible := "scope = \"global\" || (scope = \"group\" && " + groupMember + ") || author = @request.auth.id"
-	manageable := "author = @request.auth.id || (scope = \"group\" && " + groupMember + ")"
+	ownerOrAuthor := "author = @request.auth.id || (scope = \"group\" && group.owner = @request.auth.id)"
 	questions.ListRule = types.Pointer(visible)
 	questions.ViewRule = types.Pointer(visible)
-	questions.CreateRule = types.Pointer("@request.auth.id != \"\"")
-	questions.UpdateRule = types.Pointer(manageable)
-	questions.DeleteRule = types.Pointer(manageable)
+	questions.CreateRule = types.Pointer("(scope = \"user\" && author = @request.auth.id) || (scope = \"group\" && group.owner = @request.auth.id)")
+	questions.UpdateRule = types.Pointer(ownerOrAuthor)
+	questions.DeleteRule = types.Pointer(ownerOrAuthor)
 
 	if err := app.Save(questions); err != nil {
 		return nil, err
@@ -139,9 +137,10 @@ func createAnswersCollection(app core.App, editions, questions, users *core.Coll
 	)
 	answers.AddIndex("idx_answers_unique", true, "edition, question, user", "")
 
-	groupMember := "edition.group.group_memberships_via_group.user ?= @request.auth.id"
-	answers.ListRule = types.Pointer(groupMember)
-	answers.ViewRule = types.Pointer(groupMember)
+	groupMemberAfterSend := "edition.status = \"sent\" && edition.group.group_memberships_via_group.user ?= @request.auth.id"
+	selfOrReleasedGroupMember := "user = @request.auth.id || (" + groupMemberAfterSend + ")"
+	answers.ListRule = types.Pointer(selfOrReleasedGroupMember)
+	answers.ViewRule = types.Pointer(selfOrReleasedGroupMember)
 
 	if err := app.Save(answers); err != nil {
 		return nil, err
@@ -159,9 +158,10 @@ func createAnswerImagesCollection(app core.App, answers *core.Collection) error 
 		&core.NumberField{Name: "order", OnlyInt: true},
 	)
 
-	groupMember := "answer.edition.group.group_memberships_via_group.user ?= @request.auth.id"
-	images.ListRule = types.Pointer(groupMember)
-	images.ViewRule = types.Pointer(groupMember)
+	groupMemberAfterSend := "answer.edition.status = \"sent\" && answer.edition.group.group_memberships_via_group.user ?= @request.auth.id"
+	selfOrReleasedGroupMember := "answer.user = @request.auth.id || (" + groupMemberAfterSend + ")"
+	images.ListRule = types.Pointer(selfOrReleasedGroupMember)
+	images.ViewRule = types.Pointer(selfOrReleasedGroupMember)
 
 	return app.Save(images)
 }

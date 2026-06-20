@@ -1,11 +1,20 @@
 package pages
 
 import (
+	"fmt"
 	"html"
 	"strings"
 	"time"
 
 	"github.com/dlclark/regexp2/v2"
+)
+
+const (
+	maxPatternBytes     = 16 << 10
+	maxInputBytes       = 256 << 10
+	maxReplacementBytes = 64 << 10
+	maxMatches          = 10000
+	maxGroupsPerMatch   = 1000
 )
 
 type EvalInput struct {
@@ -37,6 +46,15 @@ type EvalResult struct {
 }
 
 func EvalRegex(inp EvalInput) EvalResult {
+	if len(inp.Pattern) > maxPatternBytes {
+		return limitError(inp, fmt.Sprintf("pattern is too large; limit is %d KiB", maxPatternBytes/1024))
+	}
+	if len(inp.Input) > maxInputBytes {
+		return limitError(inp, fmt.Sprintf("input is too large; limit is %d KiB", maxInputBytes/1024))
+	}
+	if len(inp.Replace) > maxReplacementBytes {
+		return limitError(inp, fmt.Sprintf("replacement is too large; limit is %d KiB", maxReplacementBytes/1024))
+	}
 	if inp.Pattern == "" {
 		return EvalResult{
 			Highlighted:  html.EscapeString(inp.Input),
@@ -79,11 +97,29 @@ func EvalRegex(inp EvalInput) EvalResult {
 		}
 	}
 	for m != nil {
+		if idx >= maxMatches {
+			return EvalResult{
+				Err:         fmt.Sprintf("too many matches; limit is %d", maxMatches),
+				MatchCount:  len(matches),
+				Highlighted: buildHighlight(inp.Input, spans),
+				Matches:     matches,
+				InputRaw:    inp.Input,
+			}
+		}
 		bstart, blen := m.ByteRange()
 		end := bstart + blen
 		spans = append(spans, [2]int{bstart, end})
 
 		groups := m.Groups()
+		if len(groups) > maxGroupsPerMatch+1 {
+			return EvalResult{
+				Err:         fmt.Sprintf("too many capture groups; limit is %d", maxGroupsPerMatch),
+				MatchCount:  len(matches),
+				Highlighted: buildHighlight(inp.Input, spans),
+				Matches:     matches,
+				InputRaw:    inp.Input,
+			}
+		}
 		var groupStrs []string
 		for _, g := range groups[1:] { // groups[0] = full match
 			groupStrs = append(groupStrs, g.String())
@@ -112,7 +148,7 @@ func EvalRegex(inp EvalInput) EvalResult {
 
 	replaced := inp.Input
 	if inp.Replace != "" {
-		if r, rerr := re.Replace(inp.Input, inp.Replace, -1, -1); rerr == nil {
+		if r, rerr := re.Replace(inp.Input, inp.Replace, -1, maxMatches); rerr == nil {
 			replaced = r
 		}
 	}
@@ -124,6 +160,14 @@ func EvalRegex(inp EvalInput) EvalResult {
 		Replaced:       replaced,
 		ReplaceApplied: inp.Replace != "",
 		InputRaw:       inp.Input,
+	}
+}
+
+func limitError(inp EvalInput, msg string) EvalResult {
+	return EvalResult{
+		Err:         msg,
+		Highlighted: html.EscapeString(inp.Input),
+		InputRaw:    inp.Input,
 	}
 }
 

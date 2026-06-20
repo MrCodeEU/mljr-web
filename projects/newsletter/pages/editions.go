@@ -122,7 +122,7 @@ func HandleCreateEdition(re *core.RequestEvent) error {
 	if err != nil {
 		return re.NotFoundError("group not found", err)
 	}
-	if _, err := requireAdminMembership(re, group, user); err != nil {
+	if err := requireAdminMembership(re, group, user); err != nil {
 		return err
 	}
 
@@ -456,7 +456,7 @@ func HandleCloseEdition(re *core.RequestEvent) error {
 	if err != nil {
 		return re.NotFoundError("group not found", err)
 	}
-	if _, err := requireAdminMembership(re, group, user); err != nil {
+	if err := requireAdminMembership(re, group, user); err != nil {
 		return err
 	}
 	edition, err := findEditionInGroup(re, group.Id, re.Request.PathValue("id"))
