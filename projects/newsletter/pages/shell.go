@@ -1,9 +1,12 @@
 package pages
 
 import (
+	"strings"
+
 	"mljr-web/ui/layout"
 	"mljr-web/ui/overlay"
 	"mljr-web/ui/primitive"
+	"mljr-web/ui/special"
 	"mljr-web/ui/token"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -34,6 +37,36 @@ func avatarTone(seed string) token.Tone {
 	return avatarTones[sum%len(avatarTones)]
 }
 
+// answerTone returns a user's chosen favorite_color tone, falling back to
+// the same deterministic id-derived tone the avatar already uses when no
+// color has been picked — keeps answer color-coding consistent with the
+// avatar's existing fallback behavior.
+func answerTone(user *core.Record) token.Tone {
+	if c := user.GetString("favorite_color"); c != "" {
+		return token.Tone(c)
+	}
+	return avatarTone(user.Id)
+}
+
+// userAvatarSrc returns the protected file URL for a user's uploaded
+// avatar, or "" if none is set (callers fall back to the color+initials
+// avatar) or if minting a file token fails. The avatar field is Protected,
+// so the URL needs a file token scoped to the viewing user themselves —
+// only ever called for a user's own avatar (profile nav, profile page), so
+// minting the token off the same record being viewed always satisfies the
+// users collection's "id = @request.auth.id" ViewRule.
+func userAvatarSrc(user *core.Record) string {
+	filename := user.GetString("avatar")
+	if filename == "" {
+		return ""
+	}
+	token, err := user.NewFileToken()
+	if err != nil {
+		return ""
+	}
+	return "/api/files/" + user.Collection().Id + "/" + user.Id + "/" + filename + "?token=" + token
+}
+
 // initials computes a 1-2 letter avatar fallback from a display name.
 func initials(name string) string {
 	var letters []rune
@@ -57,10 +90,10 @@ func initials(name string) string {
 	return string(letters)
 }
 
-func brand() g.Node {
+func brand(t func(string, ...any) string) g.Node {
 	return h.A(h.Href("/"),
 		h.Style("font-family:var(--font-display);font-weight:700;font-size:var(--t-lg);color:var(--ink);text-decoration:none"),
-		g.Text("Newsletter"),
+		g.Text(t("newsletter.nav.brand")),
 	)
 }
 
@@ -104,8 +137,8 @@ func groupAvatar(seed, name string) g.Node {
 
 // groupsNav renders the "switch group" dropdown: every group the user is in,
 // each with its avatar, name and role, with the currently-open one marked.
-func groupsNav(groups []groupSummary, activeSlug string) g.Node {
-	triggerLabel := "Groups"
+func groupsNav(t func(string, ...any) string, groups []groupSummary, activeSlug string) g.Node {
+	triggerLabel := t("newsletter.nav.groups_label")
 	for _, gr := range groups {
 		if gr.Slug == activeSlug {
 			triggerLabel = gr.Name
@@ -129,14 +162,14 @@ func groupsNav(groups []groupSummary, activeSlug string) g.Node {
 				h.Span(h.Style("display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"), g.Text(gr.Name)),
 				h.Span(h.Style("display:block;font-size:var(--t-xs);color:var(--muted);text-transform:uppercase;letter-spacing:.04em"), g.Text(gr.Role)),
 			),
-			g.If(gr.Slug == activeSlug, h.Span(h.Style("margin-left:auto;font-size:var(--t-xs);color:var(--accent);font-weight:700;white-space:nowrap"), g.Text("CURRENT"))),
+			g.If(gr.Slug == activeSlug, h.Span(h.Style("margin-left:auto;font-size:var(--t-xs);color:var(--accent);font-weight:700;white-space:nowrap"), g.Text(t("newsletter.nav.current_badge")))),
 		)
 		items = append(items, overlay.DropdownItem{Content: row, Href: "/g/" + gr.Slug})
 	}
 	if len(items) == 0 {
-		items = append(items, overlay.DropdownItem{Label: "You're not in any groups yet", Href: "/"})
+		items = append(items, overlay.DropdownItem{Label: t("newsletter.nav.groups_empty"), Href: "/"})
 	}
-	items = append(items, overlay.DropdownItem{Divider: true, Label: "Back to dashboard", Href: "/", Icon: "lucide:layout-grid"})
+	items = append(items, overlay.DropdownItem{Divider: true, Label: t("newsletter.nav.groups_back"), Href: "/", Icon: "lucide:layout-grid"})
 
 	return overlay.Dropdown(overlay.DropdownProps{Signal: "navGroups", Align: "right"}, trigger, items...)
 }
@@ -144,8 +177,9 @@ func groupsNav(groups []groupSummary, activeSlug string) g.Node {
 // profileNav renders the current user's avatar with a menu for the profile
 // page and logging out. The logout item submits a hidden plain <form> via
 // JS so the existing POST /logout route stays untouched.
-func profileNav(user *core.Record) g.Node {
+func profileNav(t func(string, ...any) string, user *core.Record) g.Node {
 	trigger := primitive.Avatar(primitive.AvatarProps{
+		Src:      userAvatarSrc(user),
 		Initials: initials(displayName(user)),
 		Tone:     avatarTone(user.Id),
 		Size:     token.SizeSM,
@@ -156,7 +190,7 @@ func profileNav(user *core.Record) g.Node {
 		h.Form(h.ID("nl-logout-form"), h.Method("post"), h.Action("/logout"), h.Style("display:none")),
 		overlay.Dropdown(overlay.DropdownProps{Signal: "navUser", Align: "right"}, trigger,
 			overlay.DropdownItem{Label: displayName(user), Icon: "lucide:user", Href: "/profile"},
-			overlay.DropdownItem{Divider: true, Label: "Log out", Icon: "lucide:log-out", Variant: "danger",
+			overlay.DropdownItem{Divider: true, Label: t("newsletter.nav.logout"), Icon: "lucide:log-out", Variant: "danger",
 				OnClick: "document.getElementById('nl-logout-form').requestSubmit()"},
 		),
 	)
@@ -167,18 +201,33 @@ func profileNav(user *core.Record) g.Node {
 // the currently-open group, if any ("" on pages with no single group
 // context, like the dashboard, or when unauthenticated).
 func appHeader(re *core.RequestEvent, activeGroupSlug string) g.Node {
+	t := translator(re)
+	langToggle := special.LanguageToggle(special.LanguageToggleProps{
+		Languages: []special.Language{
+			{Code: "en", Label: "EN", Title: "English", Flag: "circle-flags:gb"},
+			{Code: "de", Label: "DE", Title: "Deutsch", Flag: "circle-flags:de"},
+		},
+		Current:        currentLang(re),
+		ReloadOnChange: true,
+	})
+
 	user := currentUser(re)
 	if user == nil {
-		return layout.Navbar(layout.NavbarProps{}, brand(), g.Group(nil), g.Group(nil))
+		return layout.Navbar(layout.NavbarProps{}, brand(t), g.Group(nil), langToggle)
 	}
 
 	groups := userGroups(re, user)
 	nav := h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-5)"),
-		h.A(h.Href("/"), h.Style("color:inherit;text-decoration:none;font-weight:600"), g.Text("Dashboard")),
-		groupsNav(groups, activeGroupSlug),
+		h.A(h.Href("/"), h.Style("color:inherit;text-decoration:none;font-weight:600"), g.Text(t("newsletter.nav.dashboard"))),
+		groupsNav(t, groups, activeGroupSlug),
 	)
 
-	return layout.Navbar(layout.NavbarProps{}, brand(), nav, profileNav(user))
+	right := h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-3)"),
+		langToggle,
+		notificationsNav(re, user.Id),
+		profileNav(t, user),
+	)
+	return layout.Navbar(layout.NavbarProps{}, brand(t), nav, right)
 }
 
 // breadcrumbItem is one link in a breadcrumb trail; the last item rendered
@@ -214,6 +263,35 @@ func breadcrumbs(items []breadcrumbItem) g.Node {
 	)
 }
 
+// groupSubNav renders the Editions/Recap/Questions/Suggestions/Invites/
+// Settings pill nav shared by every group-scoped page, deriving the active
+// tab from the request path so call sites don't each have to say which tab
+// is current.
+func groupSubNav(re *core.RequestEvent, slug string) g.Node {
+	t := translator(re)
+	path := re.Request.URL.Path
+	items := []struct {
+		label, suffix string
+	}{
+		{t("newsletter.subnav.editions"), "/editions"},
+		{t("newsletter.subnav.recap"), "/recap"},
+		{t("newsletter.subnav.questions"), "/questions"},
+		{t("newsletter.subnav.suggestions"), "/suggestions"},
+		{t("newsletter.subnav.invites"), "/invites"},
+		{t("newsletter.subnav.settings"), "/settings"},
+	}
+	base := "/g/" + slug
+	pills := make([]layout.NavPillItem, len(items))
+	for i, it := range items {
+		pills[i] = layout.NavPillItem{
+			Label:  it.label,
+			Href:   base + it.suffix,
+			Active: strings.Contains(path, it.suffix),
+		}
+	}
+	return layout.NavPills(pills)
+}
+
 // appPage wraps page content with the shared header and an optional
 // breadcrumb trail inside the common PageShell, so every authenticated
 // route gets consistent chrome. activeGroupSlug highlights the open group
@@ -226,6 +304,7 @@ func appPage(re *core.RequestEvent, activeGroupSlug, title string, crumbs []brea
 			breadcrumbs(crumbs),
 			h.Main(
 				h.Style("max-width:640px;margin:0 auto;padding:var(--sp-8) var(--sp-4)"),
+				g.If(activeGroupSlug != "", groupSubNav(re, activeGroupSlug)),
 				g.Group(content),
 			),
 		),

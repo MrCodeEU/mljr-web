@@ -1,6 +1,8 @@
 package pages
 
 import (
+	"fmt"
+	"html"
 	"log"
 	"net/mail"
 	"strings"
@@ -33,6 +35,7 @@ func ListInvites(re *core.RequestEvent) error {
 		return redirect(re, "/login")
 	}
 
+	t := translator(re)
 	slug := re.Request.PathValue("slug")
 	group, err := findGroupBySlug(re, slug)
 	if err != nil {
@@ -59,26 +62,27 @@ func ListInvites(re *core.RequestEvent) error {
 				h.Span(h.Style("display:block;font-size:var(--t-xs);color:var(--muted);text-transform:uppercase;letter-spacing:.04em"), g.Text(inv.GetString("role"))),
 			),
 			h.Form(h.Method("post"), h.Action("/g/"+slug+"/invites/"+inv.Id+"/revoke"),
-				primitive.Button(primitive.ButtonProps{Variant: token.Ghost, Tone: token.ToneNone, Type: "submit"}, g.Text("Revoke")),
+				primitive.Button(primitive.ButtonProps{Variant: token.Ghost, Tone: token.ToneNone, Type: "submit"}, g.Text(t("newsletter.invites.revoke"))),
 			),
 		))
 	}
 
-	return renderPage(re, 200, appPage(re, slug, "Invites — "+group.GetString("name"),
-		[]breadcrumbItem{{Label: "Dashboard", Href: "/"}, {Label: group.GetString("name"), Href: "/g/" + slug}, {Label: "Invites"}},
-		primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text("Invite people")),
+	return renderPage(re, 200, appPage(re, slug, t("newsletter.invites.page_title")+" — "+group.GetString("name"),
+		[]breadcrumbItem{{Label: t("newsletter.nav.dashboard"), Href: "/"}, {Label: group.GetString("name"), Href: "/g/" + slug}, {Label: t("newsletter.subnav.invites")}},
+		primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text(t("newsletter.invites.heading"))),
+		flashAlert(re),
 		primitive.Card(primitive.CardProps{Attrs: []g.Node{h.Style("margin-top:var(--sp-4)")}},
 			h.Form(
 				h.Method("post"), h.Action("/g/"+slug+"/invites"),
-				form.Field(form.FieldProps{Label: "Email"},
+				form.Field(form.FieldProps{Label: t("newsletter.invites.email_label")},
 					form.Input(form.InputProps{Type: "email", Name: "email", Required: true, Placeholder: "friend@example.com"}),
 				),
-				form.Field(form.FieldProps{Label: "Role", Attrs: []g.Node{h.Style("margin-top:var(--sp-4)")}},
+				form.Field(form.FieldProps{Label: t("newsletter.invites.role_label"), Attrs: []g.Node{h.Style("margin-top:var(--sp-4)")}},
 					form.Select(form.SelectProps{
 						Name: "role",
 						Options: []form.SelectOption{
-							{Value: "member", Label: "Member", Selected: true},
-							{Value: "admin", Label: "Admin"},
+							{Value: "member", Label: t("newsletter.invites.role_member"), Selected: true},
+							{Value: "admin", Label: t("newsletter.invites.role_admin")},
 						},
 					}),
 				),
@@ -86,11 +90,11 @@ func ListInvites(re *core.RequestEvent) error {
 					Variant: token.Primary,
 					Type:    "submit",
 					Attrs:   []g.Node{h.Style("margin-top:var(--sp-4)")},
-				}, g.Text("Send invite")),
+				}, g.Text(t("newsletter.invites.send_button"))),
 			),
 		),
-		primitive.Heading(primitive.HeadingProps{Level: 2, Attrs: []g.Node{h.Style("margin-top:var(--sp-8)")}}, g.Text("Pending invites")),
-		g.If(len(rows) == 0, h.P(h.Style("color:var(--muted);margin-top:var(--sp-3)"), g.Text("No pending invites."))),
+		primitive.Heading(primitive.HeadingProps{Level: 2, Attrs: []g.Node{h.Style("margin-top:var(--sp-8)")}}, g.Text(t("newsletter.invites.pending_heading"))),
+		g.If(len(rows) == 0, h.P(h.Style("color:var(--muted);margin-top:var(--sp-3)"), g.Text(t("newsletter.invites.empty")))),
 		g.If(len(rows) > 0, primitive.Card(primitive.CardProps{Attrs: []g.Node{h.Style("margin-top:var(--sp-3);padding:var(--sp-2) var(--sp-4)")}}, g.Group(rows))),
 	))
 }
@@ -110,13 +114,13 @@ func HandleCreateInvite(re *core.RequestEvent) error {
 		return err
 	}
 
-	email := re.Request.FormValue("email")
+	email := strings.TrimSpace(re.Request.FormValue("email"))
 	role := re.Request.FormValue("role")
 	if role != "admin" {
 		role = "member"
 	}
-	if email == "" {
-		return redirect(re, "/g/"+slug+"/invites")
+	if _, err := mail.ParseAddress(email); email == "" || err != nil {
+		return redirect(re, "/g/"+slug+"/invites?flash=invite_invalid_email")
 	}
 
 	col, err := re.App.FindCollectionByNameOrId("group_invites")
@@ -145,23 +149,52 @@ func HandleCreateInvite(re *core.RequestEvent) error {
 			"/invites/"+invite.GetString("token"))
 	}
 
-	sendInviteEmail(invite, group, user)
+	flash := "invite_sent"
+	if !sendInviteEmail(invite, group, user) {
+		flash = "invite_email_failed"
+	}
 
-	return redirect(re, "/g/"+slug+"/invites")
+	return redirect(re, "/g/"+slug+"/invites?flash="+flash)
 }
 
-func sendInviteEmail(invite, group, invitedBy *core.Record) {
+// sendInviteEmail sends the invite link by mail and reports whether it
+// succeeded — the invite row is created either way (and visible/copyable
+// from the pending-invites list), but the admin needs to know if the email
+// itself didn't go out so they can share the link manually instead.
+func sendInviteEmail(invite, group, invitedBy *core.Record) bool {
 	link := publicAppURL + "/invites/" + invite.GetString("token")
+	lead := displayName(invitedBy) + " invited you to join \"" + group.GetString("name") + "\" on the newsletter."
 	msg := &pbmailer.Message{
 		From:    mailFrom,
 		To:      []mail.Address{{Address: invite.GetString("email")}},
 		Subject: displayName(invitedBy) + " invited you to join " + group.GetString("name"),
-		Text: "Hi,\n\n" + displayName(invitedBy) + " invited you to join \"" + group.GetString("name") +
-			"\" on the newsletter.\n\n" + link + "\n",
+		Text:    "Hi,\n\n" + lead + "\n\n" + link + "\n",
+		HTML:    transactionalEmailHTML("there", lead, link, "View invite"),
 	}
 	if err := sendMail(msg); err != nil {
 		log.Printf("newsletter invite mail: failed to send to %s: %v", invite.GetString("email"), err)
+		return false
 	}
+	return true
+}
+
+// transactionalEmailHTML mirrors scheduler.transactionalEmailHTML — pages
+// can't import scheduler (would create an import cycle with routes/handlers
+// scheduler itself doesn't depend on), so this small inline-styled wrapper
+// is duplicated rather than shared.
+func transactionalEmailHTML(greetingName, lead, linkURL, linkLabel string) string {
+	var b strings.Builder
+	b.WriteString(`<div style="font-family:sans-serif;max-width:640px;margin:0 auto;color:#1a1a1a">`)
+	fmt.Fprintf(&b, `<p style="font-size:14px">Hi %s,</p>`, html.EscapeString(greetingName))
+	fmt.Fprintf(&b, `<p style="font-size:14px;line-height:1.5">%s</p>`, html.EscapeString(lead))
+	if linkURL != "" {
+		fmt.Fprintf(&b,
+			`<p style="margin-top:20px"><a href="%s" style="display:inline-block;background:#8b5cf6;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-size:14px">%s</a></p>`,
+			html.EscapeString(linkURL), html.EscapeString(linkLabel),
+		)
+	}
+	b.WriteString(`</div>`)
+	return b.String()
 }
 
 func HandleRevokeInvite(re *core.RequestEvent) error {
@@ -189,7 +222,7 @@ func HandleRevokeInvite(re *core.RequestEvent) error {
 		return err
 	}
 
-	return redirect(re, "/g/"+slug+"/invites")
+	return redirect(re, "/g/"+slug+"/invites?flash=invite_revoked")
 }
 
 func findInviteByToken(re *core.RequestEvent, token string) (*core.Record, error) {
@@ -234,17 +267,18 @@ func InviteAccept(re *core.RequestEvent) error {
 	if err != nil {
 		return re.NotFoundError("invite not found", err)
 	}
+	t := translator(re)
 	if invite.GetString("status") != "pending" {
-		return renderPage(re, 410, authPage(re, "Invite no longer valid",
-			primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text("This invite is no longer valid")),
-			h.P(h.Style("color:var(--muted);margin-top:var(--sp-2)"), g.Text("It may have already been used or revoked.")),
+		return renderPage(re, 410, authPage(re, t("newsletter.invites.invalid_title"),
+			primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text(t("newsletter.invites.invalid_heading"))),
+			h.P(h.Style("color:var(--muted);margin-top:var(--sp-2)"), g.Text(t("newsletter.invites.invalid_body"))),
 		))
 	}
 	if inviteIsExpired(invite) {
 		expireInvite(re, invite)
-		return renderPage(re, 410, authPage(re, "Invite expired",
-			primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text("This invite has expired")),
-			h.P(h.Style("color:var(--muted);margin-top:var(--sp-2)"), g.Text("Ask whoever invited you to send a new one.")),
+		return renderPage(re, 410, authPage(re, t("newsletter.invites.expired_title"),
+			primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text(t("newsletter.invites.expired_heading"))),
+			h.P(h.Style("color:var(--muted);margin-top:var(--sp-2)"), g.Text(t("newsletter.invites.expired_body"))),
 		))
 	}
 
@@ -255,15 +289,15 @@ func InviteAccept(re *core.RequestEvent) error {
 
 	user := currentUser(re)
 	if user == nil {
-		return renderPage(re, 200, authPage(re, "Join "+group.GetString("name"),
-			primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text("Join "+group.GetString("name"))),
-			h.P(h.Style("color:var(--muted);margin:var(--sp-2) 0 var(--sp-6)"), g.Text("You've been invited as "+invite.GetString("role")+". Sign in or create an account to accept.")),
+		return renderPage(re, 200, authPage(re, t("newsletter.invites.join_title", group.GetString("name")),
+			primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text(t("newsletter.invites.join_title", group.GetString("name")))),
+			h.P(h.Style("color:var(--muted);margin:var(--sp-2) 0 var(--sp-6)"), g.Text(t("newsletter.invites.join_signedout_body", invite.GetString("role")))),
 			h.Div(h.Style("display:flex;gap:var(--sp-3)"),
 				primitive.Button(primitive.ButtonProps{Variant: token.Primary, Attrs: []g.Node{h.Type("button")}},
-					h.A(h.Href("/signup?invite="+inviteToken), h.Style("color:inherit;text-decoration:none"), g.Text("Create account")),
+					h.A(h.Href("/signup?invite="+inviteToken), h.Style("color:inherit;text-decoration:none"), g.Text(t("newsletter.invites.create_account"))),
 				),
 				primitive.Button(primitive.ButtonProps{Variant: token.Ghost, Attrs: []g.Node{h.Type("button")}},
-					h.A(h.Href("/login?invite="+inviteToken), h.Style("color:inherit;text-decoration:none"), g.Text("Sign in instead")),
+					h.A(h.Href("/login?invite="+inviteToken), h.Style("color:inherit;text-decoration:none"), g.Text(t("newsletter.invites.sign_in_instead"))),
 				),
 			),
 		))
@@ -273,17 +307,17 @@ func InviteAccept(re *core.RequestEvent) error {
 		return redirect(re, "/g/"+group.GetString("slug"))
 	}
 	if !inviteTargetsUser(invite, user) {
-		return renderPage(re, 403, authPage(re, "Invite not for this account",
-			primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text("This invite isn't for your account")),
-			h.P(h.Style("color:var(--muted);margin-top:var(--sp-2)"), g.Text("It was sent to "+invite.GetString("email")+". Sign in with that account to accept it.")),
+		return renderPage(re, 403, authPage(re, t("newsletter.invites.wrong_account_title"),
+			primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text(t("newsletter.invites.wrong_account_heading"))),
+			h.P(h.Style("color:var(--muted);margin-top:var(--sp-2)"), g.Text(t("newsletter.invites.wrong_account_body", invite.GetString("email")))),
 		))
 	}
 
-	return renderPage(re, 200, appPage(re, "", "Join "+group.GetString("name"), nil,
-		primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text("Join "+group.GetString("name"))),
-		h.P(h.Style("color:var(--muted);margin:var(--sp-2) 0 var(--sp-6)"), g.Text("You've been invited as "+invite.GetString("role")+".")),
+	return renderPage(re, 200, appPage(re, "", t("newsletter.invites.join_title", group.GetString("name")), nil,
+		primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text(t("newsletter.invites.join_title", group.GetString("name")))),
+		h.P(h.Style("color:var(--muted);margin:var(--sp-2) 0 var(--sp-6)"), g.Text(t("newsletter.invites.join_signedin_body", invite.GetString("role")))),
 		h.Form(h.Method("post"), h.Action("/invites/"+inviteToken+"/accept"),
-			primitive.Button(primitive.ButtonProps{Variant: token.Primary, Type: "submit"}, g.Text("Accept & join")),
+			primitive.Button(primitive.ButtonProps{Variant: token.Primary, Type: "submit"}, g.Text(t("newsletter.invites.accept_button"))),
 		),
 	))
 }

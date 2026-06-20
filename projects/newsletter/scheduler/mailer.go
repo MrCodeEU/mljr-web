@@ -37,6 +37,29 @@ func (m pbMailer) Send(msg *mailer.Message) error {
 	return m.app.NewMailClient().Send(msg)
 }
 
+// debugLoggingMailer wraps another Mailer and logs to=/subject= before
+// forwarding the send, so the e2e suite can assert on subject text (e.g.
+// language) regardless of whether real SMTP or the log-only fallback is
+// configured. Only wired in when NEWSLETTER_E2E_DEBUG=1 (main.go) — never in
+// a normal deploy.
+type debugLoggingMailer struct {
+	inner Mailer
+}
+
+func (m debugLoggingMailer) Send(msg *mailer.Message) error {
+	to := msg.To
+	if len(to) == 0 {
+		to = msg.Bcc
+	}
+	log.Printf("newsletter mail (e2e debug): to=%v subject=%q", to, msg.Subject)
+	return m.inner.Send(msg)
+}
+
+// WrapDebugMailer wraps m so every send is logged before being forwarded.
+func WrapDebugMailer(m Mailer) Mailer {
+	return debugLoggingMailer{inner: m}
+}
+
 // BootstrapMailer writes cfg.SMTP into PocketBase's app Settings (so
 // app.NewMailClient() picks it up) and returns the Mailer to send through.
 // If SMTP_HOST is unset, it leaves SMTP disabled in Settings and returns a
@@ -58,7 +81,11 @@ func BootstrapMailer(app core.App, cfg config.SMTPConfig) (Mailer, error) {
 	settings.SMTP.Port = port
 	settings.SMTP.Username = cfg.User
 	settings.SMTP.Password = cfg.Pass
-	settings.SMTP.TLS = true
+	// Port 465 is implicit TLS (mailyak.NewWithTLS); every other port (587,
+	// 25, ...) uses mailyak.New, which negotiates STARTTLS with the server
+	// itself. Forcing TLS=true unconditionally broke STARTTLS-only port 587
+	// servers with "tls: first record does not look like a TLS handshake".
+	settings.SMTP.TLS = port == 465
 	if err := app.Save(settings); err != nil {
 		return nil, err
 	}

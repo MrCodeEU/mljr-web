@@ -71,9 +71,11 @@ func HandleCreateComment(re *core.RequestEvent) error {
 		return re.NotFoundError("answer not found", err)
 	}
 
+	link := "/g/" + slug + "/editions/" + edition.Id + "/view"
+
 	body := strings.TrimSpace(re.Request.FormValue("body"))
 	if body == "" {
-		return redirect(re, "/g/"+slug+"/editions/"+edition.Id+"/view")
+		return redirect(re, link+"?flash=comment_empty")
 	}
 
 	parentID := re.Request.FormValue("parent")
@@ -100,7 +102,6 @@ func HandleCreateComment(re *core.RequestEvent) error {
 		return err
 	}
 
-	link := "/g/" + slug + "/editions/" + edition.Id + "/view"
 	notified := map[string]bool{user.Id: true}
 	if answerOwner := answer.GetString("user"); !notified[answerOwner] {
 		_ = createNotification(re.App, answerOwner, "comment_reply", group.Id, "", user.Id,

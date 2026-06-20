@@ -37,6 +37,9 @@ func main() {
 		if err != nil {
 			return err
 		}
+		if os.Getenv("NEWSLETTER_E2E_DEBUG") == "1" {
+			mailerClient = scheduler.WrapDebugMailer(mailerClient)
+		}
 		pages.SetMailer(mailerClient, cfg)
 
 		app.Cron().MustAdd("newsletter_scan", "*/5 * * * *", func() {
@@ -44,6 +47,19 @@ func main() {
 				log.Printf("newsletter scan failed: %v", err)
 			}
 		})
+
+		// Lets the e2e suite trigger a scan immediately instead of waiting
+		// for a real 5-minute cron tick. Only registered when explicitly
+		// opted into via env var — never present in a normal deploy, since
+		// it lets any caller force a scheduler pass with no auth check.
+		if os.Getenv("NEWSLETTER_E2E_DEBUG") == "1" {
+			e.Router.POST("/debug/scan-now", func(re *core.RequestEvent) error {
+				if err := scheduler.RunScan(app, mailerClient, cfg); err != nil {
+					return re.InternalServerError("scan failed", err)
+				}
+				return re.NoContent(204)
+			})
+		}
 
 		var staticFS fs.FS
 		if web.IsDev() {

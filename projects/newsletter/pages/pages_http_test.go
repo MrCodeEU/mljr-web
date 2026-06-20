@@ -395,6 +395,9 @@ func TestEditionCreateAnswerCloseView(t *testing.T) {
 	res = app.do(t, http.MethodPost, "/g/"+group.GetString("slug")+"/editions/"+edition.Id, mpBody,
 		mergeHeaders(cookieHeader(t, owner), map[string]string{"content-type": mpCT}))
 	expectStatus(t, res, http.StatusSeeOther)
+	if loc := res.Header.Get("Location"); !strings.Contains(loc, "?flash=") {
+		t.Errorf("expected redirect to carry a ?flash= param, got %q", loc)
+	}
 
 	ans, err := app.app.FindFirstRecordByFilter("answers",
 		"edition = {:edition} && question = {:question} && user = {:user}",

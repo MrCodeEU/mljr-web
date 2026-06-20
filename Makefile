@@ -214,6 +214,11 @@ vuln:
 test: ; go test ./... -race -cover
 test-showcase: ; go test -tags showcase ./... -race -cover
 
+test-newsletter-e2e: ## build the newsletter binary and run its e2e smoke test (needs jq, curl)
+	@if [ -f projects/newsletter/.env ]; then set -a; . projects/newsletter/.env; set +a; fi; \
+	  CGO_ENABLED=0 go build -buildvcs=false -trimpath -o bin/newsletter ./projects/newsletter && \
+	  projects/newsletter/e2e/run.sh
+
 guard-classes: ## enforce data-* contract: no class= / Class( in ui/**.go
 	@! grep -rnE '(Class\(|h\.Class|[^-]class=)' ui --include='*.go' \
 	   || (echo "✗ ui components must not use classes — use data-* + CSS" && exit 1)

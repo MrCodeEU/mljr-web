@@ -1,7 +1,6 @@
 package pages
 
 import (
-	"strconv"
 	"strings"
 
 	"mljr-web/ui/form"
@@ -49,6 +48,7 @@ func ListSuggestions(re *core.RequestEvent) error {
 		return re.ForbiddenError("not a member of this group", nil)
 	}
 	isAdmin := membership.GetString("role") == "owner" || membership.GetString("role") == "admin"
+	t := translator(re)
 
 	pending, err := re.App.FindRecordsByFilter(
 		"question_suggestions", "group = {:group} && status = \"pending\"", "-created", 0, 0,
@@ -81,9 +81,9 @@ func ListSuggestions(re *core.RequestEvent) error {
 		if _, err := findVote(re, s.Id, user.Id); err == nil {
 			hasVoted = true
 		}
-		voteLabel := "Vote"
+		voteLabel := t("newsletter.suggestions.vote")
 		if hasVoted {
-			voteLabel = "Voted ✓"
+			voteLabel = t("newsletter.suggestions.voted")
 		}
 
 		actions := []g.Node{
@@ -94,10 +94,10 @@ func ListSuggestions(re *core.RequestEvent) error {
 		if isAdmin {
 			actions = append(actions,
 				h.Form(h.Method("post"), h.Action("/g/"+slug+"/suggestions/"+s.Id+"/approve"),
-					primitive.Button(primitive.ButtonProps{Variant: token.Primary, Tone: token.ToneNone, Type: "submit"}, g.Text("Approve")),
+					primitive.Button(primitive.ButtonProps{Variant: token.Primary, Tone: token.ToneNone, Type: "submit"}, g.Text(t("newsletter.suggestions.approve"))),
 				),
 				h.Form(h.Method("post"), h.Action("/g/"+slug+"/suggestions/"+s.Id+"/reject"),
-					primitive.Button(primitive.ButtonProps{Variant: token.Ghost, Tone: token.ToneNone, Type: "submit"}, g.Text("Reject")),
+					primitive.Button(primitive.ButtonProps{Variant: token.Ghost, Tone: token.ToneNone, Type: "submit"}, g.Text(t("newsletter.suggestions.reject"))),
 				),
 			)
 		}
@@ -107,42 +107,51 @@ func ListSuggestions(re *core.RequestEvent) error {
 			h.Div(h.Style("min-width:0"),
 				h.Span(h.Style("min-width:0;overflow-wrap:anywhere"), g.Text(s.GetString("prompt"))),
 				h.Span(h.Style("display:block;font-size:var(--t-xs);color:var(--muted);text-transform:uppercase;letter-spacing:.04em"),
-					g.Text(questionTypeLabels[s.GetString("type")]+" · "+strconv.Itoa(it.votes)+" vote(s)")),
+					g.Text(questionTypeLabels[s.GetString("type")]+" · "+t("newsletter.suggestions.vote_count", it.votes))),
+				renderQuestionSummary(s),
 			),
 			h.Div(h.Style("display:flex;gap:var(--sp-2);flex-wrap:wrap"), g.Group(actions)),
 		))
 	}
 
-	return renderPage(re, 200, appPage(re, slug, "Suggestions — "+group.GetString("name"),
-		[]breadcrumbItem{{Label: "Dashboard", Href: "/"}, {Label: group.GetString("name"), Href: "/g/" + slug}, {Label: "Suggestions"}},
-		primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text("Suggest a question")),
+	return renderPage(re, 200, appPage(re, slug, t("newsletter.subnav.suggestions")+" — "+group.GetString("name"),
+		[]breadcrumbItem{{Label: t("newsletter.nav.dashboard"), Href: "/"}, {Label: group.GetString("name"), Href: "/g/" + slug}, {Label: t("newsletter.subnav.suggestions")}},
+		primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text(t("newsletter.suggestions.heading"))),
 		primitive.Card(primitive.CardProps{Attrs: []g.Node{h.Style("margin-top:var(--sp-4)")}},
 			h.Form(
+				g.Attr("data-signals", `{s_prompt:'',s_type:'text',s_options:''}`),
 				h.Method("post"), h.Action("/g/"+slug+"/suggestions"),
-				form.Field(form.FieldProps{Label: "Prompt"},
-					form.Input(form.InputProps{Type: "text", Name: "prompt", Required: true, Placeholder: "What should we ask next?"}),
+				form.Field(form.FieldProps{Label: t("newsletter.suggestions.prompt_label")},
+					form.Input(form.InputProps{Type: "text", Name: "prompt", Required: true, Placeholder: "What should we ask next?", Signal: "s_prompt"}),
 				),
-				form.Field(form.FieldProps{Label: "Answer type", Attrs: []g.Node{h.Style("margin-top:var(--sp-4)")}},
+				form.Field(form.FieldProps{Label: t("newsletter.suggestions.type_label"), Attrs: []g.Node{h.Style("margin-top:var(--sp-4)")}},
 					form.Select(form.SelectProps{
-						Name: "type",
+						Name:   "type",
+						Signal: "s_type",
 						Options: []form.SelectOption{
-							{Value: "text", Label: "Text", Selected: true},
-							{Value: "single_select", Label: "Single choice"},
-							{Value: "multi_select", Label: "Multiple choice"},
-							{Value: "image", Label: "Image"},
-							{Value: "rating", Label: "Rating"},
-							{Value: "emoji_reaction", Label: "Mood emoji"},
+							{Value: "text", Label: t("newsletter.suggestions.type_text"), Selected: true},
+							{Value: "single_select", Label: t("newsletter.suggestions.type_single")},
+							{Value: "multi_select", Label: t("newsletter.suggestions.type_multi")},
+							{Value: "image", Label: t("newsletter.suggestions.type_image")},
+							{Value: "rating", Label: t("newsletter.suggestions.type_rating")},
+							{Value: "emoji_reaction", Label: t("newsletter.suggestions.type_emoji")},
+							{Value: "yes_no", Label: t("newsletter.suggestions.type_yes_no")},
+							{Value: "scale", Label: t("newsletter.suggestions.type_scale")},
+							{Value: "number", Label: t("newsletter.suggestions.type_number")},
+							{Value: "date", Label: t("newsletter.suggestions.type_date")},
+							{Value: "color_pick", Label: t("newsletter.suggestions.type_color")},
 						},
 					}),
 				),
-				form.Field(form.FieldProps{Label: "Options (comma-separated, only for choice/mood types)", Attrs: []g.Node{h.Style("margin-top:var(--sp-4)")}},
-					form.Input(form.InputProps{Type: "text", Name: "options", Placeholder: "Great, Good, Okay, Rough"}),
+				form.Field(form.FieldProps{Label: t("newsletter.suggestions.options_label"), Attrs: []g.Node{h.Style("margin-top:var(--sp-4)")}},
+					form.Input(form.InputProps{Type: "text", Name: "options", Placeholder: "Great, Good, Okay, Rough", Signal: "s_options"}),
 				),
-				primitive.Button(primitive.ButtonProps{Variant: token.Primary, Type: "submit", Attrs: []g.Node{h.Style("margin-top:var(--sp-4)")}}, g.Text("Suggest")),
+				renderQuestionPreviewCard(t, "s_prompt", "s_type", "s_options"),
+				primitive.Button(primitive.ButtonProps{Variant: token.Primary, Type: "submit", Attrs: []g.Node{h.Style("margin-top:var(--sp-4)")}}, g.Text(t("newsletter.suggestions.submit_button"))),
 			),
 		),
-		primitive.Heading(primitive.HeadingProps{Level: 2, Attrs: []g.Node{h.Style("margin-top:var(--sp-8)")}}, g.Text("Pending suggestions")),
-		g.If(len(rows) == 0, h.P(h.Style("color:var(--muted);margin-top:var(--sp-3)"), g.Text("No pending suggestions."))),
+		primitive.Heading(primitive.HeadingProps{Level: 2, Attrs: []g.Node{h.Style("margin-top:var(--sp-8)")}}, g.Text(t("newsletter.suggestions.pending_heading"))),
+		g.If(len(rows) == 0, h.P(h.Style("color:var(--muted);margin-top:var(--sp-3)"), g.Text(t("newsletter.suggestions.empty")))),
 		g.If(len(rows) > 0, primitive.Card(primitive.CardProps{Attrs: []g.Node{h.Style("margin-top:var(--sp-3);padding:var(--sp-2) var(--sp-4)")}}, g.Group(rows))),
 	))
 }

@@ -73,6 +73,7 @@ func CreateGroup(tb testing.TB, app core.App, name, slug, ownerID string) *core.
 	group.Set("reminder_lead_hours", 48)
 	group.Set("grace_period_hours", 24)
 	group.Set("timezone", "UTC")
+	group.Set("status", "active")
 	if err := app.Save(group); err != nil {
 		tb.Fatalf("testutil: save group: %v", err)
 	}

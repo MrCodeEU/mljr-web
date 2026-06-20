@@ -20,6 +20,7 @@ type SignupProps struct {
 }
 
 func Signup(re *core.RequestEvent, p SignupProps) g.Node {
+	t := translator(re)
 	if p.InviteToken == "" {
 		p.InviteToken = re.Request.URL.Query().Get("invite")
 	}
@@ -36,21 +37,21 @@ func Signup(re *core.RequestEvent, p SignupProps) g.Node {
 			if group, err := re.App.FindRecordById("groups", invite.GetString("group")); err == nil {
 				banner = feedback.Alert(
 					feedback.AlertProps{Variant: feedback.AlertInfo, Attrs: []g.Node{h.Style("margin-bottom:var(--sp-4)")}},
-					g.Text("You're creating an account to join "+group.GetString("name")+"."),
+					g.Text(t("newsletter.signup.join_notice", group.GetString("name"))),
 				)
 			}
 		}
 	}
 
-	return authPage(re, "Sign up",
+	return authPage(re, t("newsletter.signup.page_title"),
 		layout.AuthLayout(layout.AuthLayoutProps{}, h.Div(
 			banner,
 			special.LoginForm(special.LoginFormProps{
 				Action:               "/signup",
-				Title:                "Create your account",
+				Title:                t("newsletter.signup.title"),
 				LoginHref:            "/login",
 				Error:                p.Error,
-				SubmitLabel:          "Sign up",
+				SubmitLabel:          t("newsletter.signup.submit_label"),
 				PasswordAutocomplete: "new-password",
 				PasswordMinLength:    8,
 				EmailValue:           emailValue,
@@ -98,7 +99,7 @@ func HandleSignup(re *core.RequestEvent) error {
 	inviteToken := re.Request.FormValue("invite")
 
 	if email == "" || password == "" {
-		return renderPage(re, 400, Signup(re, SignupProps{Error: "Email and password are required", InviteToken: inviteToken}))
+		return renderPage(re, 400, Signup(re, SignupProps{Error: translator(re)("newsletter.signup.required_fields"), InviteToken: inviteToken}))
 	}
 
 	users, err := re.App.FindCollectionByNameOrId("users")

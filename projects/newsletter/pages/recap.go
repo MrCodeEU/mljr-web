@@ -27,6 +27,7 @@ func Recap(re *core.RequestEvent) error {
 		return re.ForbiddenError("not a member of this group", nil)
 	}
 
+	t := translator(re)
 	editions, err := re.App.FindRecordsByFilter(
 		"newsletter_editions", "group = {:group} && (status = \"sent\" || status = \"archived\")",
 		"-sent_at", recapEditionLimit, 0,
@@ -49,7 +50,7 @@ func Recap(re *core.RequestEvent) error {
 				continue
 			}
 			rows = append(rows, h.Div(h.Style("padding:var(--sp-2) 0;border-bottom:var(--border-w) var(--border-style) var(--line)"),
-				h.P(h.Style("font-weight:600;font-size:var(--t-sm);color:var(--muted)"), g.Text(eq.Question.GetString("prompt"))),
+				h.P(h.Style("font-weight:600;font-size:var(--t-sm);color:var(--muted)"), g.Text(questionPrompt(eq.Question, currentLang(re)))),
 				renderAnswerValue(re, eq.Question, answer),
 			))
 		}
@@ -64,17 +65,17 @@ func Recap(re *core.RequestEvent) error {
 		sections = append(sections, primitive.Card(primitive.CardProps{Attrs: []g.Node{h.Style("padding:var(--sp-4);margin-bottom:var(--sp-4)")}},
 			h.Div(h.Style("display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--sp-3)"),
 				h.P(h.Style("font-weight:700"), g.Text(dateLabel)),
-				h.A(h.Href("/g/"+slug+"/editions/"+edition.Id+"/view"), h.Style("font-size:var(--t-sm)"), g.Text("View full edition")),
+				h.A(h.Href("/g/"+slug+"/editions/"+edition.Id+"/view"), h.Style("font-size:var(--t-sm)"), g.Text(t("newsletter.recap.view_full"))),
 			),
 			g.Group(rows),
 		))
 	}
 
-	return renderPage(re, 200, appPage(re, slug, "Recap — "+group.GetString("name"),
-		[]breadcrumbItem{{Label: "Dashboard", Href: "/"}, {Label: group.GetString("name"), Href: "/g/" + slug}, {Label: "Recap"}},
-		primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text("Your recap")),
-		h.P(h.Style("color:var(--muted);margin:var(--sp-2) 0 var(--sp-6)"), g.Text("Your own answers from recent editions.")),
-		g.If(len(sections) == 0, h.P(h.Style("color:var(--muted)"), g.Text("No past answers yet."))),
+	return renderPage(re, 200, appPage(re, slug, t("newsletter.subnav.recap")+" — "+group.GetString("name"),
+		[]breadcrumbItem{{Label: t("newsletter.nav.dashboard"), Href: "/"}, {Label: group.GetString("name"), Href: "/g/" + slug}, {Label: t("newsletter.subnav.recap")}},
+		primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text(t("newsletter.recap.heading"))),
+		h.P(h.Style("color:var(--muted);margin:var(--sp-2) 0 var(--sp-6)"), g.Text(t("newsletter.recap.subheading"))),
+		g.If(len(sections) == 0, h.P(h.Style("color:var(--muted)"), g.Text(t("newsletter.recap.empty")))),
 		g.Group(sections),
 	))
 }

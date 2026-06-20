@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand/v2"
 	"net/mail"
 	"strconv"
 	"strings"
 	"time"
 
 	"mljr-web/internal/config"
+	"mljr-web/internal/i18n"
 
 	"github.com/pocketbase/pocketbase/core"
 	pbmailer "github.com/pocketbase/pocketbase/tools/mailer"
@@ -22,6 +24,7 @@ import (
 // re-queries by status so a half-finished tick just gets picked up again.
 func RunScan(app core.App, m Mailer, cfg config.Config) error {
 	now := time.Now().UTC()
+	horoscopes := defaultHoroscopeProvider()
 
 	if err := createDueEditions(app); err != nil {
 		log.Printf("newsletter scan: create editions: %v", err)
@@ -29,10 +32,16 @@ func RunScan(app core.App, m Mailer, cfg config.Config) error {
 	if err := openScheduledEditions(app, now); err != nil {
 		log.Printf("newsletter scan: open editions: %v", err)
 	}
+	if err := backfillOpenEditionDeadlines(app); err != nil {
+		log.Printf("newsletter scan: backfill edition deadlines: %v", err)
+	}
 	if err := sendReminders(app, m, cfg, now); err != nil {
 		log.Printf("newsletter scan: reminders: %v", err)
 	}
-	if err := closeEditions(app, m, cfg, now); err != nil {
+	if err := sendGraceReminders(app, m, cfg, now); err != nil {
+		log.Printf("newsletter scan: grace reminders: %v", err)
+	}
+	if err := closeEditions(app, m, cfg, now, horoscopes); err != nil {
 		log.Printf("newsletter scan: close editions: %v", err)
 	}
 	if err := expireInvites(app, now); err != nil {
@@ -42,7 +51,7 @@ func RunScan(app core.App, m Mailer, cfg config.Config) error {
 }
 
 func createDueEditions(app core.App) error {
-	groups, err := app.FindRecordsByFilter("groups", "", "", 0, 0, nil)
+	groups, err := app.FindRecordsByFilter("groups", "status != \"disabled\"", "", 0, 0, nil)
 	if err != nil {
 		return err
 	}
@@ -66,12 +75,11 @@ func createDueEditions(app core.App) error {
 			log.Printf("newsletter scan: group %s: %v", group.Id, err)
 			continue
 		}
-		closesAt, err := nextWindowForGroup(group, opensAt)
+		closesAt, err := closeTimeForOpenEdition(group, opensAt)
 		if err != nil {
 			log.Printf("newsletter scan: group %s: %v", group.Id, err)
 			continue
 		}
-		closesAt = closesAt.Add(-24 * time.Hour)
 		reminderLead := time.Duration(group.GetInt("reminder_lead_hours")) * time.Hour
 		gracePeriod := time.Duration(group.GetInt("grace_period_hours")) * time.Hour
 
@@ -91,6 +99,76 @@ func createDueEditions(app core.App) error {
 		}
 
 		if err := populateEditionQuestions(app, edition); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func closeTimeForOpenEdition(group *core.Record, openedAt time.Time) (time.Time, error) {
+	next, err := nextWindowForGroup(group, openedAt)
+	if err != nil {
+		return time.Time{}, err
+	}
+	closesAt := next.Add(-24 * time.Hour)
+	if closesAt.After(openedAt) {
+		return closesAt, nil
+	}
+
+	// If a manual edition was opened after this cycle's soft-close instant,
+	// use the following cycle rather than closing it immediately.
+	next, err = nextWindowForGroup(group, next)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return next.Add(-24 * time.Hour), nil
+}
+
+func backfillOpenEditionDeadlines(app core.App) error {
+	editions, err := app.FindRecordsByFilter(
+		"newsletter_editions",
+		"status = \"open\" || status = \"reminder_sent\" || status = \"grace\"",
+		"", 0, 0, nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, edition := range editions {
+		group, err := app.FindRecordById("groups", edition.GetString("group"))
+		if err != nil {
+			continue
+		}
+		openedAt := edition.GetDateTime("opens_at").Time()
+		if openedAt.IsZero() {
+			openedAt = edition.GetDateTime("created").Time()
+		}
+		if openedAt.IsZero() {
+			openedAt = time.Now().UTC()
+		}
+
+		closesAt := edition.GetDateTime("closes_at").Time()
+		if closesAt.IsZero() {
+			closesAt, err = closeTimeForOpenEdition(group, openedAt)
+			if err != nil {
+				log.Printf("newsletter scan: edition %s: %v", edition.Id, err)
+				continue
+			}
+			edition.Set("closes_at", closesAt)
+		}
+		reminderLead := time.Duration(group.GetInt("reminder_lead_hours")) * time.Hour
+		wantReminderAt := closesAt.Add(-reminderLead)
+		reminderAt := edition.GetDateTime("reminder_at").Time()
+		if reminderAt.IsZero() || reminderAt.After(closesAt) {
+			edition.Set("reminder_at", wantReminderAt)
+		}
+		gracePeriod := time.Duration(group.GetInt("grace_period_hours")) * time.Hour
+		wantGraceUntil := closesAt.Add(gracePeriod)
+		graceUntil := edition.GetDateTime("grace_until").Time()
+		if graceUntil.IsZero() || graceUntil.Before(closesAt) || graceUntil.Sub(closesAt) > gracePeriod {
+			edition.Set("grace_until", wantGraceUntil)
+		}
+		if err := app.Save(edition); err != nil {
 			return err
 		}
 	}
@@ -122,6 +200,7 @@ func populateEditionQuestions(app core.App, edition *core.Record) error {
 	if err != nil {
 		return err
 	}
+	rand.Shuffle(len(questions), func(i, j int) { questions[i], questions[j] = questions[j], questions[i] })
 	for i, q := range questions {
 		eq := core.NewRecord(eqCol)
 		eq.Set("edition", edition.Id)
@@ -203,10 +282,73 @@ func sendReminders(app core.App, m Mailer, cfg config.Config, now time.Time) err
 	return nil
 }
 
-func closeEditions(app core.App, m Mailer, cfg config.Config, now time.Time) error {
+// sendGraceReminders sends one last-chance email to members who still
+// haven't completed every question once an edition has passed its soft
+// closes_at but is still inside its grace_until window — the period where
+// closeEditions hasn't fired yet but stragglers are running out of time.
+// Unlike sendReminders (which only checks whether a member started), this
+// checks actual completion against the edition's question count, since by
+// this point a half-finished answer set is the more useful signal. sendOnce
+// dedupes by edition+user, so each member gets exactly one of these
+// regardless of how many scan ticks land inside the grace window.
+func sendGraceReminders(app core.App, m Mailer, cfg config.Config, now time.Time) error {
 	editions, err := app.FindRecordsByFilter(
 		"newsletter_editions",
-		"(status = \"open\" || status = \"reminder_sent\") && grace_until != \"\" && grace_until <= {:now}",
+		"(status = \"open\" || status = \"reminder_sent\" || status = \"grace\") && closes_at != \"\" && closes_at <= {:now} && grace_until != \"\" && grace_until > {:now}",
+		"", 0, 0, map[string]any{"now": now},
+	)
+	if err != nil {
+		return err
+	}
+	for _, edition := range editions {
+		group, err := app.FindRecordById("groups", edition.GetString("group"))
+		if err != nil {
+			continue
+		}
+		eqs, err := app.FindRecordsByFilter(
+			"edition_questions", "edition = {:edition}", "", 0, 0, map[string]any{"edition": edition.Id},
+		)
+		if err != nil || len(eqs) == 0 {
+			continue
+		}
+		members, err := app.FindRecordsByFilter(
+			"group_memberships", "group = {:group}", "", 0, 0, map[string]any{"group": group.Id},
+		)
+		if err != nil {
+			continue
+		}
+		for _, membership := range members {
+			userID := membership.GetString("user")
+			answered, err := app.FindRecordsByFilter(
+				"answers", "edition = {:edition} && user = {:user} && skipped = false",
+				"", 0, 0, map[string]any{"edition": edition.Id, "user": userID},
+			)
+			if err == nil && len(answered) >= len(eqs) {
+				continue // already answered every question
+			}
+			user, err := app.FindRecordById("users", userID)
+			if err != nil || user.Email() == "" {
+				continue
+			}
+			dedupeKey := "grace_reminder:" + edition.Id + ":" + userID
+			sendOnce(app, m, dedupeKey, "grace_reminder", user.Email(), func() (*pbmailer.Message, error) {
+				return graceReminderMessage(cfg, group, edition, user), nil
+			})
+		}
+		if edition.GetString("status") != "grace" {
+			edition.Set("status", "grace")
+			if err := app.Save(edition); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func closeEditions(app core.App, m Mailer, cfg config.Config, now time.Time, horoscopes HoroscopeProvider) error {
+	editions, err := app.FindRecordsByFilter(
+		"newsletter_editions",
+		"(status = \"open\" || status = \"reminder_sent\" || status = \"grace\") && grace_until != \"\" && grace_until <= {:now}",
 		"", 0, 0, map[string]any{"now": now},
 	)
 	if err != nil {
@@ -221,12 +363,22 @@ func closeEditions(app core.App, m Mailer, cfg config.Config, now time.Time) err
 			log.Printf("newsletter scan: mark skipped for edition %s: %v", edition.Id, err)
 		}
 
-		dedupeKey := "send:" + edition.Id
-		recipients, err := memberEmails(app, group.Id)
-		if err == nil && len(recipients) > 0 {
-			sendOnce(app, m, dedupeKey, "edition_sent", strings.Join(recipients, ","), func() (*pbmailer.Message, error) {
-				return editionSentMessage(app, cfg, group, edition, recipients)
-			})
+		if err := trackZeroResponseStreak(app, group, edition); err != nil {
+			log.Printf("newsletter scan: zero-response streak for group %s: %v", group.Id, err)
+		}
+
+		members, err := memberUsers(app, group.Id)
+		if err == nil {
+			for _, member := range members {
+				if member.Email() == "" {
+					continue
+				}
+				user := member
+				dedupeKey := "send:" + edition.Id + ":" + user.Id
+				sendOnce(app, m, dedupeKey, "edition_sent", user.Email(), func() (*pbmailer.Message, error) {
+					return editionSentMessage(app, cfg, group, edition, user, horoscopes)
+				})
+			}
 		}
 
 		edition.Set("status", "sent")
@@ -281,6 +433,53 @@ func markMissingAnswersSkipped(app core.App, edition *core.Record) error {
 	return nil
 }
 
+// disableAfterUnanswered is how many consecutive editions a group can have
+// zero respondents before it's auto-disabled to stop spamming reminders into
+// the void.
+const disableAfterUnanswered = 3
+
+// editionHasAnyAnswer reports whether at least one member submitted a
+// non-skipped answer for the edition — the same completion signal
+// sendGraceReminders uses, applied here to decide whether a group's
+// zero-response streak continues or resets.
+func editionHasAnyAnswer(app core.App, editionID string) (bool, error) {
+	answer, err := app.FindFirstRecordByFilter(
+		"answers", "edition = {:edition} && skipped = false", map[string]any{"edition": editionID},
+	)
+	if err != nil {
+		return false, nil // ErrNoRows: treat as "no answer" rather than an error
+	}
+	return answer != nil, nil
+}
+
+// trackZeroResponseStreak increments or resets a group's consecutive
+// zero-respondent edition counter as each edition closes, auto-disabling the
+// group once it hits disableAfterUnanswered so a dead group stops generating
+// new editions and reminder emails.
+func trackZeroResponseStreak(app core.App, group, edition *core.Record) error {
+	hasAnswer, err := editionHasAnyAnswer(app, edition.Id)
+	if err != nil {
+		return err
+	}
+	if hasAnswer {
+		if group.GetInt("consecutive_unanswered_editions") != 0 {
+			group.Set("consecutive_unanswered_editions", 0)
+			return app.Save(group)
+		}
+		return nil
+	}
+
+	streak := group.GetInt("consecutive_unanswered_editions") + 1
+	group.Set("consecutive_unanswered_editions", streak)
+	if streak >= disableAfterUnanswered && group.GetString("status") != "disabled" {
+		group.Set("status", "disabled")
+		notifyMembers(app, group.Id, "", "group_disabled", "",
+			group.GetString("name")+" was disabled after "+strconv.Itoa(streak)+" editions with no answers",
+			"/g/"+group.GetString("slug")+"/settings")
+	}
+	return app.Save(group)
+}
+
 func expireInvites(app core.App, now time.Time) error {
 	invites, err := app.FindRecordsByFilter(
 		"group_invites", "status = \"pending\" && expires_at <= {:now}", "", 0, 0,
@@ -329,22 +528,25 @@ func notifyMembers(app core.App, groupID, excludeUserID, kind, actorID, body, li
 	}
 }
 
-func memberEmails(app core.App, groupID string) ([]string, error) {
+// memberUsers resolves a group's memberships to full user records — needed
+// (rather than just emails) so each recipient can mint their own file token
+// for the protected avatar/answer-image URLs embedded in their email.
+func memberUsers(app core.App, groupID string) ([]*core.Record, error) {
 	members, err := app.FindRecordsByFilter(
 		"group_memberships", "group = {:group}", "", 0, 0, map[string]any{"group": groupID},
 	)
 	if err != nil {
 		return nil, err
 	}
-	var emails []string
+	var users []*core.Record
 	for _, membership := range members {
 		user, err := app.FindRecordById("users", membership.GetString("user"))
-		if err != nil || user.Email() == "" {
+		if err != nil {
 			continue
 		}
-		emails = append(emails, user.Email())
+		users = append(users, user)
 	}
-	return emails, nil
+	return users, nil
 }
 
 // sendOnce checks email_log for dedupeKey before building/sending, and logs
@@ -384,79 +586,51 @@ func sendOnce(app core.App, m Mailer, dedupeKey, kind, recipient string, build f
 }
 
 func reminderMessage(cfg config.Config, group, edition, user *core.Record) *pbmailer.Message {
+	lang := user.GetString("language")
 	link := cfg.Newsletter.PublicAppURL + "/g/" + group.GetString("slug") + "/editions/" + edition.Id
-	body := fmt.Sprintf(
-		"Hi %s,\n\n%s's newsletter edition is still open and you haven't answered yet.\n\n%s\n",
-		displayNameOrEmail(user), group.GetString("name"), link,
-	)
+	lead := i18n.T(lang, "newsletter.email.reminder_lead", group.GetString("name"))
+	button := i18n.T(lang, "newsletter.email.answer_now")
 	return &pbmailer.Message{
 		From:    fromAddress(cfg.SMTP.From),
 		To:      []mail.Address{{Address: user.Email()}},
-		Subject: group.GetString("name") + ": don't forget to answer this week's questions",
-		Text:    body,
+		Subject: i18n.T(lang, "newsletter.email.reminder_subject", group.GetString("name")),
+		Text:    fmt.Sprintf(i18n.T(lang, "newsletter.email.greeting")+"\n\n%s\n\n%s\n", displayNameOrEmail(user), lead, link),
+		HTML:    transactionalEmailHTML(displayNameOrEmail(user), lead, link, button),
 	}
 }
 
-func editionSentMessage(app core.App, cfg config.Config, group, edition *core.Record, recipients []string) (*pbmailer.Message, error) {
-	body, err := compileEditionText(app, group, edition)
+func graceReminderMessage(cfg config.Config, group, edition, user *core.Record) *pbmailer.Message {
+	lang := user.GetString("language")
+	link := cfg.Newsletter.PublicAppURL + "/g/" + group.GetString("slug") + "/editions/" + edition.Id
+	lead := i18n.T(lang, "newsletter.email.grace_lead", group.GetString("name"))
+	button := i18n.T(lang, "newsletter.email.answer_now")
+	return &pbmailer.Message{
+		From:    fromAddress(cfg.SMTP.From),
+		To:      []mail.Address{{Address: user.Email()}},
+		Subject: i18n.T(lang, "newsletter.email.grace_subject", group.GetString("name")),
+		Text:    fmt.Sprintf(i18n.T(lang, "newsletter.email.greeting")+"\n\n%s\n\n%s\n", displayNameOrEmail(user), lead, link),
+		HTML:    transactionalEmailHTML(displayNameOrEmail(user), lead, link, button),
+	}
+}
+
+// editionSentMessage builds one recipient's edition_sent email. It's
+// per-recipient rather than one shared Bcc message because answer_images
+// is a Protected collection — each embedded image URL needs a file token
+// minted for that specific recipient, so the rendered body itself differs
+// per person.
+func editionSentMessage(app core.App, cfg config.Config, group, edition, recipient *core.Record, horoscopes HoroscopeProvider) (*pbmailer.Message, error) {
+	data, err := gatherEditionComposeData(app, cfg, group, edition, recipient, horoscopes)
 	if err != nil {
 		return nil, err
 	}
-	to := make([]mail.Address, len(recipients))
-	for i, addr := range recipients {
-		to[i] = mail.Address{Address: addr}
-	}
+	lang := recipient.GetString("language")
 	return &pbmailer.Message{
 		From:    fromAddress(cfg.SMTP.From),
-		Bcc:     to,
-		Subject: group.GetString("name") + " newsletter — " + edition.GetString("opens_at")[:10],
-		Text:    body,
+		To:      []mail.Address{{Address: recipient.Email()}},
+		Subject: i18n.T(lang, "newsletter.email.sent_subject", group.GetString("name"), edition.GetString("opens_at")[:10]),
+		Text:    renderEditionText(lang, data),
+		HTML:    renderEditionHTML(lang, data),
 	}, nil
-}
-
-func compileEditionText(app core.App, group, edition *core.Record) (string, error) {
-	eqs, err := app.FindRecordsByFilter(
-		"edition_questions", "edition = {:edition}", "order", 0, 0, map[string]any{"edition": edition.Id},
-	)
-	if err != nil {
-		return "", err
-	}
-
-	var b strings.Builder
-	fmt.Fprintf(&b, "%s newsletter\n\n", group.GetString("name"))
-
-	for _, eq := range eqs {
-		question, err := app.FindRecordById("question_bank", eq.GetString("question"))
-		if err != nil {
-			continue
-		}
-		fmt.Fprintf(&b, "%s\n", question.GetString("prompt"))
-
-		answers, err := app.FindRecordsByFilter(
-			"answers", "edition = {:edition} && question = {:question} && skipped = false", "", 0, 0,
-			map[string]any{"edition": edition.Id, "question": question.Id},
-		)
-		if err != nil {
-			continue
-		}
-		for _, answer := range answers {
-			user, err := app.FindRecordById("users", answer.GetString("user"))
-			if err != nil {
-				continue
-			}
-			text := valueAsText(decodeJSONField(answer, "value"))
-			if question.GetString("type") == "image" {
-				text = "[shared a photo]"
-			}
-			if text == "" {
-				continue
-			}
-			fmt.Fprintf(&b, "  - %s: %s\n", displayNameOrEmail(user), text)
-		}
-		b.WriteString("\n")
-	}
-
-	return b.String(), nil
 }
 
 func displayNameOrEmail(user *core.Record) string {

@@ -20,6 +20,7 @@ func Dashboard(re *core.RequestEvent) error {
 		return redirect(re, "/login")
 	}
 
+	t := translator(re)
 	memberships, err := re.App.FindRecordsByFilter(
 		"group_memberships", "user = {:user}", "-created", 0, 0,
 		map[string]any{"user": user.Id},
@@ -47,27 +48,29 @@ func Dashboard(re *core.RequestEvent) error {
 		))
 	}
 
-	return renderPage(re, 200, appPage(re, "", "Dashboard", nil,
-		primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text("Your groups")),
+	return renderPage(re, 200, appPage(re, "", t("newsletter.nav.dashboard"), nil,
+		primitive.Heading(primitive.HeadingProps{Level: 1}, g.Text(t("newsletter.dashboard.heading"))),
+		flashAlert(re),
 		g.If(len(groupRows) == 0,
-			h.P(h.Style("color:var(--muted);margin:var(--sp-3) 0 var(--sp-6)"), g.Text("You're not in any groups yet — create one below.")),
+			h.P(h.Style("color:var(--muted);margin:var(--sp-3) 0 var(--sp-6)"), g.Text(t("newsletter.dashboard.empty"))),
 		),
 		g.If(len(groupRows) > 0,
 			h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-3);margin:var(--sp-4) 0 var(--sp-8)"), g.Group(groupRows)),
 		),
 
-		primitive.Heading(primitive.HeadingProps{Level: 2}, g.Text("Create a group")),
+		primitive.Heading(primitive.HeadingProps{Level: 2}, g.Text(t("newsletter.dashboard.create_heading"))),
+		flashAlert(re),
 		primitive.Card(primitive.CardProps{Attrs: []g.Node{h.Style("margin-top:var(--sp-3)")}},
 			h.Form(
 				h.Method("post"), h.Action("/groups"),
-				form.Field(form.FieldProps{Label: "Group name"},
+				form.Field(form.FieldProps{Label: t("newsletter.dashboard.name_label")},
 					form.Input(form.InputProps{Type: "text", Name: "name", Required: true, Placeholder: "e.g. The Weekly Crew"}),
 				),
 				primitive.Button(primitive.ButtonProps{
 					Variant: token.Primary,
 					Type:    "submit",
 					Attrs:   []g.Node{h.Style("margin-top:var(--sp-3)")},
-				}, icon.Icon("lucide:plus"), g.Text("Create group")),
+				}, icon.Icon("lucide:plus"), g.Text(t("newsletter.dashboard.create_button"))),
 			),
 		),
 	))

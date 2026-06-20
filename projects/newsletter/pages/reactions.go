@@ -75,16 +75,18 @@ func HandleToggleReaction(re *core.RequestEvent) error {
 		return re.NotFoundError("answer not found", err)
 	}
 
+	link := "/g/" + slug + "/editions/" + edition.Id + "/view"
+
 	emoji := re.Request.FormValue("emoji")
 	if emoji == "" {
-		return redirect(re, "/g/"+slug+"/editions/"+edition.Id+"/view")
+		return redirect(re, link+"?flash=reaction_invalid")
 	}
 
 	if existing, err := findReaction(re, answer.Id, user.Id, emoji); err == nil {
 		if err := re.App.Delete(existing); err != nil {
 			return err
 		}
-		return redirect(re, "/g/"+slug+"/editions/"+edition.Id+"/view")
+		return redirect(re, link)
 	}
 
 	col, err := re.App.FindCollectionByNameOrId("emoji_reactions")
@@ -105,5 +107,5 @@ func HandleToggleReaction(re *core.RequestEvent) error {
 			"/g/"+slug+"/editions/"+edition.Id+"/view")
 	}
 
-	return redirect(re, "/g/"+slug+"/editions/"+edition.Id+"/view")
+	return redirect(re, link)
 }

@@ -1,8 +1,13 @@
 package pages
 
 import (
+	"mljr-web/ui/feedback"
+	"mljr-web/ui/overlay"
+
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/types"
+	g "maragu.dev/gomponents"
+	h "maragu.dev/gomponents/html"
 )
 
 // createNotification inserts an in-app notification row. link, group, invite
@@ -68,6 +73,52 @@ func NotifyGroupAdmins(app core.App, groupID, excludeUserID, kind, actorID, body
 		}
 		_ = createNotification(app, m.GetString("user"), kind, groupID, "", actorID, body, link)
 	}
+}
+
+// notificationsNav renders the notification bell: an unread-count badge plus
+// a dropdown of the most recent notifications and a "mark all read" action.
+// Previously this data existed (recentNotifications/countUnreadNotifications)
+// but nothing in the header rendered it, so invites/comments/reactions/
+// edition events were silently invisible to the recipient.
+func notificationsNav(re *core.RequestEvent, userID string) g.Node {
+	t := translator(re)
+	unread := countUnreadNotifications(re, userID)
+	list := recentNotifications(re, userID)
+
+	trigger := feedback.NotificationBadge(feedback.NotificationBadgeProps{Count: unread},
+		h.Button(h.Type("button"), h.Style("background:none;border:none;cursor:pointer;font-size:1.2em;line-height:1;padding:var(--sp-1)"),
+			g.Text("🔔")),
+	)
+
+	var items []overlay.DropdownItem
+	if len(list) == 0 {
+		items = append(items, overlay.DropdownItem{Label: t("newsletter.notifications.empty"), Href: "#"})
+	}
+	for _, n := range list {
+		weight := "400"
+		if n.GetString("read_at") == "" {
+			weight = "700"
+		}
+		row := h.Div(h.Style("min-width:0;max-width:280px"),
+			h.Span(h.Style("display:block;font-weight:"+weight+";overflow-wrap:anywhere"), g.Text(n.GetString("body"))),
+			h.Span(h.Style("display:block;font-size:var(--t-xs);color:var(--muted);margin-top:2px"), g.Text(n.GetString("created")[:10])),
+		)
+		href := n.GetString("link")
+		if href == "" {
+			href = "#"
+		}
+		items = append(items, overlay.DropdownItem{Content: row, Href: href})
+	}
+	items = append(items, overlay.DropdownItem{
+		Divider: true, Label: t("newsletter.notifications.mark_all_read"), Icon: "lucide:check-check",
+		OnClick: "document.getElementById('nl-mark-read-form').requestSubmit()",
+	})
+
+	return h.Div(
+		h.Style("display:flex;align-items:center"),
+		h.Form(h.ID("nl-mark-read-form"), h.Method("post"), h.Action("/notifications/read-all"), h.Style("display:none")),
+		overlay.Dropdown(overlay.DropdownProps{Signal: "navNotifs", Align: "right"}, trigger, items...),
+	)
 }
 
 // HandleMarkAllNotificationsRead marks every unread notification for the

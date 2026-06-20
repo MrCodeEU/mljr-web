@@ -3,6 +3,7 @@ package pages
 import (
 	"strings"
 
+	"mljr-web/ui/form"
 	"mljr-web/ui/primitive"
 	"mljr-web/ui/token"
 
@@ -76,30 +77,33 @@ func renderReactionBar(slug, editionID string, answer *core.Record, counts []rea
 // renderCommentThreads shows every comment (with one level of replies) on an
 // answer, plus a reply form per top-level comment and a new-top-level-comment
 // form at the bottom.
-func renderCommentThreads(slug, editionID string, answer *core.Record, threads []commentThread, byUser func(userID string) string) g.Node {
+func renderCommentThreads(re *core.RequestEvent, slug, editionID string, answer *core.Record, threads []commentThread, byUser func(userID string) string) g.Node {
+	t := translator(re)
 	actionURL := "/g/" + slug + "/editions/" + editionID + "/answers/" + answer.Id + "/comments"
 
 	var nodes []g.Node
-	for _, t := range threads {
+	for _, thread := range threads {
 		nodes = append(nodes, h.Div(h.Style("margin-top:var(--sp-2);padding-left:var(--sp-3);border-left:var(--border-w) var(--border-style) var(--line)"),
 			h.P(h.Style("font-size:var(--t-sm)"),
-				h.Span(h.Style("font-weight:600"), g.Text(byUser(t.Comment.GetString("author"))+": ")),
-				g.Text(t.Comment.GetString("body")),
+				h.Span(h.Style("font-weight:600"), g.Text(byUser(thread.Comment.GetString("author"))+": ")),
+				g.Text(thread.Comment.GetString("body")),
 			),
-			g.Group(renderReplies(t.Replies, byUser)),
+			g.Group(renderReplies(thread.Replies, byUser)),
 			h.Form(h.Method("post"), h.Action(actionURL), h.Style("display:flex;gap:var(--sp-2);margin-top:var(--sp-1)"),
-				h.Input(h.Type("hidden"), h.Name("parent"), h.Value(t.Comment.Id)),
-				h.Input(h.Type("text"), h.Name("body"), h.Placeholder("Reply…"), h.Style("flex:1;font-size:var(--t-sm)")),
+				h.Input(h.Type("hidden"), h.Name("parent"), h.Value(thread.Comment.Id)),
+				form.Input(form.InputProps{Type: "text", Name: "body", Placeholder: t("newsletter.comments.reply_placeholder"), Required: true,
+					Attrs: []g.Node{h.Style("flex:1;font-size:var(--t-sm)")}}),
 				primitive.Button(primitive.ButtonProps{Variant: token.Ghost, Tone: token.ToneNone, Type: "submit",
-					Attrs: []g.Node{h.Style("font-size:var(--t-sm)")}}, g.Text("Reply")),
+					Attrs: []g.Node{h.Style("font-size:var(--t-sm)")}}, g.Text(t("newsletter.comments.reply_button"))),
 			),
 		))
 	}
 
 	nodes = append(nodes, h.Form(h.Method("post"), h.Action(actionURL), h.Style("display:flex;gap:var(--sp-2);margin-top:var(--sp-2)"),
-		h.Input(h.Type("text"), h.Name("body"), h.Placeholder("Add a comment…"), h.Style("flex:1;font-size:var(--t-sm)")),
+		form.Input(form.InputProps{Type: "text", Name: "body", Placeholder: t("newsletter.comments.add_placeholder"), Required: true,
+			Attrs: []g.Node{h.Style("flex:1;font-size:var(--t-sm)")}}),
 		primitive.Button(primitive.ButtonProps{Variant: token.Ghost, Tone: token.ToneNone, Type: "submit",
-			Attrs: []g.Node{h.Style("font-size:var(--t-sm)")}}, g.Text("Comment")),
+			Attrs: []g.Node{h.Style("font-size:var(--t-sm)")}}, g.Text(t("newsletter.comments.comment_button"))),
 	))
 
 	return h.Div(g.Group(nodes))

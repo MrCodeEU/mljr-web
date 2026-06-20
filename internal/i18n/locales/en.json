@@ -187,5 +187,204 @@
   },
   "toggle": {
     "language_aria": "Switch language"
+  },
+  "newsletter": {
+    "nav": {
+      "brand": "Newsletter",
+      "dashboard": "Dashboard",
+      "groups_label": "Groups",
+      "groups_empty": "You're not in any groups yet",
+      "groups_back": "Back to dashboard",
+      "current_badge": "CURRENT",
+      "logout": "Log out"
+    },
+    "subnav": {
+      "editions": "Editions",
+      "recap": "Recap",
+      "questions": "Questions",
+      "suggestions": "Suggestions",
+      "invites": "Invites",
+      "settings": "Settings"
+    },
+    "invites": {
+      "page_title": "Invites",
+      "heading": "Invite people",
+      "email_label": "Email",
+      "role_label": "Role",
+      "role_member": "Member",
+      "role_admin": "Admin",
+      "send_button": "Send invite",
+      "pending_heading": "Pending invites",
+      "empty": "No pending invites.",
+      "revoke": "Revoke",
+      "invalid_title": "Invite no longer valid",
+      "invalid_heading": "This invite is no longer valid",
+      "invalid_body": "It may have already been used or revoked.",
+      "expired_title": "Invite expired",
+      "expired_heading": "This invite has expired",
+      "expired_body": "Ask whoever invited you to send a new one.",
+      "join_title": "Join %s",
+      "join_signedout_body": "You've been invited as %s. Sign in or create an account to accept.",
+      "create_account": "Create account",
+      "sign_in_instead": "Sign in instead",
+      "wrong_account_title": "Invite not for this account",
+      "wrong_account_heading": "This invite isn't for your account",
+      "wrong_account_body": "It was sent to %s. Sign in with that account to accept it.",
+      "join_signedin_body": "You've been invited as %s.",
+      "accept_button": "Accept & join"
+    },
+    "groups": {
+      "start_edition": "Start an edition",
+      "no_edition_yet": "No edition yet.",
+      "answers_close_in": "Answers close in",
+      "final_cutoff_in": "Final cutoff (grace period) in",
+      "open_no_deadline": "Open — no deadline, an admin closes it manually.",
+      "answer_now": "Answer now",
+      "view_results": "View results",
+      "current_edition": "Current edition",
+      "question_count": "%d question(s)",
+      "answered_count": "%d/%d answered",
+      "members_heading": "Members",
+      "reactivate_button": "Reactivate group",
+      "auto_disabled_notice": "This group was auto-disabled after %d editions in a row with no answers — no new editions will be created until it's reactivated.",
+      "leave_heading": "Leave group",
+      "leave_body": "You'll lose access to this group's editions and recaps.",
+      "leave_button": "Leave group",
+      "settings_heading": "%s settings",
+      "name_label": "Name",
+      "schedule_period_label": "Schedule period",
+      "period_weekly": "Weekly",
+      "period_biweekly": "Biweekly",
+      "period_monthly": "Monthly",
+      "period_quarterly": "Quarterly",
+      "reminder_lead_label": "Reminder lead time (hours before close)",
+      "grace_period_label": "Grace period after close (hours)",
+      "settings_note": "Only affects editions created after this is saved — the current edition's timers were already fixed when it was created.",
+      "save_button": "Save"
+    },
+    "editions": {
+      "curate_questions": "Curate questions",
+      "start_new": "Start new edition",
+      "empty": "No editions yet.",
+      "answer_title": "Answer",
+      "this_edition": "This edition",
+      "questions_heading": "This edition's questions",
+      "answered_progress": "%d of %d questions answered",
+      "save_answers": "Save answers",
+      "no_answers": "No answers.",
+      "edition_title": "Edition",
+      "results_heading": "Edition results",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "suggestions": {
+      "vote": "Vote",
+      "voted": "Voted ✓",
+      "approve": "Approve",
+      "reject": "Reject",
+      "vote_count": "%d vote(s)",
+      "heading": "Suggest a question",
+      "prompt_label": "Prompt",
+      "type_label": "Answer type",
+      "type_text": "Text",
+      "type_single": "Single choice",
+      "type_multi": "Multiple choice",
+      "type_image": "Image",
+      "type_rating": "Rating",
+      "type_emoji": "Mood emoji",
+      "options_label": "Options (comma-separated, only for choice/mood types)",
+      "submit_button": "Suggest",
+      "pending_heading": "Pending suggestions",
+      "empty": "No pending suggestions.",
+      "type_yes_no": "Yes/No",
+      "type_scale": "Scale (1-10)",
+      "type_number": "Number",
+      "type_date": "Date",
+      "type_color": "Color"
+    },
+    "dashboard": {
+      "heading": "Your groups",
+      "empty": "You're not in any groups yet — create one below.",
+      "create_heading": "Create a group",
+      "name_label": "Group name",
+      "create_button": "Create group"
+    },
+    "questions": {
+      "global": "Global",
+      "custom": "Custom",
+      "inactive": "inactive",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "bank_heading": "Question bank",
+      "add_button": "Add question",
+      "all_heading": "All questions"
+    },
+    "profile": {
+      "title": "Profile",
+      "starsign": "Starsign: %s",
+      "not_set": "Not set",
+      "avatar_label": "Avatar",
+      "upload_avatar": "Upload avatar",
+      "name_label": "Name",
+      "birthday_label": "Birthday",
+      "animal_label": "Favorite animal",
+      "food_label": "Favorite food",
+      "color_label": "Favorite color",
+      "language_label": "Language",
+      "save_button": "Save"
+    },
+    "errors": {
+      "title": "Error",
+      "heading": "Something went wrong",
+      "back_link": "Back to dashboard"
+    },
+    "notifications": {
+      "empty": "No notifications yet",
+      "mark_all_read": "Mark all read"
+    },
+    "recap": {
+      "view_full": "View full edition",
+      "heading": "Recap",
+      "subheading": "Your answers from past editions in this group.",
+      "empty": "You haven't answered anything yet."
+    },
+    "edition_questions": {
+      "title": "Edit Questions",
+      "heading": "Curate Questions",
+      "note": "Check the questions to include in this edition and set their order. Only available while the edition is still scheduled."
+    },
+    "comments": {
+      "reply_placeholder": "Reply…",
+      "reply_button": "Reply",
+      "add_placeholder": "Add a comment…",
+      "comment_button": "Comment"
+    },
+    "signup": {
+      "page_title": "Sign up",
+      "title": "Create your account",
+      "submit_label": "Sign up",
+      "join_notice": "You're creating an account to join %s.",
+      "required_fields": "Email and password are required"
+    },
+    "question_widgets": {
+      "live_preview": "Live preview",
+      "placeholder_prompt": "Your question will appear here",
+      "no_options": "No options yet",
+      "image_note": "📷 members upload a photo",
+      "free_text": "Free-text answer"
+    },
+    "email": {
+      "reminder_subject": "%s: don't forget to answer this week's questions",
+      "reminder_lead": "%s's newsletter edition is still open and you haven't answered yet.",
+      "grace_subject": "%s: last call to answer this week's questions",
+      "grace_lead": "%s's newsletter edition is closing very soon and you still have unanswered questions — this is the last call before the edition is sent out.",
+      "answer_now": "Answer now",
+      "greeting": "Hi %s,",
+      "sent_subject": "%s newsletter — %s",
+      "view_online": "View this edition online",
+      "no_answers": "No answers.",
+      "upcoming_birthdays": "Upcoming birthdays",
+      "horoscopes": "Horoscopes"
+    }
   }
 }

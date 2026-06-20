@@ -14,108 +14,47 @@ func RegisterRoutes(e *core.ServeEvent) error {
 	e.Router.GET("/login", func(re *core.RequestEvent) error {
 		return web.RenderPB(re, 200, Login(re, LoginProps{}))
 	})
-	e.Router.POST("/login", func(re *core.RequestEvent) error {
-		return HandleLogin(re)
-	})
+	e.Router.POST("/login", wrapErrors(HandleLogin))
 	e.Router.GET("/signup", func(re *core.RequestEvent) error {
 		return web.RenderPB(re, 200, Signup(re, SignupProps{}))
 	})
-	e.Router.POST("/signup", func(re *core.RequestEvent) error {
-		return HandleSignup(re)
-	})
-	e.Router.POST("/logout", func(re *core.RequestEvent) error {
-		return HandleLogout(re)
-	})
-	e.Router.GET("/profile", func(re *core.RequestEvent) error {
-		return Profile(re)
-	})
-	e.Router.POST("/profile", func(re *core.RequestEvent) error {
-		return HandleProfile(re)
-	})
-	e.Router.GET("/", func(re *core.RequestEvent) error {
-		return Dashboard(re)
-	})
-	e.Router.GET("/g/{slug}", func(re *core.RequestEvent) error {
-		return GroupHome(re)
-	})
-	e.Router.GET("/g/{slug}/settings", func(re *core.RequestEvent) error {
-		return GroupSettings(re)
-	})
-	e.Router.POST("/g/{slug}/settings", func(re *core.RequestEvent) error {
-		return HandleGroupSettings(re)
-	})
-	e.Router.POST("/groups", func(re *core.RequestEvent) error {
-		return HandleCreateGroup(re)
-	})
-	e.Router.GET("/g/{slug}/invites", func(re *core.RequestEvent) error {
-		return ListInvites(re)
-	})
-	e.Router.POST("/g/{slug}/invites", func(re *core.RequestEvent) error {
-		return HandleCreateInvite(re)
-	})
-	e.Router.POST("/g/{slug}/invites/{id}/revoke", func(re *core.RequestEvent) error {
-		return HandleRevokeInvite(re)
-	})
-	e.Router.GET("/invites/{token}", func(re *core.RequestEvent) error {
-		return InviteAccept(re)
-	})
-	e.Router.POST("/invites/{token}/accept", func(re *core.RequestEvent) error {
-		return HandleAcceptInvite(re)
-	})
-	e.Router.POST("/notifications/read-all", func(re *core.RequestEvent) error {
-		return HandleMarkAllNotificationsRead(re)
-	})
-	e.Router.GET("/g/{slug}/questions", func(re *core.RequestEvent) error {
-		return ListQuestions(re)
-	})
-	e.Router.POST("/g/{slug}/questions", func(re *core.RequestEvent) error {
-		return HandleCreateQuestion(re)
-	})
-	e.Router.POST("/g/{slug}/questions/{id}/toggle", func(re *core.RequestEvent) error {
-		return HandleToggleQuestion(re)
-	})
-	e.Router.GET("/g/{slug}/editions", func(re *core.RequestEvent) error {
-		return ListEditions(re)
-	})
-	e.Router.POST("/g/{slug}/editions", func(re *core.RequestEvent) error {
-		return HandleCreateEdition(re)
-	})
-	e.Router.GET("/g/{slug}/editions/{id}", func(re *core.RequestEvent) error {
-		return EditionAnswer(re)
-	})
-	e.Router.POST("/g/{slug}/editions/{id}", func(re *core.RequestEvent) error {
-		return HandleSubmitAnswers(re)
-	})
-	e.Router.POST("/g/{slug}/editions/{id}/close", func(re *core.RequestEvent) error {
-		return HandleCloseEdition(re)
-	})
-	e.Router.GET("/g/{slug}/editions/{id}/view", func(re *core.RequestEvent) error {
-		return EditionView(re)
-	})
-	e.Router.POST("/g/{slug}/editions/{id}/answers/{answerID}/react", func(re *core.RequestEvent) error {
-		return HandleToggleReaction(re)
-	})
-	e.Router.POST("/g/{slug}/editions/{id}/answers/{answerID}/comments", func(re *core.RequestEvent) error {
-		return HandleCreateComment(re)
-	})
-	e.Router.GET("/g/{slug}/suggestions", func(re *core.RequestEvent) error {
-		return ListSuggestions(re)
-	})
-	e.Router.POST("/g/{slug}/suggestions", func(re *core.RequestEvent) error {
-		return HandleCreateSuggestion(re)
-	})
-	e.Router.POST("/g/{slug}/suggestions/{id}/vote", func(re *core.RequestEvent) error {
-		return HandleToggleVote(re)
-	})
-	e.Router.POST("/g/{slug}/suggestions/{id}/approve", func(re *core.RequestEvent) error {
-		return HandleApproveSuggestion(re)
-	})
-	e.Router.POST("/g/{slug}/suggestions/{id}/reject", func(re *core.RequestEvent) error {
-		return HandleRejectSuggestion(re)
-	})
-	e.Router.GET("/g/{slug}/recap", func(re *core.RequestEvent) error {
-		return Recap(re)
-	})
+	e.Router.POST("/signup", wrapErrors(HandleSignup))
+	e.Router.POST("/logout", wrapErrors(HandleLogout))
+	e.Router.GET("/profile", wrapErrors(Profile))
+	e.Router.POST("/profile", wrapErrors(HandleProfile))
+	e.Router.POST("/profile/avatar", wrapErrors(HandleProfileAvatar))
+	e.Router.GET("/", wrapErrors(Dashboard))
+	e.Router.GET("/g/{slug}", wrapErrors(GroupHome))
+	e.Router.GET("/g/{slug}/settings", wrapErrors(GroupSettings))
+	e.Router.POST("/g/{slug}/settings", wrapErrors(HandleGroupSettings))
+	e.Router.POST("/groups", wrapErrors(HandleCreateGroup))
+	e.Router.POST("/g/{slug}/leave", wrapErrors(HandleLeaveGroup))
+	e.Router.POST("/g/{slug}/reactivate", wrapErrors(HandleReactivateGroup))
+	e.Router.GET("/g/{slug}/editions/{id}/questions", wrapErrors(EditionQuestions))
+	e.Router.POST("/g/{slug}/editions/{id}/questions", wrapErrors(HandleEditionQuestions))
+	e.Router.GET("/g/{slug}/invites", wrapErrors(ListInvites))
+	e.Router.POST("/g/{slug}/invites", wrapErrors(HandleCreateInvite))
+	e.Router.POST("/g/{slug}/invites/{id}/revoke", wrapErrors(HandleRevokeInvite))
+	e.Router.GET("/invites/{token}", wrapErrors(InviteAccept))
+	e.Router.POST("/invites/{token}/accept", wrapErrors(HandleAcceptInvite))
+	e.Router.POST("/notifications/read-all", wrapErrors(HandleMarkAllNotificationsRead))
+	e.Router.GET("/g/{slug}/questions", wrapErrors(ListQuestions))
+	e.Router.POST("/g/{slug}/questions", wrapErrors(HandleCreateQuestion))
+	e.Router.POST("/g/{slug}/questions/{id}/toggle", wrapErrors(HandleToggleQuestion))
+	e.Router.GET("/g/{slug}/editions", wrapErrors(ListEditions))
+	e.Router.POST("/g/{slug}/editions", wrapErrors(HandleCreateEdition))
+	e.Router.GET("/g/{slug}/editions/{id}", wrapErrors(EditionAnswer))
+	e.Router.POST("/g/{slug}/editions/{id}", wrapErrors(HandleSubmitAnswers))
+	e.Router.POST("/g/{slug}/editions/{id}/close", wrapErrors(HandleCloseEdition))
+	e.Router.GET("/g/{slug}/editions/{id}/view", wrapErrors(EditionView))
+	e.Router.POST("/g/{slug}/editions/{id}/answers/{answerID}/react", wrapErrors(HandleToggleReaction))
+	e.Router.POST("/g/{slug}/editions/{id}/answers/{answerID}/comments", wrapErrors(HandleCreateComment))
+	e.Router.GET("/g/{slug}/suggestions", wrapErrors(ListSuggestions))
+	e.Router.POST("/g/{slug}/suggestions", wrapErrors(HandleCreateSuggestion))
+	e.Router.POST("/g/{slug}/suggestions/{id}/vote", wrapErrors(HandleToggleVote))
+	e.Router.POST("/g/{slug}/suggestions/{id}/approve", wrapErrors(HandleApproveSuggestion))
+	e.Router.POST("/g/{slug}/suggestions/{id}/reject", wrapErrors(HandleRejectSuggestion))
+	e.Router.GET("/g/{slug}/recap", wrapErrors(Recap))
 	e.Router.GET("/healthz", func(re *core.RequestEvent) error {
 		return re.String(200, "ok")
 	})

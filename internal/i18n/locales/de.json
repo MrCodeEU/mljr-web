@@ -187,5 +187,204 @@
   },
   "toggle": {
     "language_aria": "Sprache wechseln"
+  },
+  "newsletter": {
+    "nav": {
+      "brand": "Newsletter",
+      "dashboard": "Übersicht",
+      "groups_label": "Gruppen",
+      "groups_empty": "Du bist noch in keiner Gruppe",
+      "groups_back": "Zur Übersicht",
+      "current_badge": "AKTUELL",
+      "logout": "Abmelden"
+    },
+    "subnav": {
+      "editions": "Ausgaben",
+      "recap": "Rückblick",
+      "questions": "Fragen",
+      "suggestions": "Vorschläge",
+      "invites": "Einladungen",
+      "settings": "Einstellungen"
+    },
+    "invites": {
+      "page_title": "Einladungen",
+      "heading": "Leute einladen",
+      "email_label": "E-Mail",
+      "role_label": "Rolle",
+      "role_member": "Mitglied",
+      "role_admin": "Admin",
+      "send_button": "Einladung senden",
+      "pending_heading": "Ausstehende Einladungen",
+      "empty": "Keine ausstehenden Einladungen.",
+      "revoke": "Zurückziehen",
+      "invalid_title": "Einladung nicht mehr gültig",
+      "invalid_heading": "Diese Einladung ist nicht mehr gültig",
+      "invalid_body": "Sie wurde möglicherweise bereits verwendet oder zurückgezogen.",
+      "expired_title": "Einladung abgelaufen",
+      "expired_heading": "Diese Einladung ist abgelaufen",
+      "expired_body": "Bitte bitte die Person, die dich eingeladen hat, eine neue zu senden.",
+      "join_title": "%s beitreten",
+      "join_signedout_body": "Du wurdest als %s eingeladen. Melde dich an oder erstelle ein Konto, um anzunehmen.",
+      "create_account": "Konto erstellen",
+      "sign_in_instead": "Stattdessen anmelden",
+      "wrong_account_title": "Einladung passt nicht zu diesem Konto",
+      "wrong_account_heading": "Diese Einladung ist nicht für dein Konto",
+      "wrong_account_body": "Sie wurde an %s gesendet. Melde dich mit diesem Konto an, um anzunehmen.",
+      "join_signedin_body": "Du wurdest als %s eingeladen.",
+      "accept_button": "Annehmen & beitreten"
+    },
+    "groups": {
+      "start_edition": "Ausgabe starten",
+      "no_edition_yet": "Noch keine Ausgabe.",
+      "answers_close_in": "Antworten schließen in",
+      "final_cutoff_in": "Letzte Frist (Karenzzeit) in",
+      "open_no_deadline": "Offen — keine Frist, ein Admin schließt manuell.",
+      "answer_now": "Jetzt antworten",
+      "view_results": "Ergebnisse ansehen",
+      "current_edition": "Aktuelle Ausgabe",
+      "question_count": "%d Frage(n)",
+      "answered_count": "%d/%d beantwortet",
+      "members_heading": "Mitglieder",
+      "reactivate_button": "Gruppe reaktivieren",
+      "auto_disabled_notice": "Diese Gruppe wurde nach %d Ausgaben ohne Antworten automatisch deaktiviert — es werden keine neuen Ausgaben erstellt, bis sie reaktiviert wird.",
+      "leave_heading": "Gruppe verlassen",
+      "leave_body": "Du verlierst den Zugriff auf die Ausgaben und Rückblicke dieser Gruppe.",
+      "leave_button": "Gruppe verlassen",
+      "settings_heading": "%s Einstellungen",
+      "name_label": "Name",
+      "schedule_period_label": "Zeitplan",
+      "period_weekly": "Wöchentlich",
+      "period_biweekly": "Zweiwöchentlich",
+      "period_monthly": "Monatlich",
+      "period_quarterly": "Vierteljährlich",
+      "reminder_lead_label": "Erinnerungsvorlauf (Stunden vor Schließung)",
+      "grace_period_label": "Karenzzeit nach Schließung (Stunden)",
+      "settings_note": "Wirkt sich nur auf Ausgaben aus, die nach dem Speichern erstellt werden — die Timer der aktuellen Ausgabe wurden bereits bei deren Erstellung festgelegt.",
+      "save_button": "Speichern"
+    },
+    "editions": {
+      "curate_questions": "Fragen auswählen",
+      "start_new": "Neue Ausgabe starten",
+      "empty": "Noch keine Ausgaben.",
+      "answer_title": "Antworten",
+      "this_edition": "Diese Ausgabe",
+      "questions_heading": "Fragen dieser Ausgabe",
+      "answered_progress": "%d von %d Fragen beantwortet",
+      "save_answers": "Antworten speichern",
+      "no_answers": "Keine Antworten.",
+      "edition_title": "Ausgabe",
+      "results_heading": "Ausgabeergebnisse",
+      "yes": "Ja",
+      "no": "Nein"
+    },
+    "suggestions": {
+      "vote": "Abstimmen",
+      "voted": "Abgestimmt ✓",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "vote_count": "%d Stimme(n)",
+      "heading": "Frage vorschlagen",
+      "prompt_label": "Frage",
+      "type_label": "Antworttyp",
+      "type_text": "Text",
+      "type_single": "Einzelauswahl",
+      "type_multi": "Mehrfachauswahl",
+      "type_image": "Bild",
+      "type_rating": "Bewertung",
+      "type_emoji": "Stimmungs-Emoji",
+      "options_label": "Optionen (kommagetrennt, nur für Auswahl-/Stimmungstypen)",
+      "submit_button": "Vorschlagen",
+      "pending_heading": "Ausstehende Vorschläge",
+      "empty": "Keine ausstehenden Vorschläge.",
+      "type_yes_no": "Ja/Nein",
+      "type_scale": "Skala (1-10)",
+      "type_number": "Zahl",
+      "type_date": "Datum",
+      "type_color": "Farbe"
+    },
+    "dashboard": {
+      "heading": "Deine Gruppen",
+      "empty": "Du bist noch in keiner Gruppe — erstelle unten eine.",
+      "create_heading": "Gruppe erstellen",
+      "name_label": "Gruppenname",
+      "create_button": "Gruppe erstellen"
+    },
+    "questions": {
+      "global": "Global",
+      "custom": "Eigene",
+      "inactive": "inaktiv",
+      "deactivate": "Deaktivieren",
+      "activate": "Aktivieren",
+      "bank_heading": "Fragenkatalog",
+      "add_button": "Frage hinzufügen",
+      "all_heading": "Alle Fragen"
+    },
+    "profile": {
+      "title": "Profil",
+      "starsign": "Sternzeichen: %s",
+      "not_set": "Nicht festgelegt",
+      "avatar_label": "Avatar",
+      "upload_avatar": "Avatar hochladen",
+      "name_label": "Name",
+      "birthday_label": "Geburtstag",
+      "animal_label": "Lieblingstier",
+      "food_label": "Lieblingsessen",
+      "color_label": "Lieblingsfarbe",
+      "language_label": "Sprache",
+      "save_button": "Speichern"
+    },
+    "errors": {
+      "title": "Fehler",
+      "heading": "Etwas ist schiefgelaufen",
+      "back_link": "Zurück zur Übersicht"
+    },
+    "notifications": {
+      "empty": "Noch keine Benachrichtigungen",
+      "mark_all_read": "Alle als gelesen markieren"
+    },
+    "recap": {
+      "view_full": "Vollständige Ausgabe ansehen",
+      "heading": "Rückblick",
+      "subheading": "Deine Antworten aus vergangenen Ausgaben dieser Gruppe.",
+      "empty": "Du hast noch nichts beantwortet."
+    },
+    "edition_questions": {
+      "title": "Fragen bearbeiten",
+      "heading": "Fragen zusammenstellen",
+      "note": "Wähle die Fragen für diese Ausgabe aus und lege ihre Reihenfolge fest. Nur möglich, solange die Ausgabe noch geplant ist."
+    },
+    "comments": {
+      "reply_placeholder": "Antworten…",
+      "reply_button": "Antworten",
+      "add_placeholder": "Kommentar hinzufügen…",
+      "comment_button": "Kommentieren"
+    },
+    "signup": {
+      "page_title": "Registrieren",
+      "title": "Konto erstellen",
+      "submit_label": "Registrieren",
+      "join_notice": "Du erstellst ein Konto, um %s beizutreten.",
+      "required_fields": "E-Mail und Passwort sind erforderlich"
+    },
+    "question_widgets": {
+      "live_preview": "Live-Vorschau",
+      "placeholder_prompt": "Deine Frage erscheint hier",
+      "no_options": "Noch keine Optionen",
+      "image_note": "📷 Mitglieder laden ein Foto hoch",
+      "free_text": "Freitext-Antwort"
+    },
+    "email": {
+      "reminder_subject": "%s: Vergiss nicht, die Fragen dieser Woche zu beantworten",
+      "reminder_lead": "Die Ausgabe von %s ist noch offen und du hast noch nicht geantwortet.",
+      "grace_subject": "%s: letzte Chance, die Fragen dieser Woche zu beantworten",
+      "grace_lead": "Die Ausgabe von %s schließt bald und du hast noch unbeantwortete Fragen — das ist der letzte Aufruf, bevor die Ausgabe versendet wird.",
+      "answer_now": "Jetzt antworten",
+      "greeting": "Hallo %s,",
+      "sent_subject": "%s Newsletter — %s",
+      "view_online": "Diese Ausgabe online ansehen",
+      "no_answers": "Keine Antworten.",
+      "upcoming_birthdays": "Anstehende Geburtstage",
+      "horoscopes": "Horoskope"
+    }
   }
 }
