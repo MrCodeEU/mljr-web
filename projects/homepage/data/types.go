@@ -31,6 +31,7 @@ type SiteData struct {
 	Content       map[string]SiteContent `json:"content"`
 	Thesis        map[string][]Thesis    `json:"thesis"`
 	Timeline      []TimelineItem         `json:"timeline"`
+	WellnessData  []WellnessDay          `json:"wellness_data,omitempty"`
 }
 
 // ContentFor returns the hand-authored copy for lang, falling back to
@@ -428,6 +429,23 @@ type StravaMonthBucket struct {
 	Time     int     `json:"time"`
 }
 
+// WellnessDay is one day of intervals.icu training-load/health data,
+// synced from a wearable via Zepp. Only publicly-shown-worthy fields
+// (training load) are rendered on the homepage; health metrics like HRV,
+// resting heart rate, and sleep are kept out of the public page.
+type WellnessDay struct {
+	Date             string  `json:"date"`
+	CTL              float64 `json:"ctl,omitempty"`
+	ATL              float64 `json:"atl,omitempty"`
+	Form             float64 `json:"form,omitempty"`
+	RestingHeartrate int     `json:"resting_heartrate,omitempty"`
+	HRV              float64 `json:"hrv,omitempty"`
+	SleepTime        int     `json:"sleep_time,omitempty"`
+	SleepScore       float64 `json:"sleep_score,omitempty"`
+	SleepQuality     int     `json:"sleep_quality,omitempty"`
+	Steps            int     `json:"steps,omitempty"`
+}
+
 // SkillGroup is a hand-curated grouping of the flat LinkedIn skills list plus
 // extra skills not exported by LinkedIn.
 type SkillGroup struct {
@@ -625,6 +643,11 @@ func (d SiteData) AllProjects() []Project {
 // activity aggregate data to render a useful section.
 func (d SiteData) HasStrava() bool {
 	return d.Strava.TotalStats.Count > 0 || len(d.Strava.RecentActivities) > 0
+}
+
+// HasWellness reports whether there's enough training-load history to chart.
+func (d SiteData) HasWellness() bool {
+	return len(d.WellnessData) >= 2
 }
 
 // SkillGroups returns the curated skill groups.

@@ -3,12 +3,14 @@ package pages
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
 	"mljr-web/internal/i18n"
 	hpdata "mljr-web/projects/homepage/data"
+	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/primitive"
@@ -96,9 +98,84 @@ func stravaSection(num string, d hpdata.SiteData, lang string) g.Node {
 						}()),
 					),
 				),
+				fitnessCard(d.WellnessData),
 			),
 		),
 	)
+}
+
+// fitnessCard charts training load (Fitness/Fatigue/Form, intervals.icu's
+// CTL/ATL/TSB) over the last ~90 days. Deliberately the only wellness metric
+// shown publicly: it reads as training-analytics engineering, not a health
+// readout — HRV, resting heart rate, and sleep stay out of the public page.
+func fitnessCard(days []hpdata.WellnessDay) g.Node {
+	if len(days) < 2 {
+		return nil
+	}
+	if len(days) > 90 {
+		days = days[len(days)-90:]
+	}
+
+	ctl := make([]float64, len(days))
+	atl := make([]float64, len(days))
+	form := make([]float64, len(days))
+	labels := make([]string, len(days))
+	for i, day := range days {
+		ctl[i] = day.CTL
+		atl[i] = day.ATL
+		form[i] = day.Form
+		labels[i] = fitnessLabel(day.Date, i, len(days))
+	}
+	latest := days[len(days)-1]
+
+	return primitive.Card(primitive.CardProps{Tone: token.ToneLime},
+		h.Div(h.Style("display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
+			h.Div(
+				h.H3(h.Style("font-size:var(--t-xl);font-weight:900;margin:0"), g.Text("Training load")),
+				h.Div(h.Style("font-size:var(--t-xs);font-weight:800;color:var(--muted);margin-top:var(--sp-1)"),
+					g.Text("Fitness (CTL) · Fatigue (ATL) · Form, last 90 days")),
+			),
+			h.Span(h.Style("font-family:var(--font-mono,monospace);font-weight:800;font-size:var(--t-sm);white-space:nowrap"),
+				g.Text(fmt.Sprintf("Form %+.1f", latest.Form))),
+		),
+		uidata.LineChart(uidata.LineChartProps{
+			Height:   140,
+			Labels:   labels,
+			ShowGrid: true,
+			YAxis:    true,
+			Series: []uidata.LineChartSeries{
+				{Label: "Fitness", Points: ctl, Color: "var(--accent)", Fill: true},
+				{Label: "Fatigue", Points: atl, Color: "var(--warning)"},
+				{Label: "Form", Points: form, Color: "var(--success)"},
+			},
+		}),
+		h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-3);margin-top:var(--sp-3);font-size:var(--t-xs);font-weight:800;color:var(--muted)"),
+			fitnessLegend("var(--accent)", "Fitness"),
+			fitnessLegend("var(--warning)", "Fatigue"),
+			fitnessLegend("var(--success)", "Form"),
+		),
+	)
+}
+
+func fitnessLegend(color, label string) g.Node {
+	return h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-1)"),
+		h.Span(h.Style(fmt.Sprintf("width:10px;height:10px;background:%s;border:var(--bw-1) solid var(--ink);display:inline-block", color))),
+		g.Text(label),
+	)
+}
+
+// fitnessLabel renders x-axis labels sparsely (roughly 5 across the chart)
+// to avoid a wall of overlapping dates.
+func fitnessLabel(date string, i, n int) string {
+	step := n / 4
+	if step == 0 || i%step != 0 {
+		return ""
+	}
+	t, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return ""
+	}
+	return t.Format("Jan 2")
 }
 
 func publicActivityBadge(s hpdata.StravaData) string {

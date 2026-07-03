@@ -174,7 +174,7 @@ data-update: ## regenerate mljr-data/generated/site-data.json + update seed-cach
 	@if [ -f projects/homepage/.env ]; then set -a; . projects/homepage/.env; set +a; fi; \
 	  cd mljr-data/generator && \
 	  GITHUB_TOKEN="$$GITHUB_TOKEN" GITHUB_USER="$${GITHUB_USERNAME:-MrCodeEU}" \
-	  STRAVA_CLIENT_ID="$$STRAVA_CLIENT_ID" STRAVA_CLIENT_SECRET="$$STRAVA_CLIENT_SECRET" STRAVA_REFRESH_TOKEN="$$STRAVA_REFRESH_TOKEN" \
+	  INTERVALS_API_KEY="$$INTERVALS_API_KEY" INTERVALS_ATHLETE_ID="$$INTERVALS_ATHLETE_ID" \
 	  go run ./cmd/generate
 	@cp mljr-data/generated/site-data.json projects/homepage/data/seed-cache.json
 	@echo "seed-cache.json updated"
