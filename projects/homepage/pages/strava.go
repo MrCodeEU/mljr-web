@@ -128,7 +128,7 @@ func fitnessCard(days []hpdata.WellnessDay) g.Node {
 	}
 	latest := days[len(days)-1]
 
-	return primitive.Card(primitive.CardProps{Tone: token.ToneLime},
+	return primitive.Card(primitive.CardProps{Tone: token.ToneNone},
 		h.Div(h.Style("display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
 			h.Div(
 				h.H3(h.Style("font-size:var(--t-xl);font-weight:900;margin:0"), g.Text("Training load")),
@@ -139,12 +139,12 @@ func fitnessCard(days []hpdata.WellnessDay) g.Node {
 				g.Text(fmt.Sprintf("Form %+.1f", latest.Form))),
 		),
 		uidata.LineChart(uidata.LineChartProps{
-			Height:   140,
+			Height:   220,
 			Labels:   labels,
 			ShowGrid: true,
 			YAxis:    true,
 			Series: []uidata.LineChartSeries{
-				{Label: "Fitness", Points: ctl, Color: "var(--accent)", Fill: true},
+				{Label: "Fitness", Points: ctl, Color: "var(--accent)"},
 				{Label: "Fatigue", Points: atl, Color: "var(--warning)"},
 				{Label: "Form", Points: form, Color: "var(--success)"},
 			},

@@ -213,11 +213,17 @@ func LineChart(p LineChartProps) g.Node {
 		svgH += labelH
 	}
 
-	svgNode := g.El("svg",
-		g.Attr("viewBox", fmt.Sprintf("0 0 %d %d", totalW, svgH)),
-		g.Attr("style", fmt.Sprintf("width:100%%;height:%dpx;overflow:visible", svgH)),
-		g.Attr("xmlns", "http://www.w3.org/2000/svg"),
-		g.Group(nodes),
+	// The wrapper's aspect-ratio is set to exactly match the viewBox, so the
+	// SVG's default "meet" scaling fills it edge-to-edge with no letterboxing
+	// and no non-uniform stretch (which would distort strokes/text).
+	svgNode := g.El("div",
+		g.Attr("style", fmt.Sprintf("width:100%%;aspect-ratio:%d/%d", totalW, svgH)),
+		g.El("svg",
+			g.Attr("viewBox", fmt.Sprintf("0 0 %d %d", totalW, svgH)),
+			g.Attr("style", "display:block;width:100%;height:100%"),
+			g.Attr("xmlns", "http://www.w3.org/2000/svg"),
+			g.Group(nodes),
+		),
 	)
 
 	if p.Caption != "" {
