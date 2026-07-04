@@ -71,6 +71,11 @@
       "title": "Live-Tools",
       "count": "%d Live-Tool",
       "open": "Tool öffnen →"
+    },
+    "playground": {
+      "title": "Spielwiese",
+      "sub": "alte Nebenprojekte, neu gebaut",
+      "open": "Öffnen →"
     }
   },
   "contact": {
@@ -197,6 +202,33 @@
       "groups_back": "Zur Übersicht",
       "current_badge": "AKTUELL",
       "logout": "Abmelden"
+    },
+    "landing": {
+      "eyebrow": "Ein Brief, kein Feed",
+      "headline_line1": "Eine Frage pro Woche.",
+      "headline_line2": "Ein Brief zurück.",
+      "subhead": "Alle in deiner Gruppe beantworten dieselbe Frage. Am Versandtag landet ein einziger Brief in jedem Postfach — mit allen Antworten und Fotos. Kein Scrollen, kein Algorithmus, keine Lesebestätigung.",
+      "sign_in": "Anmelden",
+      "create_account": "Konto erstellen",
+      "postcard_kicker": "Ausgabe Nr. 014",
+      "postcard_question": "„Was war diese Woche das Schönste, das dir passiert ist?“",
+      "postcard_reply_1": "Mira: eine Fremde hat meinen Kaffee bezahlt",
+      "postcard_reply_2": "Theo: endlich das Fahrrad repariert",
+      "postcard_more": "+ 4 weitere Antworten",
+      "postmark_label": "Versendet",
+      "stages_eyebrow": "So entsteht ein Brief",
+      "stage_open_label": "Offen",
+      "stage_open_body": "Eine Frage geht gleichzeitig an alle in der Gruppe.",
+      "stage_reminder_label": "Erinnerung",
+      "stage_reminder_body": "Wer noch nicht geantwortet hat, bekommt kurz vor Ablauf eine Erinnerung.",
+      "stage_grace_label": "Nachfrist",
+      "stage_grace_body": "Nachzügler bekommen nach Ablauf noch ein kurzes Zeitfenster für ihre Antwort.",
+      "stage_sent_label": "Versendet",
+      "stage_sent_body": "Alle Antworten werden zu einem Brief gebündelt und an die ganze Gruppe geschickt.",
+      "quote": "Kein Feed. Keine Likes. Nur die Handschrift aller, einmal pro Woche.",
+      "cta_heading": "Starte einen Brief für deine Leute",
+      "cta_body": "Melde dich an, falls du schon ein Konto hast, oder erstelle eines, um eine eigene Gruppe zu starten.",
+      "cta_invite_hint": "Tritt einer Gruppe bei? Nutze stattdessen den Einladungslink, den du erhalten hast."
     },
     "subnav": {
       "editions": "Ausgaben",
@@ -385,6 +417,119 @@
       "no_answers": "Keine Antworten.",
       "upcoming_birthdays": "Anstehende Geburtstage",
       "horoscopes": "Horoskope"
+    }
+  },
+  "games": {
+    "snake": {
+      "card_desc": "Der Klassiker, mit Tastatur steuerbar. Äpfel essen, länger werden, nicht in Wand oder sich selbst laufen.",
+      "lede": "Pfeiltasten zum Steuern. Leertaste startet nach Game Over neu.",
+      "desc_title": "Wie es funktioniert",
+      "desc_p1": "Ein direkter Port eines alten p5.js-Nebenprojekts: Pfeiltasten steuern eine Schlange über ein Gitter, Äpfel lassen sie wachsen, und eine Kollision mit Wand oder eigenem Schwanz beendet den Lauf.",
+      "desc_p2": "Das Original hat beim Tod ohne jede Rückmeldung stillschweigend neu gestartet. Die überarbeitete Version friert das Spielfeld ein, zeigt einen Game-Over-Bildschirm mit Punktestand und wartet auf die Leertaste zum Neustart — und der Kopf ist jetzt farblich vom Rest des Körpers abgesetzt, damit auf einen Blick klar ist, wohin die Schlange gerade schaut.",
+      "desc_p3": "Die Bewegung läuft über einen festen Takt unabhängig von der Framerate, damit die Spielgeschwindigkeit auf jedem Gerät und Browser gleich bleibt."
+    },
+    "ai_snake": {
+      "card_desc": "Die Schlange spielt sich selbst — mit einer Wegfindung, die klug genug ist, sich nicht selbst einzusperren.",
+      "lede": "Die Schlange spielt sich selbst und sucht den Weg zum Futter, ohne sich einzusperren. Regler zieht die Geschwindigkeit hoch oder runter.",
+      "label_speed": "Geschwindigkeit",
+      "desc_title": "Wie es funktioniert",
+      "desc_p1": "Die Schlange bekommt nie eine Tastatur zu Gesicht. Bei jedem Takt sucht sie den kürzesten Weg zum Apfel und folgt ihm — eine Demo für Wegfindung auf einem Gitter, kein Spiel zum Selberspielen.",
+      "desc_p2": "Die Wegfindung läuft über Breitensuche (BFS) statt A* mit sortierter Open-List: Da jeder Schritt auf dem Gitter genau gleich viel kostet, findet BFS denselben kürzesten Weg mit einem Bruchteil des Aufwands — das macht die höheren Geschwindigkeitsstufen erst möglich.",
+      "desc_p3": "Der interessante Teil passiert, bevor sie sich auf diesen kürzesten Weg festlegt: Sie simuliert das Essen des Apfels und prüft, ob sie danach noch ihren eigenen Schwanz erreichen könnte. Würde das Fressen jetzt eine Sackgasse versiegeln, verwirft sie die Abkürzung, folgt stattdessen ihrem eigenen Schwanz, um im offenen Raum zu überleben, und wählt — falls selbst das scheitert — die Richtung mit dem meisten erreichbaren freien Platz.",
+      "desc_diagram_caption": "Der kürzeste Weg zum Futter (grün) wird nur genommen, wenn danach noch ein Weg zum Schwanz (blau) existiert — sonst folgt die Schlange stattdessen ihrem Schwanz."
+    },
+    "minenfeld": {
+      "card_desc": "Ein Minenfeld Reihe für Reihe durchqueren — ein falscher Schritt und es ist vorbei.",
+      "lede": "Minenfeld [20x20] — mit den Pfeiltasten durchqueren, ohne eine Mine zu treffen.",
+      "play_again": "Nochmal spielen",
+      "desc_title": "Wie es funktioniert",
+      "desc_p1": "Kein klassisches Minesweeper: Jede Reihe versteckt genau eine Mine, und man durchquert das Feld Reihe für Reihe, indem man mit den Pfeiltasten die Spalte wählt — links, rechts oder geradeaus nach unten.",
+      "desc_p2": "Jeder Schritt zeigt, ob die Reihe sicher war, und zeichnet den bisherigen Weg ein. Wer die unterste Reihe erreicht, ohne eine Mine zu treffen, gewinnt — das Feld wird bei jedem Versuch neu ausgewürfelt.",
+      "desc_p3": "Ein deutsches Nebenprojekt von vor Jahren, hier bewusst in der Originalsprache belassen — die Portierung bestand darin, den Neustart zu reparieren (ein Play-Again-Button statt erzwungenem Seiten-Reload), das Eingabefeld zu stylen, Enter zum Bestätigen zu ergänzen und den ganzen Weg statt nur des letzten Schritts zu zeichnen."
+    },
+    "pendulum": {
+      "card_desc": "Ein chaotisches Pendel mit mehreren Segmenten — Physik anpassen und zusehen, wie winzige Änderungen zu völlig anderem Verlauf führen.",
+      "lede": "Chaotische Bewegung aus mehreren verbundenen Pendelsegmenten — winzige Änderungen im Startwinkel führen zu einem völlig anderen Verlauf. Segmente hinzufügen oder Physikparameter unten anpassen und auf Zurücksetzen klicken.",
+      "label_segments": "Segmente",
+      "label_gravity": "Schwerkraft",
+      "label_speed": "Geschwindigkeit",
+      "label_segment": "Segment %d",
+      "label_length": "Länge",
+      "label_mass": "Masse",
+      "apply_reset": "Übernehmen & Zurücksetzen",
+      "desc_title": "Wie es funktioniert",
+      "desc_p1": "Das Original war eine falsch benannte Drei-Körper-Physik-Spielerei auf einer per CDN geladenen Engine, kein echtes Doppelpendel. Das hier ist ein echter Neuaufbau: eine verallgemeinerte Kette aus 2 bis 5 starren Pendelsegmenten, jedes mit eigener Länge und Masse.",
+      "desc_p2": "Die Bewegungsgleichungen stammen aus der Lagrange-Mechanik: Bei jedem Schritt wird eine Massenmatrix gelöst, die jedes Segment mit jedem anderen koppelt, um die Winkelbeschleunigung jedes Segments zu erhalten, danach wird mit einem Runge-Kutta-Verfahren vierter Ordnung (RK4) integriert. RK4 wurde einem einfacheren Integrator vorgezogen, weil sich Energiefehler sehr schnell aufsummieren, sobald mehr als zwei Segmente gekoppelt sind — eine gröbere Methode driftete sichtbar und wurde mit der Zeit immer schneller, statt Energie zu erhalten.",
+      "desc_p3": "Segmentanzahl, Länge und Masse pro Segment, Schwerkraft und Simulationsgeschwindigkeit lassen sich unten anpassen — ändern und auf „Übernehmen & Zurücksetzen“ klicken, um zu sehen, wie das Chaos reagiert. Mehr Segmente und weitere Startwinkel machen die Bewegung merklich unvorhersehbarer."
+    },
+    "fourier": {
+      "card_desc": "Eine beliebige Form zeichnen und zusehen, wie ein Stapel rotierender Kreise sie aus reinen Sinuswellen nachbildet.",
+      "lede": "Links eine Form zeichnen, auf Play drücken und zusehen, wie eine Kette rotierender Kreise sie mit nichts als Sinuswellen nachzeichnet.",
+      "draw_hint": "Hier zeichnen, dann Play drücken",
+      "your_drawing": "Deine Zeichnung",
+      "reconstruction": "Fourier-Rekonstruktion",
+      "wave_label": "Geschichtete Wellen (Amplitude über Zeit)",
+      "play": "Play",
+      "clear": "Löschen",
+      "label_waves": "Anzahl der Wellen",
+      "desc_title": "Wie es funktioniert",
+      "desc_p1": "Jede geschlossene Form, die über die Zeit gezeichnet wird, ist im Grunde nur ein Signal — eine x-Koordinate und eine y-Koordinate, die sich beide mit der Zeit ändern. Fasst man dieses Paar als eine komplexe Zahl pro Zeitpunkt auf, zerlegt die diskrete Fourier-Transformation es in eine Summe rotierender Vektoren (Kreise), jeder mit eigener fester Geschwindigkeit, Größe und Startwinkel.",
+      "desc_p2": "Reiht man diese Kreise Spitze an Spitze aneinander — größte zuerst, für den klassischen verschachtelten Look — und lässt jeden mit seiner eigenen Frequenz rotieren, ergibt sich wieder der ursprüngliche Pfad: Zu jedem Zeitpunkt landet die Spitze des letzten Kreises in der Kette genau dort, wo der Stift an dieser Stelle der Zeichnung war. Mehr Kreise erfassen feinere Details; eine Handvoll der größten zeichnet schon die grobe Form nach.",
+      "desc_p3": "Der Streifen unten zeigt dieselbe Rekonstruktion aus einem anderen Blickwinkel: die vertikale Position dieser letzten Spitze, aufgetragen über die Zeit, während sie vorbeiläuft — die einzelnen, geschichteten Sinuswellen, aus denen die Kreise eigentlich bestehen, sichtbar gemacht als ein einziges durchgehendes Signal.",
+      "desc_p4": "Zieht man den Regler „Anzahl der Wellen“ herunter, sieht man einen Kompressionsalgorithmus im Miniaturformat: Dieselbe Grundidee steckt in JPEG oder MP3 — die Frequenzanteile verwerfen, die am wenigsten beitragen, und die Form bleibt mit einem Bruchteil der ursprünglichen Daten erkennbar."
+    },
+    "boids": {
+      "card_desc": "Ein Schwarm, der sich selbst aus drei einfachen lokalen Regeln organisiert — ohne Anführer, ohne Plan, nur Steuerung.",
+      "lede": "Kein Anführer, kein Plan — jeder Boid schaut nur auf seine nächsten Nachbarn, und der Schwarm entsteht ganz von selbst daraus. Regler gewichten die drei Steuerregeln live um.",
+      "label_separation": "Trennung",
+      "label_alignment": "Ausrichtung",
+      "label_cohesion": "Zusammenhalt",
+      "label_count": "Boids",
+      "desc_title": "Wie es funktioniert",
+      "desc_p1": "Craig Reynolds' „Boids“-Modell von 1986: Jeder Boid folgt drei einfachen Regeln, die sich nur auf die Nachbarn in einem kleinen Radius um ihn herum beziehen — von zu nahen Nachbarn wegsteuern (Trennung), die durchschnittliche Richtung der nahen Boids übernehmen (Ausrichtung) und zu ihrer durchschnittlichen Position hin driften (Zusammenhalt).",
+      "desc_p2": "Keine der drei Regeln erwähnt „den Schwarm“ — jeder Boid reagiert immer nur auf die Handvoll Nachbarn, die gerade in diesem Moment in der Nähe sind. Die koordinierte, fließende Bewegung der Gruppe ist eine emergente Eigenschaft: Sie entsteht aus vielen einfachen lokalen Interaktionen, ohne dass sie irgendwo direkt einprogrammiert wäre.",
+      "desc_p3": "Die drei Regler gewichten live um, wie stark jede Regel auf die Steuerung jedes Boids wirkt, während die Simulation weiterläuft: Trennung hochziehen und der Schwarm breitet sich aus und wirkt unruhig; Zusammenhalt allein hochziehen und er fällt zu einem trägen, dichten Klumpen zusammen; Ausrichtung dominant allein erzeugt lange, parallel fließende Ströme."
+    },
+    "particle_life": {
+      "card_desc": "Farbige Partikel, die sich nach einfachen paarweisen Regeln anziehen und abstoßen — und von selbst zu schwärmenden, jagenden Clustern werden.",
+      "lede": "Fünf Partikelfarben, eine zufällige Anziehungs-/Abstoßungsregel zwischen jedem Farbpaar, sonst nichts — auf Regeln würfeln klicken und zusehen, wie völlig neue, lebendig wirkende Strukturen entstehen.",
+      "label_count": "Partikel",
+      "label_force": "Kraftstärke",
+      "label_radius": "Wirkungsradius",
+      "randomize": "Regeln würfeln",
+      "reset_positions": "Positionen zurücksetzen",
+      "desc_title": "Wie es funktioniert",
+      "desc_p1": "Anders als bei Boids gibt es hier überhaupt keine Schwarmregel — nur eine Zufallszahl zwischen -1 und 1 für jedes Paar der fünf Partikelfarben, die angibt, wie stark sich dieses Paar auf kurze Distanz anzieht (positiv) oder abstößt (negativ). Jedes Partikel spürt dabei ausschließlich Kräfte von anderen Partikeln innerhalb seines eigenen Wirkungsradius.",
+      "desc_p2": "Alle Partikel folgen unabhängig von ihrer Farbe derselben universellen Kraftkurve: harte Abstoßung auf sehr kurze Distanz, damit sie sich nie vollständig überlappen, danach übernimmt der eigene Anziehungs-/Abstoßungswert des Paares und klingt am Rand des Wirkungsradius auf null ab. Nur diese eine Zahl unterscheidet sich zwischen Farbpaaren — der Rest der Physik ist für alle identisch.",
+      "desc_p3": "Strukturen, die wie Absicht aussehen — kreisende Cluster, Jage-und-Flieh-Ketten, Partikel einer Farbe gefangen in der Hülle einer anderen — entstehen alle aus dieser einen zufälligen Regeltabelle, ohne dass irgendwo im Code eine Jagd oder ein Cluster einprogrammiert wäre. „Regeln würfeln“ klicken für eine komplett andere Regeltabelle und oft eine komplett andere Art von emergenter Struktur."
+    },
+    "maze": {
+      "card_desc": "Zusehen, wie sich ein Labyrinth Zelle für Zelle selbst gräbt, dann wie eine Breitensuche es löst.",
+      "lede": "Ein Labyrinth gräbt sich selbst einen Gang nach dem anderen, danach flutet eine Breitensuche vom Start aus nach außen, um den kürzesten Weg zum Ausgang zu finden.",
+      "label_speed": "Geschwindigkeit",
+      "regenerate": "Neues Labyrinth",
+      "desc_title": "Wie es funktioniert",
+      "desc_p1": "Die Erzeugung nutzt eine randomisierte Tiefensuche, meist „recursive backtracker“ genannt: Von der aktuellen Zelle aus wird ein Gang zu einem zufälligen unbesuchten Nachbarn gegraben, dann geht es dorthin weiter, wobei sich die Zelle merkt, die gerade verlassen wurde. Hat eine Zelle keine unbesuchten Nachbarn mehr, geht es zurück zur zuletzt gemerkten Zelle und von dort weiter — genau dieses Zurückgehen erzeugt die langen, verwinkelten Gänge statt eines Rasters kleiner, unverbundener Räume.",
+      "desc_p2": "Sobald jede Zelle besucht wurde, ist das Labyrinth fertig und eine Breitensuche übernimmt: Von der Zelle oben links aus wird ringweise nach außen erkundet, wobei mitgeführt wird, welche Zelle zu welcher geführt hat. Weil ring- statt richtungsweise vorgegangen wird, ist die Spur „welche Zelle führte hierher“ in dem Moment, in dem die Zelle unten rechts erreicht wird, garantiert der kürzestmögliche Weg — nicht nur irgendein Weg.",
+      "desc_p3": "Der hervorgehobene Bereich während des Lösens ist genau diese wachsende Suchfront; die finale Linie ist der kürzeste Weg, rückwärts vom Ausgang zum Start durch diese Spur rekonstruiert."
+    },
+    "sorting": {
+      "card_desc": "Klassische Sortieralgorithmen als animierte Balken gegeneinander antreten lassen und sehen, wie unterschiedlich jeder zu seinen Vergleichen und Tauschvorgängen kommt.",
+      "lede": "Algorithmus wählen, Balken mischen, auf Start klicken — jeder Vergleich und jeder Tausch wird gezeichnet, während er passiert.",
+      "label_algorithm": "Algorithmus",
+      "label_size": "Balken",
+      "label_speed": "Geschwindigkeit",
+      "shuffle": "Mischen",
+      "start": "Start",
+      "algo_bubble": "Bubblesort",
+      "algo_selection": "Selectionsort",
+      "algo_insertion": "Insertionsort",
+      "algo_merge": "Mergesort",
+      "algo_quick": "Quicksort",
+      "desc_title": "Wie es funktioniert",
+      "desc_p1": "Alle fünf Algorithmen hier sind als Generatorfunktionen geschrieben, die nach jedem einzelnen Vergleich oder Tausch pausieren — genau diese Pause wird zu einem Animationsframe. Die Visualisierung ist also keine separate Annäherung an den Algorithmus, sondern der tatsächliche Algorithmus, der Schritt für Schritt läuft.",
+      "desc_p2": "Bubble-, Selection- und Insertionsort vergleichen alle immer wieder benachbarte oder nahe Elemente — O(n²)-Aufwand, der sich visuell als viel kleines, lokales Flackern zeigt. Mergesort teilt das Array rekursiv in zwei Hälften, sortiert jede einzeln und führt sie dann wieder zusammen — die Vergleiche springen zwischen zwei separaten sortierten Abschnitten hin und her, statt sich am Array entlangzuarbeiten. Quicksort wählt ein Pivot-Element und ordnet alles andere in-place darum herum an, sodass die endgültige Position des Pivots sichtbar wird, sobald dieser Partitionierungsschritt abgeschlossen ist.",
+      "desc_p3": "Die Zähler für Vergleiche und Tauschvorgänge unter den Balken machen den Unterschied zwischen O(n²) und O(n log n) konkret statt theoretisch — Bubblesort und Quicksort direkt nacheinander mit derselben Balkenzahl laufen lassen, und die Zähler allein erzählen schon fast die ganze Geschichte."
     }
   }
 }

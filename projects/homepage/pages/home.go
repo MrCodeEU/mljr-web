@@ -67,6 +67,7 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 			if len(liveTools) > 0 {
 				liveNode = liveToolsSection(nextSec(), liveTools, lang)
 			}
+			playgroundNode := playgroundSection(nextSec(), lang)
 			githubNode := githubSection(nextSec(), d, lang)
 			experienceNode := experienceSection(nextSec(), d, lang)
 			homelabNode := homelabSection(nextSec(), hl, lang)
@@ -83,6 +84,7 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 				featuredNode,
 				projectsNode,
 				liveNode,
+				playgroundNode,
 				githubNode,
 				experienceNode,
 				homelabNode,

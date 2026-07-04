@@ -71,6 +71,33 @@ func main() {
 	e.GET("/datenschutz", func(c echo.Context) error {
 		return web.Render(c, 200, pages.Datenschutz(web.Lang(c), analytics))
 	})
+	e.GET("/games/minenfeld", func(c echo.Context) error {
+		return web.Render(c, 200, pages.Minenfeld(web.Lang(c), analytics))
+	})
+	e.GET("/games/snake", func(c echo.Context) error {
+		return web.Render(c, 200, pages.Snake(web.Lang(c), analytics))
+	})
+	e.GET("/games/ai-snake", func(c echo.Context) error {
+		return web.Render(c, 200, pages.AISnake(web.Lang(c), analytics))
+	})
+	e.GET("/games/double-pendulum", func(c echo.Context) error {
+		return web.Render(c, 200, pages.DoublePendulum(web.Lang(c), analytics))
+	})
+	e.GET("/games/fourier", func(c echo.Context) error {
+		return web.Render(c, 200, pages.Fourier(web.Lang(c), analytics))
+	})
+	e.GET("/games/boids", func(c echo.Context) error {
+		return web.Render(c, 200, pages.Boids(web.Lang(c), analytics))
+	})
+	e.GET("/games/particle-life", func(c echo.Context) error {
+		return web.Render(c, 200, pages.ParticleLife(web.Lang(c), analytics))
+	})
+	e.GET("/games/maze", func(c echo.Context) error {
+		return web.Render(c, 200, pages.Maze(web.Lang(c), analytics))
+	})
+	e.GET("/games/sorting", func(c echo.Context) error {
+		return web.Render(c, 200, pages.Sorting(web.Lang(c), analytics))
+	})
 	e.GET("/projects/:id", func(c echo.Context) error {
 		d := dataStore.Current()
 		p, ok := d.ProjectByID(c.Param("id"))
@@ -91,6 +118,9 @@ func main() {
 		b.WriteString(`  <url><loc>https://mljr.eu/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>` + "\n")
 		b.WriteString(`  <url><loc>https://mljr.eu/impressum</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>` + "\n")
 		b.WriteString(`  <url><loc>https://mljr.eu/datenschutz</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>` + "\n")
+		for _, it := range pages.PlaygroundURLPaths() {
+			fmt.Fprintf(&b, "  <url><loc>https://mljr.eu%s</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>\n", it)
+		}
 		for _, p := range dataStore.Current().GitHub {
 			if !p.HasDetailPage() {
 				continue

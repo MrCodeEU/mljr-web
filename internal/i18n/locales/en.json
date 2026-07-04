@@ -71,6 +71,11 @@
       "title": "Live Tools",
       "count": "%d live tool",
       "open": "Open Tool →"
+    },
+    "playground": {
+      "title": "Playground",
+      "sub": "old side projects, rebuilt",
+      "open": "Open →"
     }
   },
   "contact": {
@@ -197,6 +202,33 @@
       "groups_back": "Back to dashboard",
       "current_badge": "CURRENT",
       "logout": "Log out"
+    },
+    "landing": {
+      "eyebrow": "A letter, not a feed",
+      "headline_line1": "One question a week.",
+      "headline_line2": "One letter back.",
+      "subhead": "Everyone in your group answers the same question. On send day it lands in every inbox as one letter — replies, photos, and all. No scrolling, no algorithm, no read receipts.",
+      "sign_in": "Sign in",
+      "create_account": "Create an account",
+      "postcard_kicker": "Edition No. 014",
+      "postcard_question": "“What’s the best thing that happened this week?”",
+      "postcard_reply_1": "Mira: a stranger paid for my coffee",
+      "postcard_reply_2": "Theo: finally fixed the bike",
+      "postcard_more": "+ 4 more replies",
+      "postmark_label": "Posted",
+      "stages_eyebrow": "How a letter gets written",
+      "stage_open_label": "Open",
+      "stage_open_body": "A question goes out to everyone in the group at once.",
+      "stage_reminder_label": "Reminder",
+      "stage_reminder_body": "Anyone who hasn’t answered yet gets a nudge before the window closes.",
+      "stage_grace_label": "Grace",
+      "stage_grace_body": "Stragglers get one last short window after closing to send a reply.",
+      "stage_sent_label": "Sent",
+      "stage_sent_body": "Every answer is bundled into one letter and mailed to the whole group.",
+      "quote": "No feed. No likes. Just everyone’s handwriting, once a week.",
+      "cta_heading": "Start a letter for your people",
+      "cta_body": "Sign in if you already have an account, or create one to start a circle of your own.",
+      "cta_invite_hint": "Joining a friend’s group? Use the invite link they sent you instead."
     },
     "subnav": {
       "editions": "Editions",
@@ -385,6 +417,119 @@
       "no_answers": "No answers.",
       "upcoming_birthdays": "Upcoming birthdays",
       "horoscopes": "Horoscopes"
+    }
+  },
+  "games": {
+    "snake": {
+      "card_desc": "The classic, keyboard-controlled. Eat apples, grow longer, don't hit the wall or yourself.",
+      "lede": "Arrow keys to steer. Space restarts after Game Over.",
+      "desc_title": "How it works",
+      "desc_p1": "A straight port of an old p5.js side project: arrow keys steer a snake around a grid, apples make it grow, and hitting the wall or your own tail ends the run.",
+      "desc_p2": "The original silently reset on death with no feedback. The rebuilt version freezes the board, overlays a Game Over screen with your score, and waits for Space to restart — and the head is now colored differently from the body so you can actually tell which way you're facing at a glance.",
+      "desc_p3": "Movement is on a fixed tick timer independent of the frame rate, so the game speed stays consistent across displays and browsers."
+    },
+    "ai_snake": {
+      "card_desc": "Snake plays itself with pathfinding smart enough to avoid trapping itself in dead ends.",
+      "lede": "Snake plays itself, pathfinding to food while avoiding dead ends. Drag the slider to change speed.",
+      "label_speed": "Speed",
+      "desc_title": "How it works",
+      "desc_p1": "The snake never touches a keyboard. Every tick it searches the grid for the shortest route to the apple and follows it — a self-playing demo of grid pathfinding rather than a game you play.",
+      "desc_p2": "Pathfinding runs breadth-first search instead of A* with a sorted open list: since every move on a grid costs exactly one step, BFS finds the same shortest path for a fraction of the work, which is what makes the higher speed settings possible.",
+      "desc_p3": "The interesting part is what happens before it commits to that shortest path: it simulates eating the apple and checks whether it could still reach its own tail afterwards. If eating now would seal off a dead end, it abandons the shortcut, follows its own tail to stay alive in open space instead, and — if even that fails — picks whichever direction leaves the most reachable floor space free.",
+      "desc_diagram_caption": "Shortest path to food (green) is only taken if a path to the tail (blue) still exists afterwards — otherwise the snake follows its tail instead."
+    },
+    "minenfeld": {
+      "card_desc": "Cross a minefield one row at a time — one wrong step and it's over.",
+      "lede": "Minefield [20x20] — cross it with the arrow keys without hitting a mine.",
+      "play_again": "Play again",
+      "desc_title": "How it works",
+      "desc_p1": "Not classic Minesweeper: there's one hidden mine per row, and you cross the field one row at a time by choosing which column to step into, moving left, right, or straight down with the arrow keys.",
+      "desc_p2": "Each step reveals whether that row was safe and draws the path taken so far. Reach the bottom row without hitting a mine and you win — the whole board is randomized fresh every attempt.",
+      "desc_p3": "A German side project from years ago, kept in its original language here — the porting work was fixing the restart flow (a Play Again button instead of a forced page reload), styling the input, adding Enter-to-submit, and drawing the full path instead of just the last step."
+    },
+    "pendulum": {
+      "card_desc": "A chaotic n-segment pendulum — tune the physics and watch tiny changes explode into wildly different motion.",
+      "lede": "Chaotic motion from hinged pendulum segments — tiny changes in the starting angle send it on a wildly different path. Add segments or change the physics parameters below and hit Reset.",
+      "label_segments": "Segments",
+      "label_gravity": "Gravity",
+      "label_speed": "Speed",
+      "label_segment": "Segment %d",
+      "label_length": "Length",
+      "label_mass": "Mass",
+      "apply_reset": "Apply & Reset",
+      "desc_title": "How it works",
+      "desc_p1": "The original was a mislabeled three-body physics toy running on a CDN-loaded engine, not an actual double pendulum. This is a real from-scratch rebuild: a generalized chain of 2 to 5 rigid pendulum segments, each with its own length and mass.",
+      "desc_p2": "The equations of motion come from Lagrangian mechanics: at every step, a mass matrix that couples every segment to every other segment is solved to get each segment's angular acceleration, then integrated forward with fourth-order Runge-Kutta. RK4 was chosen over a simpler integrator because energy errors compound fast once more than two segments are coupled — a cruder method visibly drifted and sped up over time instead of conserving energy.",
+      "desc_p3": "Segment count, per-segment length and mass, gravity, and simulation speed are all adjustable below — change them and hit Apply & Reset to see how the chaos responds. More segments and wider starting angles make the motion noticeably more unpredictable."
+    },
+    "fourier": {
+      "card_desc": "Draw any shape and watch a stack of rotating circles reconstruct it from pure sine waves.",
+      "lede": "Draw a shape on the left, press Play, and watch a chain of rotating circles trace it back out using nothing but sine waves.",
+      "draw_hint": "Draw here, then press Play",
+      "your_drawing": "Your drawing",
+      "reconstruction": "Fourier reconstruction",
+      "wave_label": "Layered waves (amplitude over time)",
+      "play": "Play",
+      "clear": "Clear",
+      "label_waves": "Number of waves",
+      "desc_title": "How it works",
+      "desc_p1": "Any closed shape traced out over time is just a signal — an x-coordinate and a y-coordinate, each varying with time. Treat that pair as one complex number per instant, and the Discrete Fourier Transform decomposes it into a sum of rotating vectors (circles), each spinning at its own fixed speed, size, and starting angle.",
+      "desc_p2": "Chaining those circles tip-to-tail — largest first, for the classic nested look — and letting each one spin at its own frequency reproduces the original path: at every instant, the tip of the last circle in the chain lands exactly where the pen was at that point in the drawing. More circles capture finer detail; a handful of the largest ones already outline the rough shape.",
+      "desc_p3": "The strip along the bottom shows the same reconstruction from a different angle: the vertical position of that final tip, plotted against time as it scrolls by — the individual sine wave layered motion that the circles are actually built from, made visible as a single continuous signal.",
+      "desc_p4": "Drag the \"number of waves\" slider down and you're looking at a compression algorithm in miniature: this is the same core idea as JPEG or MP3 — throw away the frequency components that contribute the least, and keep the shape recognizable with a fraction of the original data."
+    },
+    "boids": {
+      "card_desc": "A flock that organizes itself from three simple local rules — no leader, no plan, just steering.",
+      "lede": "No leader and no plan — each boid only looks at its close neighbours, and flocking falls out of that on its own. Sliders reweight the three steering rules live.",
+      "label_separation": "Separation",
+      "label_alignment": "Alignment",
+      "label_cohesion": "Cohesion",
+      "label_count": "Boids",
+      "desc_title": "How it works",
+      "desc_p1": "Craig Reynolds' 1986 \"boids\" model: every boid follows three simple rules based only on the neighbours within a short radius around it — steer away from ones that are too close (separation), match the average heading of nearby boids (alignment), and drift toward their average position (cohesion).",
+      "desc_p2": "None of the three rules mention \"the flock\" — each boid only ever reacts to whichever handful of neighbours happen to be nearby at that instant. The coordinated, flowing group motion is an emergent property: it arises from many simple local interactions rather than being programmed in directly anywhere.",
+      "desc_p3": "The three sliders reweight how strongly each rule pulls on every boid's steering, live, while the simulation keeps running: push separation up and the flock spreads out and gets jittery; push cohesion up alone and it collapses into a tight, slow-moving blob; alignment dominant on its own produces long, parallel-flowing streams."
+    },
+    "particle_life": {
+      "card_desc": "Colored particles that attract and repel each other by simple pairwise rules — and organize into swarming, chasing clusters on their own.",
+      "lede": "Five particle colors, a random attract/repel rule between every pair of colors, and nothing else — hit Randomize to roll a new rule set and watch completely different life-like structures emerge.",
+      "label_count": "Particles",
+      "label_force": "Force strength",
+      "label_radius": "Interaction radius",
+      "randomize": "Randomize rules",
+      "reset_positions": "Reset positions",
+      "desc_title": "How it works",
+      "desc_p1": "Unlike Boids, there's no flocking rule here at all — just a random number between -1 and 1 for every pair of the five particle colors, saying how strongly that pair attracts (positive) or repels (negative) at close range. Every particle only ever feels forces from whichever other particles happen to be within its interaction radius.",
+      "desc_p2": "All particles get one universal force curve regardless of color: hard repulsion at very close range so they never fully overlap, then the pair's own attract/repel value takes over further out, fading to nothing at the edge of the interaction radius. Only that single number differs between color pairs — everything else about the physics is identical.",
+      "desc_p3": "Structures that look designed — orbiting clusters, chase-and-flee chains, one color's particles trapped inside a shell of another — all fall out of that one random rule table, with nothing resembling a chase or a cluster written anywhere in the code. Press Randomize for a completely different rule set and, often, a completely different kind of emergent structure."
+    },
+    "maze": {
+      "card_desc": "Watch a maze carve itself out cell by cell, then watch a breadth-first search solve it.",
+      "lede": "A maze carves itself out one passage at a time, then a breadth-first search floods outward from the start to find the shortest way to the exit.",
+      "label_speed": "Speed",
+      "regenerate": "New maze",
+      "desc_title": "How it works",
+      "desc_p1": "Generation uses a randomized depth-first search, usually called a \"recursive backtracker\": from the current cell, carve a passage to a random unvisited neighbour and move into it, remembering the cell just left. When a cell has no unvisited neighbours left, back up to the last remembered cell and keep carving from there — that backtracking is exactly what produces the long, winding corridors instead of a grid of little disconnected rooms.",
+      "desc_p2": "Once every cell has been visited, the maze is finished and a breadth-first search takes over: starting from the top-left cell, it explores outward one ring at a time, tracking which cell led to which. Because it expands ring by ring rather than committing to one direction first, the moment it reaches the bottom-right cell that trail of \"which cell led here\" is guaranteed to be the shortest possible path — not just a path.",
+      "desc_p3": "The highlighted region during solving is that expanding search frontier; the final line is the shortest path reconstructed by walking the trail backwards from the exit to the start."
+    },
+    "sorting": {
+      "card_desc": "Race classic sorting algorithms as animated bars and watch how differently each one earns its comparisons and swaps.",
+      "lede": "Pick an algorithm, shuffle the bars, and press Start — every comparison and swap is drawn as it happens.",
+      "label_algorithm": "Algorithm",
+      "label_size": "Bars",
+      "label_speed": "Speed",
+      "shuffle": "Shuffle",
+      "start": "Start",
+      "algo_bubble": "Bubble sort",
+      "algo_selection": "Selection sort",
+      "algo_insertion": "Insertion sort",
+      "algo_merge": "Merge sort",
+      "algo_quick": "Quick sort",
+      "desc_title": "How it works",
+      "desc_p1": "All five algorithms here are written as generator functions that pause after every single comparison or swap — that pause is exactly what turns into one animation frame, so the visualization isn't a separate approximation of the algorithm, it's the actual algorithm running one step at a time.",
+      "desc_p2": "Bubble, selection, and insertion sort all compare adjacent or nearby elements over and over — O(n²) work that shows up visually as a lot of small local flickering. Merge sort splits the array in half recursively, sorts each half, then merges them back together — the comparisons jump around between two separate sorted runs instead of crawling along the array. Quick sort picks a pivot and partitions everything else around it in place, so the pivot's final resting point is visible the moment the partition step finishes.",
+      "desc_p3": "The comparison and swap counters below the bars make the O(n²) vs O(n log n) difference concrete instead of theoretical — run bubble sort and quick sort back to back on the same bar count and the counters alone tell most of the story."
     }
   }
 }

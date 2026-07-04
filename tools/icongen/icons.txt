@@ -90,6 +90,14 @@ lucide:shield
 lucide:server
 lucide:git-branch
 lucide:bot
+lucide:gamepad-2
+lucide:bomb
+lucide:orbit
+lucide:audio-waveform
+lucide:bird
+lucide:atom
+lucide:route
+lucide:bar-chart-3
 lucide:globe
 lucide:activity
 lucide:database
