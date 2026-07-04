@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Determine projects to build
         id: set
@@ -61,8 +61,14 @@ jobs:
             exit 0
           fi
 
-          # Push event: diff against parent; fallback to all on first commit
-          if ! CHANGED=$(git diff --name-only HEAD^ HEAD 2>/dev/null); then
+          # Push event: diff against the range GitHub actually pushed (may span
+          # several commits pushed together), not just the last commit's parent.
+          BASE="${{ github.event.before }}"
+          if [ -z "$BASE" ] || [ "$BASE" == "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
+            echo "matrix=$ALL" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! CHANGED=$(git diff --name-only "$BASE" HEAD 2>/dev/null); then
             echo "matrix=$ALL" >> "$GITHUB_OUTPUT"
             exit 0
           fi
