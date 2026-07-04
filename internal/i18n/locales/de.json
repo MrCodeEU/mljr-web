@@ -429,14 +429,19 @@
       "desc_p3": "Die Bewegung läuft über einen festen Takt unabhängig von der Framerate, damit die Spielgeschwindigkeit auf jedem Gerät und Browser gleich bleibt."
     },
     "ai_snake": {
-      "card_desc": "Die Schlange spielt sich selbst — mit einer Wegfindung, die klug genug ist, sich nicht selbst einzusperren.",
-      "lede": "Die Schlange spielt sich selbst und sucht den Weg zum Futter, ohne sich einzusperren. Regler zieht die Geschwindigkeit hoch oder runter.",
+      "card_desc": "Die Schlange spielt sich selbst, indem sie einer festen Schleife durch jede Zelle des Spielfelds folgt — eine mathematische Garantie, dass sie sich nie selbst einsperren kann.",
+      "lede": "Die Schlange spielt sich selbst — Strategie unten wählen und zusehen, wie unterschiedlich jede mit demselben Problem umgeht.",
       "label_speed": "Geschwindigkeit",
+      "label_strategy": "Strategie",
+      "strategy_cycle_pure": "Schleife (rein) — beweisbar sicher",
+      "strategy_greedy_safe": "Gierig + Schwanz-Sicherheit — meist sicher",
+      "strategy_cycle_shortcuts": "Schleife + Abkürzungen — schneller, sperrt sich gelegentlich selbst ein",
+      "strategy_greedy": "Gierig (naiv) — stirbt oft",
       "desc_title": "Wie es funktioniert",
-      "desc_p1": "Die Schlange bekommt nie eine Tastatur zu Gesicht. Bei jedem Takt sucht sie den kürzesten Weg zum Apfel und folgt ihm — eine Demo für Wegfindung auf einem Gitter, kein Spiel zum Selberspielen.",
-      "desc_p2": "Die Wegfindung läuft über Breitensuche (BFS) statt A* mit sortierter Open-List: Da jeder Schritt auf dem Gitter genau gleich viel kostet, findet BFS denselben kürzesten Weg mit einem Bruchteil des Aufwands — das macht die höheren Geschwindigkeitsstufen erst möglich.",
-      "desc_p3": "Der interessante Teil passiert, bevor sie sich auf diesen kürzesten Weg festlegt: Sie simuliert das Essen des Apfels und prüft, ob sie danach noch ihren eigenen Schwanz erreichen könnte. Würde das Fressen jetzt eine Sackgasse versiegeln, verwirft sie die Abkürzung, folgt stattdessen ihrem eigenen Schwanz, um im offenen Raum zu überleben, und wählt — falls selbst das scheitert — die Richtung mit dem meisten erreichbaren freien Platz.",
-      "desc_diagram_caption": "Der kürzeste Weg zum Futter (grün) wird nur genommen, wenn danach noch ein Weg zum Schwanz (blau) existiert — sonst folgt die Schlange stattdessen ihrem Schwanz."
+      "desc_p1": "Es gibt hier vier auswählbare Strategien, ungefähr in der Reihenfolge, in der sie in dieser Session tatsächlich gebaut wurden, während ein einziges Ziel verfolgt wurde: die Schlange davon abzuhalten, sich selbst einzusperren. Ein Strategiewechsel startet den Lauf neu und setzt den Todeszähler zurück, sodass man dasselbe Problem auf vier verschiedene Arten angegangen sehen kann.",
+      "desc_p2": "„Gierig“ nimmt immer den kürzesten Weg zum Apfel, ohne jede Rücksicht auf den eigenen Körper — sie stirbt, sobald dieser Weg zufällig dort verläuft, wo gleich der Schwanz sein wird. „Gierig + Schwanz-Sicherheit“ fügt eine Ein-Schritt-Vorausschau hinzu (den Zug simulieren, prüfen, ob danach noch ein Weg zum Schwanz existiert) plus einen Fallback, der dem eigenen Schwanz durch offenen Raum folgt. „Schleife + Abkürzungen“ folgt standardmäßig einer festen Schleife durch jede Zelle, springt aber direkt zum Apfel, wann immer dieselbe Ein-Schritt-Prüfung es erlaubt.",
+      "desc_p3": "Nur „Schleife (rein)“ ist tatsächlich beweisbar: Sie zieht immer zur nächsten Zelle in einer festen Schleife, die das gesamte Spielfeld genau einmal besucht, sodass ihr Körper garantiert ein zusammenhängendes, sich nie überschneidendes Stück bleibt — hier gibt es keine Vorausschau, die sich täuschen lässt. Die anderen drei verlassen sich auf diese Ein-Schritt-Sicherheitsprüfung, die von Natur aus kurzsichtig ist: Ein Zug kann völlig sicher aussehen und trotzdem ein paar Schritte später eine Tasche versiegelt haben. Es gibt noch eine zweite, leisere Fehlerart - eine Strategie kann dauerhaft „sicher“ bleiben, indem sie eine Schleife dreht, die nie wirklich näher an das Futter kommt, was auf den ersten Blick unauffällig wirkt, weil sie nie abstürzt - das zu erkennen brauchte eine Prüfung, ob der Punktestand noch steigt, statt nur, ob theoretisch ein Weg zum Futter existiert. Belastungstests aller vier mit beiden Prüfungen haben die Rangfolge bestätigt — Gierig stirbt ständig, Schleife+Abkürzungen und Gierig+Sicherheit scheitern beide gelegentlich (entweder durch Selbsteinsperrung oder durch endloses Kreisen ohne Fortschritt), und reines Schleifenfolgen ist über Hunderttausende simulierter Züge kein einziges Mal gescheitert.",
+      "desc_p4": "Der Kompromiss ist Geschwindigkeit: Reines Schleifenfolgen steuert nie direkt auf den Apfel zu, das Wachstum hängt also davon ab, wie lange die Schleife braucht, um daran vorbeizukommen. Zu berechnen ist es trotzdem mit Abstand am schnellsten (ein einzelner Array-Zugriff, keine Suche) — nur beim Finden von Futter ist es nicht die schnellste Strategie."
     },
     "minenfeld": {
       "card_desc": "Ein Minenfeld Reihe für Reihe durchqueren — ein falscher Schritt und es ist vorbei.",

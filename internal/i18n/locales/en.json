@@ -429,14 +429,19 @@
       "desc_p3": "Movement is on a fixed tick timer independent of the frame rate, so the game speed stays consistent across displays and browsers."
     },
     "ai_snake": {
-      "card_desc": "Snake plays itself with pathfinding smart enough to avoid trapping itself in dead ends.",
-      "lede": "Snake plays itself, pathfinding to food while avoiding dead ends. Drag the slider to change speed.",
+      "card_desc": "Snake plays itself by following a fixed loop through every cell on the board — a mathematical guarantee it can never trap itself.",
+      "lede": "Snake plays itself — pick a strategy below and watch how differently each one handles the exact same problem.",
       "label_speed": "Speed",
+      "label_strategy": "Strategy",
+      "strategy_cycle_pure": "Cycle (pure) — provably safe",
+      "strategy_greedy_safe": "Greedy + tail safety — usually safe",
+      "strategy_cycle_shortcuts": "Cycle + shortcuts — faster, occasionally traps itself",
+      "strategy_greedy": "Greedy (naive) — dies often",
       "desc_title": "How it works",
-      "desc_p1": "The snake never touches a keyboard. Every tick it searches the grid for the shortest route to the apple and follows it — a self-playing demo of grid pathfinding rather than a game you play.",
-      "desc_p2": "Pathfinding runs breadth-first search instead of A* with a sorted open list: since every move on a grid costs exactly one step, BFS finds the same shortest path for a fraction of the work, which is what makes the higher speed settings possible.",
-      "desc_p3": "The interesting part is what happens before it commits to that shortest path: it simulates eating the apple and checks whether it could still reach its own tail afterwards. If eating now would seal off a dead end, it abandons the shortcut, follows its own tail to stay alive in open space instead, and — if even that fails — picks whichever direction leaves the most reachable floor space free.",
-      "desc_diagram_caption": "Shortest path to food (green) is only taken if a path to the tail (blue) still exists afterwards — otherwise the snake follows its tail instead."
+      "desc_p1": "There are four selectable strategies here, in roughly the order they were actually built this session while chasing a single goal: make the snake stop trapping itself. Switching strategies restarts the run and resets the death counter, so you can watch the same problem handled four different ways.",
+      "desc_p2": "\"Greedy\" always takes the shortest path to the apple with zero regard for its own body — it dies as soon as that path happens to cross where the tail will be. \"Greedy + tail safety\" adds a one-step lookahead (simulate the move, check a path to the tail still exists afterwards) plus a fallback that follows its own tail through open space. \"Cycle + shortcuts\" follows a fixed loop through every cell by default but jumps straight for the apple whenever that same one-step check allows it.",
+      "desc_p3": "Only \"cycle (pure)\" is actually provable: it always moves to the next cell in one fixed loop that visits the whole board exactly once, so its body is guaranteed to stay one contiguous, non-crossing arc - there's no lookahead to fool. The other three rely on that one-step safety check, which is inherently short-sighted: a move can look completely safe and still turn out to have sealed off a pocket a few steps later. There's a second, quieter failure mode too - a strategy can end up permanently \"safe\" by orbiting a loop that never actually gets any closer to food, which looks fine at a glance since it never crashes, so catching it needed watching whether the score is still climbing rather than just whether a path to the food exists in theory. Stress-testing all four with both checks in place confirmed the ranking: greedy dies constantly, cycle-shortcuts and greedy-safe both occasionally fail (either by trapping themselves or by looping forever without progress), and pure cycle-following has never failed once across hundreds of thousands of simulated moves.",
+      "desc_p4": "The trade-off is speed: pure cycle-following never beelines for the apple, so growth depends on however long the loop takes to sweep past it. It's still by far the fastest strategy to compute (a single array lookup, no search at all) - it's simply not the fastest at finding food."
     },
     "minenfeld": {
       "card_desc": "Cross a minefield one row at a time — one wrong step and it's over.",

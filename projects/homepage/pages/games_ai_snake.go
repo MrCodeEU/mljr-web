@@ -15,11 +15,11 @@ func AISnake(lang string, a AnalyticsConfig) g.Node {
 	return layout.PageShell(
 		layout.PageProps{
 			Title:       "AI Snake - Michael Reinegger",
-			Description: "A self-playing snake that pathfinds to food while avoiding trapping itself, ported from an old side project.",
+			Description: "A self-playing snake that follows a fixed Hamiltonian cycle so it can never trap itself, ported from an old side project.",
 			Theme:       token.ThemeSwissBrut,
 			Mode:        token.ModeLight,
 			Lang:        lang,
-			HeadExtra:   append([]g.Node{g.El("style", g.Raw(homepageCSS + gameCSS + gameDescCSS))}, AnalyticsHead(a)...),
+			HeadExtra:   append([]g.Node{g.El("style", g.Raw(homepageCSS + gameCSS + boidsCSS + aiSnakeCSS + gameDescCSS))}, AnalyticsHead(a)...),
 		},
 		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
 		siteNavbar(lang),
@@ -29,9 +29,16 @@ func AISnake(lang string, a AnalyticsConfig) g.Node {
 				h.H1(g.Text("AI Snake")),
 				h.P(h.Class("game-lede"), g.Text(i18n.T(lang, "games.ai_snake.lede"))),
 				h.Div(h.ID("ai-snake-game"), h.Class("game-canvas-wrap")),
-				h.Div(h.Class("game-controls"),
+				h.Div(h.Class("control-row"),
+					h.Label(h.For("ai-snake-strategy"), g.Text(i18n.T(lang, "games.ai_snake.label_strategy"))),
+					h.Select(h.ID("ai-snake-strategy"),
+						h.Option(h.Value("cycle_pure"), h.Selected(), g.Text(i18n.T(lang, "games.ai_snake.strategy_cycle_pure"))),
+						h.Option(h.Value("greedy_safe"), g.Text(i18n.T(lang, "games.ai_snake.strategy_greedy_safe"))),
+						h.Option(h.Value("cycle_shortcuts"), g.Text(i18n.T(lang, "games.ai_snake.strategy_cycle_shortcuts"))),
+						h.Option(h.Value("greedy"), g.Text(i18n.T(lang, "games.ai_snake.strategy_greedy"))),
+					),
 					h.Label(h.For("ai-snake-speed"), g.Text(i18n.T(lang, "games.ai_snake.label_speed"))),
-					h.Input(h.Type("range"), h.ID("ai-snake-speed"), h.Min("1"), h.Max("300"), h.Value("60")),
+					h.Input(h.Type("range"), h.ID("ai-snake-speed"), h.Min("1"), h.Max("20000"), h.Value("300")),
 				),
 			),
 		),
@@ -42,10 +49,21 @@ func AISnake(lang string, a AnalyticsConfig) g.Node {
 	)
 }
 
+const aiSnakeCSS = `
+.control-row select {
+  font: inherit;
+  box-sizing: border-box;
+  padding: var(--sp-1) var(--sp-2);
+  border: var(--bw-2) solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+`
+
 func aiSnakeDescriptionSection(lang string) g.Node {
 	return gameDescriptionSection(lang, "games.ai_snake.desc_title",
-		[]string{"games.ai_snake.desc_p1", "games.ai_snake.desc_p2", "games.ai_snake.desc_p3"},
-		aiSnakeDiagram(), "games.ai_snake.desc_diagram_caption")
+		[]string{"games.ai_snake.desc_p1", "games.ai_snake.desc_p2", "games.ai_snake.desc_p3", "games.ai_snake.desc_p4"},
+		aiSnakeDiagram(), "")
 }
 
 func aiSnakeDiagram() g.Node {
@@ -53,17 +71,8 @@ func aiSnakeDiagram() g.Node {
 		g.Attr("viewBox", "0 0 260 220"),
 		g.Attr("xmlns", "http://www.w3.org/2000/svg"),
 		gridLines(260, 220, 24),
-		// head
-		g.El("rect", g.Attr("x", "20"), g.Attr("y", "92"), g.Attr("width", "22"), g.Attr("height", "22"), g.Attr("style", "fill:#78c878")),
-		// tail
-		g.El("rect", g.Attr("x", "20"), g.Attr("y", "20"), g.Attr("width", "22"), g.Attr("height", "22"), g.Attr("style", "fill:var(--muted)")),
-		// food
-		g.El("rect", g.Attr("x", "212"), g.Attr("y", "92"), g.Attr("width", "22"), g.Attr("height", "22"), g.Attr("style", "fill:#e56b6f")),
-		// path to food (green dashed)
-		g.El("path", g.Attr("d", "M31 103 L223 103"), g.Attr("style", "stroke:#78c878;stroke-width:2;stroke-dasharray:5,4;fill:none")),
-		// path to tail (blue dashed)
-		g.El("path", g.Attr("d", "M31 103 L31 31"), g.Attr("style", "stroke:#78b4ff;stroke-width:2;stroke-dasharray:5,4;fill:none")),
-		g.El("text", g.Attr("x", "60"), g.Attr("y", "95"), g.Attr("style", "font-size:11px;fill:#78c878"), g.Text("path to food")),
-		g.El("text", g.Attr("x", "36"), g.Attr("y", "65"), g.Attr("style", "font-size:11px;fill:#78b4ff"), g.Text("path to tail")),
+		g.El("path", g.Attr("d", "M20 20 L212 20 L212 68 L164 68 L164 44 L116 44 L116 68 L68 68 L68 164 L212 164 L212 116 L20 116 Z"),
+			g.Attr("style", "stroke:#78b4ff;stroke-width:2.5;fill:none;stroke-linejoin:round")),
+		g.El("text", g.Attr("x", "10"), g.Attr("y", "200"), g.Attr("style", "font-size:11px;fill:var(--muted)"), g.Text("one fixed loop through every cell, always followed forward")),
 	)
 }
