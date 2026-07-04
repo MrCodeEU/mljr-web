@@ -17,7 +17,7 @@ import (
 func Dashboard(re *core.RequestEvent) error {
 	user := currentUser(re)
 	if user == nil {
-		return redirect(re, "/login")
+		return Landing(re)
 	}
 
 	t := translator(re)

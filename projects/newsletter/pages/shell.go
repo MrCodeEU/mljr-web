@@ -298,7 +298,7 @@ func groupSubNav(re *core.RequestEvent, slug string) g.Node {
 // in the nav; pass "" for pages with no single group context.
 func appPage(re *core.RequestEvent, activeGroupSlug, title string, crumbs []breadcrumbItem, content ...g.Node) g.Node {
 	return layout.PageShell(
-		layout.PageProps{Title: title + " — Newsletter", Theme: token.ThemeSwissBrut, Mode: token.ModeLight},
+		layout.PageProps{Title: title + " — Newsletter", Theme: token.ThemeInk, Mode: token.ModeLight},
 		h.Div(
 			appHeader(re, activeGroupSlug),
 			breadcrumbs(crumbs),
@@ -315,7 +315,7 @@ func appPage(re *core.RequestEvent, activeGroupSlug, title string, crumbs []brea
 // header, minus any nav that requires a logged-in user.
 func authPage(re *core.RequestEvent, title string, content ...g.Node) g.Node {
 	return layout.PageShell(
-		layout.PageProps{Title: title + " — Newsletter", Theme: token.ThemeSwissBrut, Mode: token.ModeLight},
+		layout.PageProps{Title: title + " — Newsletter", Theme: token.ThemeInk, Mode: token.ModeLight},
 		h.Div(
 			appHeader(re, ""),
 			h.Main(

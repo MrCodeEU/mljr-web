@@ -149,13 +149,11 @@ func TestHandleLoginWrongPassword(t *testing.T) {
 	expectContains(t, res, "Invalid email or password")
 }
 
-func TestDashboardRequiresAuth(t *testing.T) {
+func TestDashboardShowsLandingWhenUnauthenticated(t *testing.T) {
 	app := newTestApp(t)
 	res := app.do(t, http.MethodGet, "/", nil, nil)
-	expectStatus(t, res, http.StatusSeeOther)
-	if loc := res.Header.Get("Location"); loc != "/login" {
-		t.Errorf("expected redirect to /login, got %q", loc)
-	}
+	expectStatus(t, res, 200)
+	expectContains(t, res, "One question a week.")
 }
 
 func TestDashboardAuthenticated(t *testing.T) {
