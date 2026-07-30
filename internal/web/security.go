@@ -9,12 +9,14 @@ func SecurityHeaders() echo.MiddlewareFunc {
 	// 'unsafe-eval' is required: Datastar v1.x evaluates data-* expressions
 	// via new Function() at runtime. There is no precompile mode.
 	// 'unsafe-inline' covers the pre-paint FOUC-prevention inline <script>.
-	const csp = "default-src 'self'; " +
+	const csp = "default-src 'none'; " +
 		"script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
 		"style-src 'self' 'unsafe-inline'; " +
 		"img-src 'self' data: https://*.tile.openstreetmap.org https://picsum.photos https://fastly.picsum.photos; " +
 		"font-src 'self'; " +
 		"connect-src 'self'; " +
+		"media-src 'self'; " +
+		"object-src 'none'; " +
 		"frame-ancestors 'self'; " +
 		"base-uri 'self'; " +
 		"form-action 'self';"
