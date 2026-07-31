@@ -364,7 +364,7 @@ Echo gzip middleware **must skip `/sse/*` and `/api/*` SSE routes** or it buffer
 
 ## Security
 
-- CSP set in `internal/web/security.go`. **`'unsafe-eval'` is required** — Datastar v1.x evaluates all `data-*` expressions via `new Function()` at runtime. Removing it breaks all interactivity. `'unsafe-inline'` covers the pre-paint FOUC-prevention inline `<script>`. This is an accepted trade-off; Datastar has no precompile mode.
+- CSP set in `internal/web/security.go`. **`script-src` has NO `'unsafe-inline'`**: inline `<script>` blocks are allowlisted per response via sha256 hashes — `web.Render` (`internal/web/render.go`) renders the page to a buffer, extracts every src-less `<script>` with `x/net/html`, hashes the exact bytes, and overrides the middleware's fallback CSP (`SetCSPWithScriptHashes`). This means components can keep shipping inline `h.Script(g.Raw(...))` blocks with zero changes — but ONLY responses going through `web.Render` get hashes, so never write HTML via `c.HTML`/raw writer. **`'unsafe-eval'` is still required** — Datastar v1.x evaluates all `data-*` expressions via `new Function()` at runtime. Removing it breaks all interactivity. `'unsafe-inline'` in `style-src` covers inline `style=` attributes; this is an accepted trade-off.
 - The same middleware sets `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Resource-Policy: same-origin`. COEP is deliberately NOT set — `require-corp` would break the cross-origin OSM tiles / picsum images.
 - The homepage serves RFC 9116 `/.well-known/security.txt` (route in `projects/homepage/main.go`) with a dynamically computed `Expires` (now + 1 year) — no stale-date maintenance needed.
 - Self-hosted fonts in `assets/static/fonts/`. No Google Fonts.

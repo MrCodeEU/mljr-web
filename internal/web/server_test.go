@@ -29,6 +29,9 @@ func TestNewEchoAppliesSecurityHeaders(t *testing.T) {
 	if got := headers.Get("Content-Security-Policy"); !strings.Contains(got, "default-src 'none'") {
 		t.Fatalf("Content-Security-Policy = %q, want none default-src", got)
 	}
+	if got := cspDirective(headers.Get("Content-Security-Policy"), "script-src"); strings.Contains(got, "'unsafe-inline'") {
+		t.Fatalf("fallback script-src = %q, must not allow unsafe-inline", got)
+	}
 	if got := headers.Get("X-Content-Type-Options"); got != "nosniff" {
 		t.Fatalf("X-Content-Type-Options = %q, want nosniff", got)
 	}
