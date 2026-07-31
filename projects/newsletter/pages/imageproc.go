@@ -18,7 +18,7 @@ import (
 const maxUploadImageSize = 25 << 20 // 25MB
 
 const (
-	maxImageDimension    = 1080
+	maxImageDimension     = 1080
 	processedImageQuality = 80
 )
 

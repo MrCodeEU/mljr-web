@@ -99,7 +99,6 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 
 		overlay.Toaster(overlay.ToasterProps{}),
 		overlay.Portal("portal"),
-
 	)
 }
 

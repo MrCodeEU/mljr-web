@@ -3,11 +3,11 @@ package config
 import "os"
 
 type Config struct {
-	Env       string // "dev" | "prod"
-	Port      string
-	AltchaKey string // HMAC key for altcha challenge signing; generate with: openssl rand -hex 32
-	SMTP      SMTPConfig
-	ContactTo string
+	Env        string // "dev" | "prod"
+	Port       string
+	AltchaKey  string // HMAC key for altcha challenge signing; generate with: openssl rand -hex 32
+	SMTP       SMTPConfig
+	ContactTo  string
 	Analytics  AnalyticsConfig
 	Homelab    HomelabConfig
 	Data       DataConfig

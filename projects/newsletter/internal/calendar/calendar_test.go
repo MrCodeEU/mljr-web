@@ -33,7 +33,9 @@ func TestSignForDate(t *testing.T) {
 
 func TestInRange(t *testing.T) {
 	d := func(month, day int) time.Time { return time.Date(2026, time.Month(month), day, 0, 0, 0, 0, time.UTC) }
-	dYear := func(year, month, day int) time.Time { return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC) }
+	dYear := func(year, month, day int) time.Time {
+		return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+	}
 
 	cases := []struct {
 		name       string

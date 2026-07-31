@@ -98,7 +98,7 @@ func matcherFor(period string, anchorWeekday, anchorDayOfMonth int, epoch time.T
 				return false
 			}
 			monthsSinceEpoch := (d.Year()-epoch.Year())*12 + int(d.Month()) - int(epoch.Month())
-			return ((monthsSinceEpoch % 3) + 3) % 3 == 0
+			return ((monthsSinceEpoch%3)+3)%3 == 0
 		}, nil
 	default:
 		return nil, errors.New("unknown schedule_period: " + period)

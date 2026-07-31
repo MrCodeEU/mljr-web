@@ -14,7 +14,7 @@ import (
 // MeshNode is one infra host in a Tailscale-style mesh diagram.
 type MeshNode struct {
 	Name     string
-	OS       string   // OS family, e.g. "linux", "windows", "macOS"
+	OS       string // OS family, e.g. "linux", "windows", "macOS"
 	Online   bool
 	Relay    bool     // true if currently reachable only via a DERP relay (not direct)
 	Services []string // service names hosted here
@@ -151,9 +151,9 @@ func Mesh(p MeshProps, nodes []MeshNode) g.Node {
 		case meshKindHub:
 			sb.WriteString(`<g>`)
 		case meshKindHost:
-			sb.WriteString(`<g class="mesh-breathe-host" style="transform-box:fill-box;transform-origin:50% 50%">`)
+			sb.WriteString(`<g data-mesh="breathe-host" style="transform-box:fill-box;transform-origin:50% 50%">`)
 		default:
-			sb.WriteString(`<g class="mesh-breathe-svc" style="transform-box:fill-box;transform-origin:50% 50%">`)
+			sb.WriteString(`<g data-mesh="breathe-svc" style="transform-box:fill-box;transform-origin:50% 50%">`)
 		}
 		if s.title != "" {
 			fmt.Fprintf(&sb, `<title>%s</title>`, stdhtml.EscapeString(s.title))
@@ -176,7 +176,7 @@ func Mesh(p MeshProps, nodes []MeshNode) g.Node {
 			if !s.online {
 				dotColor = "var(--muted)"
 			}
-			fmt.Fprintf(&sb, `<circle cx="%.1f" cy="%.1f" r="4" fill="%s" class="mesh-pulse"/>`, x+r*0.6, y-r*0.6, dotColor)
+			fmt.Fprintf(&sb, `<circle cx="%.1f" cy="%.1f" r="4" fill="%s" data-mesh="pulse"/>`, x+r*0.6, y-r*0.6, dotColor)
 			fmt.Fprintf(&sb, `<text x="%.1f" y="%.1f" fill="var(--ink)" font-size="%.1f" font-family="var(--font-mono)" text-anchor="middle" dominant-baseline="middle" font-weight="800">%s</text>`,
 				x, y+1, r*0.32, stdhtml.EscapeString(osAbbrev(findHostOS(nodes, s.label))))
 			fmt.Fprintf(&sb, `<text x="%.1f" y="%.1f" fill="var(--ink)" font-size="11" font-family="var(--font-mono)" text-anchor="middle" font-weight="700">%s</text>`,
@@ -213,15 +213,15 @@ func Mesh(p MeshProps, nodes []MeshNode) g.Node {
 // hero, used the same way as ui/special/logo_scatter.go.
 const meshFloatScript = `<script>(function(root){
   if(!root||!window.Motion) return;
-  root.querySelectorAll('.mesh-breathe-host').forEach(function(el){
+  root.querySelectorAll('[data-mesh="breathe-host"]').forEach(function(el){
     Motion.animate(el,{scale:[1,1.045,1]},
       {duration:2.6+Math.random()*1.2,easing:'ease-in-out',repeat:Infinity,delay:Math.random()*0.8});
   });
-  root.querySelectorAll('.mesh-breathe-svc').forEach(function(el){
+  root.querySelectorAll('[data-mesh="breathe-svc"]').forEach(function(el){
     Motion.animate(el,{scale:[1,1.1,1]},
       {duration:2.0+Math.random()*1.4,easing:'ease-in-out',repeat:Infinity,delay:Math.random()*1.0});
   });
-  root.querySelectorAll('.mesh-pulse').forEach(function(el){
+  root.querySelectorAll('[data-mesh="pulse"]').forEach(function(el){
     Motion.animate(el,{opacity:[1,0.35,1]},
       {duration:1.6+Math.random()*0.8,repeat:Infinity,delay:Math.random()*0.6});
   });

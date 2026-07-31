@@ -44,7 +44,7 @@ func heroSection(d hpdata.SiteData, lang string, projectCount int) g.Node {
 					// Main headline
 					h.H1(
 						h.Style("font-size:clamp(2.5rem,6vw,4rem);font-weight:900;line-height:1.05;margin:0"),
-						g.Text(i18n.T(lang, "hero.greeting") + " "),
+						g.Text(i18n.T(lang, "hero.greeting")+" "),
 						primitive.GradientText(primitive.GradientTextProps{
 							From:  "var(--accent)",
 							To:    "var(--ink)",

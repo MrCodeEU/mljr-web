@@ -95,13 +95,13 @@ func experienceSection(num string, d hpdata.SiteData, lang string) g.Node {
 									),
 								),
 								h.H4(h.Style("font-weight:900;font-size:var(--t-base);margin:0;line-height:1.35"), g.Text(edu.Title)),
-							g.If(edu.Desc != "",
-								h.P(h.Style("margin:var(--sp-2) 0 0;font-size:var(--t-sm);line-height:1.5;opacity:.8"), g.Text(edu.Desc)),
-							),
-						)
-					}
-					return nodes
-				}()),
+								g.If(edu.Desc != "",
+									h.P(h.Style("margin:var(--sp-2) 0 0;font-size:var(--t-sm);line-height:1.5;opacity:.8"), g.Text(edu.Desc)),
+								),
+							)
+						}
+						return nodes
+					}()),
 				),
 				// Thesis section
 				g.If(len(d.ThesisFor(lang)) > 0,

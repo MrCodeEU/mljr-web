@@ -21,7 +21,7 @@ func Snake(lang string, a AnalyticsConfig) g.Node {
 			Theme:       token.ThemeSwissBrut,
 			Mode:        token.ModeLight,
 			Lang:        lang,
-			HeadExtra:   append([]g.Node{g.El("style", g.Raw(homepageCSS + gameCSS + gameDescCSS))}, AnalyticsHead(a)...),
+			HeadExtra:   append([]g.Node{g.El("style", g.Raw(homepageCSS+gameCSS+gameDescCSS))}, AnalyticsHead(a)...),
 		},
 		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
 		siteNavbar(lang),
