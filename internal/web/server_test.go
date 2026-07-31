@@ -26,14 +26,20 @@ func TestNewEchoAppliesSecurityHeaders(t *testing.T) {
 	}
 
 	headers := rec.Header()
-	if got := headers.Get("Content-Security-Policy"); !strings.Contains(got, "default-src 'self'") {
-		t.Fatalf("Content-Security-Policy = %q, want self default-src", got)
+	if got := headers.Get("Content-Security-Policy"); !strings.Contains(got, "default-src 'none'") {
+		t.Fatalf("Content-Security-Policy = %q, want none default-src", got)
 	}
 	if got := headers.Get("X-Content-Type-Options"); got != "nosniff" {
 		t.Fatalf("X-Content-Type-Options = %q, want nosniff", got)
 	}
 	if got := headers.Get("X-Frame-Options"); got != "SAMEORIGIN" {
 		t.Fatalf("X-Frame-Options = %q, want SAMEORIGIN", got)
+	}
+	if got := headers.Get("Cross-Origin-Opener-Policy"); got != "same-origin" {
+		t.Fatalf("Cross-Origin-Opener-Policy = %q, want same-origin", got)
+	}
+	if got := headers.Get("Cross-Origin-Resource-Policy"); got != "same-origin" {
+		t.Fatalf("Cross-Origin-Resource-Policy = %q, want same-origin", got)
 	}
 }
 

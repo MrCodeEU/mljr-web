@@ -110,6 +110,16 @@ func main() {
 		return c.String(200, "User-agent: *\nAllow: /\nSitemap: https://mljr.eu/sitemap.xml\n")
 	})
 	e.HEAD("/robots.txt", func(c echo.Context) error { return c.NoContent(200) })
+	// RFC 9116 security contact info. Expires is generated dynamically
+	// (now + 1 year) so the file never silently goes stale.
+	e.GET("/.well-known/security.txt", func(c echo.Context) error {
+		expires := time.Now().UTC().AddDate(1, 0, 0).Format(time.RFC3339)
+		body := "Contact: mailto:michael-reinegger@tuta.io\n" +
+			"Expires: " + expires + "\n" +
+			"Preferred-Languages: en\n"
+		return c.String(200, body)
+	})
+	e.HEAD("/.well-known/security.txt", func(c echo.Context) error { return c.NoContent(200) })
 	e.GET("/sitemap.xml", func(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "application/xml; charset=utf-8")
 		var b strings.Builder

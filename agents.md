@@ -365,6 +365,8 @@ Echo gzip middleware **must skip `/sse/*` and `/api/*` SSE routes** or it buffer
 ## Security
 
 - CSP set in `internal/web/security.go`. **`'unsafe-eval'` is required** — Datastar v1.x evaluates all `data-*` expressions via `new Function()` at runtime. Removing it breaks all interactivity. `'unsafe-inline'` covers the pre-paint FOUC-prevention inline `<script>`. This is an accepted trade-off; Datastar has no precompile mode.
+- The same middleware sets `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Resource-Policy: same-origin`. COEP is deliberately NOT set — `require-corp` would break the cross-origin OSM tiles / picsum images.
+- The homepage serves RFC 9116 `/.well-known/security.txt` (route in `projects/homepage/main.go`) with a dynamically computed `Expires` (now + 1 year) — no stale-date maintenance needed.
 - Self-hosted fonts in `assets/static/fonts/`. No Google Fonts.
 - altcha + honeypot on every public form. Verify server-side with `altcha.VerifySolution`.
 - `gosec` runs in CI. `govulncheck` in pre-push.

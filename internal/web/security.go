@@ -28,6 +28,8 @@ func SecurityHeaders() echo.MiddlewareFunc {
 			h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
 			h.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
 			h.Set("X-Frame-Options", "SAMEORIGIN")
+			h.Set("Cross-Origin-Opener-Policy", "same-origin")
+			h.Set("Cross-Origin-Resource-Policy", "same-origin")
 			return next(c)
 		}
 	}
