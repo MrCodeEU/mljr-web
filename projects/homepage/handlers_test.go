@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"mljr-web/internal/mail"
 
@@ -32,7 +33,7 @@ func TestContactSubmitSendsMailAfterAltcha(t *testing.T) {
 	key := "test-altcha-key"
 	mailer := &fakeMailer{}
 
-	rec := postContact(t, key, mailer, contactSignals{
+	rec := postContact(t, mailer, contactSignals{
 		Name:    "Test User",
 		Email:   "test@example.com",
 		Message: "This is a valid test message.",
@@ -57,7 +58,7 @@ func TestContactSubmitReportsMailFailure(t *testing.T) {
 	key := "test-altcha-key"
 	mailer := &fakeMailer{err: errors.New("smtp unavailable")}
 
-	rec := postContact(t, key, mailer, contactSignals{
+	rec := postContact(t, mailer, contactSignals{
 		Name:    "Test User",
 		Email:   "test@example.com",
 		Message: "This is a valid test message.",
@@ -78,7 +79,7 @@ func TestContactSubmitReportsMailFailure(t *testing.T) {
 func TestContactSubmitDoesNotSendMailWithInvalidAltcha(t *testing.T) {
 	mailer := &fakeMailer{}
 
-	rec := postContact(t, "test-altcha-key", mailer, contactSignals{
+	rec := postContact(t, mailer, contactSignals{
 		Name:    "Test User",
 		Email:   "test@example.com",
 		Message: "This is a valid test message.",
@@ -96,7 +97,82 @@ func TestContactSubmitDoesNotSendMailWithInvalidAltcha(t *testing.T) {
 	}
 }
 
-func postContact(t *testing.T, key string, mailer mail.ContactMailer, signals contactSignals) *httptest.ResponseRecorder {
+func TestContactSubmitRejectsHeaderInjectionAndOversizedFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		signals contactSignals
+		want    string
+	}{
+		{
+			name:    "name header injection",
+			signals: contactSignals{Name: "Attacker\r\nBcc: victim@example.com", Email: "test@example.com", Message: "A valid message body"},
+			want:    "Name must be at most",
+		},
+		{
+			name:    "email header injection",
+			signals: contactSignals{Name: "Test User", Email: "test@example.com\r\nBcc: victim@example.com", Message: "A valid message body"},
+			want:    "Valid email required",
+		},
+		{
+			name:    "oversized message",
+			signals: contactSignals{Name: "Test User", Email: "test@example.com", Message: strings.Repeat("x", contactMaxMessageLength+1)},
+			want:    "at most 5,000",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mailer := &fakeMailer{}
+			rec := postContact(t, mailer, tt.signals)
+			if mailer.calls != 0 {
+				t.Fatalf("mailer calls = %d, want 0", mailer.calls)
+			}
+			if !strings.Contains(rec.Body.String(), tt.want) {
+				t.Fatalf("response %q does not contain %q", rec.Body.String(), tt.want)
+			}
+		})
+	}
+}
+
+func TestContactRateLimiter(t *testing.T) {
+	limiter := &contactRateLimiter{}
+	now := time.Unix(1_700_000_000, 0)
+	for i := 0; i < contactRateMax; i++ {
+		if !limiter.allow("192.0.2.1", now) {
+			t.Fatalf("attempt %d unexpectedly rejected", i+1)
+		}
+	}
+	if limiter.allow("192.0.2.1", now) {
+		t.Fatal("attempt above rate limit was accepted")
+	}
+	if !limiter.allow("192.0.2.1", now.Add(contactRateWindow)) {
+		t.Fatal("attempt after rate window was rejected")
+	}
+	if !limiter.consumeSolution("solution", now) {
+		t.Fatal("new ALTCHA solution was rejected")
+	}
+	if limiter.consumeSolution("solution", now) {
+		t.Fatal("replayed ALTCHA solution was accepted")
+	}
+	if !limiter.consumeSolution("solution", now.Add(contactReplayWindow)) {
+		t.Fatal("expired replay-cache entry was not removed")
+	}
+}
+
+func TestContactSubmitRejectsOversizedRequestBody(t *testing.T) {
+	e := echo.New()
+	body := `{"name":"Test","email":"test@example.com","message":"` + strings.Repeat("x", contactMaxBodyBytes) + `"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/contact", strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	err := contactSubmit("test-altcha-key", &fakeMailer{})(e.NewContext(req, rec))
+	var httpErr *echo.HTTPError
+	if !errors.As(err, &httpErr) || httpErr.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("error = %#v, want HTTP %d", err, http.StatusRequestEntityTooLarge)
+	}
+}
+
+func postContact(t *testing.T, mailer mail.ContactMailer, signals contactSignals) *httptest.ResponseRecorder {
 	t.Helper()
 
 	body, err := json.Marshal(signals)
@@ -111,7 +187,7 @@ func postContact(t *testing.T, key string, mailer mail.ContactMailer, signals co
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	if err := contactSubmit(key, mailer)(c); err != nil {
+	if err := contactSubmit("test-altcha-key", mailer)(c); err != nil {
 		t.Fatal(err)
 	}
 	return rec

@@ -91,9 +91,12 @@
     "captcha_required": "Bitte löse das Captcha.",
     "captcha_failed": "Captcha-Überprüfung fehlgeschlagen. Bitte versuche es erneut.",
     "delivery_failed": "Nachricht konnte nicht zugestellt werden. Bitte schreib mir direkt eine E-Mail.",
+    "rate_limited": "Zu viele Anfragen. Bitte warte einige Minuten und versuche es erneut.",
     "error_name_required": "Name ist erforderlich",
+    "error_name_invalid": "Der Name darf höchstens 100 Zeichen und keine Steuerzeichen enthalten",
     "error_email_invalid": "Gültige E-Mail-Adresse erforderlich",
     "error_message_short": "Nachricht muss mindestens 10 Zeichen lang sein",
+    "error_message_long": "Die Nachricht darf höchstens 5.000 Zeichen lang sein",
     "success_title": "Nachricht gesendet!",
     "success_body": "Ich melde mich so schnell wie möglich bei dir."
   },

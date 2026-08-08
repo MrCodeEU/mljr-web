@@ -91,9 +91,12 @@
     "captcha_required": "Please complete the captcha.",
     "captcha_failed": "Captcha verification failed. Please try again.",
     "delivery_failed": "Message delivery failed. Please email me directly.",
+    "rate_limited": "Too many submissions. Please wait a few minutes and try again.",
     "error_name_required": "Name is required",
+    "error_name_invalid": "Name must be at most 100 characters and contain no control characters",
     "error_email_invalid": "Valid email required",
     "error_message_short": "Message must be at least 10 characters",
+    "error_message_long": "Message must be at most 5,000 characters",
     "success_title": "Message sent!",
     "success_body": "I'll get back to you as soon as possible."
   },

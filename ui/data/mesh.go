@@ -4,7 +4,6 @@ import (
 	"fmt"
 	stdhtml "html"
 	"math"
-	"math/rand"
 	"strings"
 
 	g "maragu.dev/gomponents"
@@ -30,11 +29,9 @@ type meshKind int
 const (
 	meshKindHub meshKind = iota
 	meshKindHost
-	meshKindService
 )
 
-// meshSimNode is one body in the force simulation: the tailnet hub, a host,
-// or a service satellite orbiting its host.
+// meshSimNode is one body in the force simulation: the tailnet hub or a host.
 type meshSimNode struct {
 	x, y, vx, vy float64
 	r            float64
@@ -51,10 +48,10 @@ type meshEdge struct {
 	strength float64
 }
 
-// Mesh renders the tailnet as a force-directed graph: a hub, one node per
-// host, and a satellite node per service the host runs. The layout is
-// computed once server-side with a small spring/repulsion simulation and
-// rendered as static SVG — zero JS, same approach as Heatmap.
+// Mesh renders the tailnet as a force-directed graph with one node per host.
+// Service names remain available in each host's tooltip and their count is
+// shown below the host; omitting individual service satellites keeps the
+// topology readable as the inventory grows.
 func Mesh(p MeshProps, nodes []MeshNode) g.Node {
 	if p.Size == 0 {
 		p.Size = 480
@@ -66,11 +63,6 @@ func Mesh(p MeshProps, nodes []MeshNode) g.Node {
 	size := float64(p.Size)
 	hubR := size * 0.055
 	hostR := size * 0.07
-	svcR := size * 0.028
-
-	// Deterministic jitter so re-renders of the same data settle into the
-	// same layout instead of visibly reshuffling every poll.
-	rng := rand.New(rand.NewSource(1))
 
 	sim := []meshSimNode{{x: 0, y: 0, r: hubR, kind: meshKindHub, label: "tailnet"}}
 	var edges []meshEdge
@@ -92,17 +84,6 @@ func Mesh(p MeshProps, nodes []MeshNode) g.Node {
 			label: node.Name, title: title, online: node.Online, relay: node.Relay,
 		})
 		edges = append(edges, meshEdge{from: 0, to: hostIdx, ideal: hostOrbit, strength: 0.06})
-
-		m := len(node.Services)
-		for j, svc := range node.Services {
-			sAngle := angle + (float64(j)-float64(m-1)/2)*0.5 + (rng.Float64()-0.5)*0.2
-			sDist := hostR + svcR + size*0.16
-			sim = append(sim, meshSimNode{
-				x: hx + sDist*math.Cos(sAngle), y: hy + sDist*math.Sin(sAngle),
-				r: svcR, kind: meshKindService, label: svc, title: svc, online: node.Online,
-			})
-			edges = append(edges, meshEdge{from: hostIdx, to: len(sim) - 1, ideal: sDist, strength: 0.1})
-		}
 	}
 
 	simulateMesh(sim, edges)
@@ -135,11 +116,6 @@ func Mesh(p MeshProps, nodes []MeshNode) g.Node {
 			} else if to.relay {
 				stroke = "color-mix(in srgb, var(--accent) 50%, orange)"
 			}
-		case meshKindService:
-			if to.online {
-				stroke = "color-mix(in srgb, var(--accent) 35%, var(--muted))"
-				dash = ""
-			}
 		}
 		fmt.Fprintf(&sb, `<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="%s"%s/>`,
 			x1, y1, x2, y2, stroke, strokeW, dash)
@@ -152,8 +128,6 @@ func Mesh(p MeshProps, nodes []MeshNode) g.Node {
 			sb.WriteString(`<g>`)
 		case meshKindHost:
 			sb.WriteString(`<g data-mesh="breathe-host" style="transform-box:fill-box;transform-origin:50% 50%">`)
-		default:
-			sb.WriteString(`<g data-mesh="breathe-svc" style="transform-box:fill-box;transform-origin:50% 50%">`)
 		}
 		if s.title != "" {
 			fmt.Fprintf(&sb, `<title>%s</title>`, stdhtml.EscapeString(s.title))
@@ -181,16 +155,10 @@ func Mesh(p MeshProps, nodes []MeshNode) g.Node {
 				x, y+1, r*0.32, stdhtml.EscapeString(osAbbrev(findHostOS(nodes, s.label))))
 			fmt.Fprintf(&sb, `<text x="%.1f" y="%.1f" fill="var(--ink)" font-size="11" font-family="var(--font-mono)" text-anchor="middle" font-weight="700">%s</text>`,
 				x, y+r+14, stdhtml.EscapeString(s.label))
-
-		case meshKindService:
-			fill := "var(--surface)"
-			if s.online {
-				fill = "color-mix(in srgb, var(--accent) 12%, var(--surface))"
+			if count := serviceCount(nodes, s.label); count > 0 {
+				fmt.Fprintf(&sb, `<text x="%.1f" y="%.1f" fill="var(--muted)" font-size="11" font-family="var(--font-mono)" text-anchor="middle" font-weight="700">%d svc</text>`,
+					x, y+r+25, count)
 			}
-			fmt.Fprintf(&sb, `<circle cx="%.1f" cy="%.1f" r="%.1f" fill="%s" stroke="var(--muted)" stroke-width="1"/>`,
-				x, y, r, fill)
-			fmt.Fprintf(&sb, `<text x="%.1f" y="%.1f" fill="var(--muted)" font-size="9" font-family="var(--font-mono)" text-anchor="middle">%s</text>`,
-				x, y+r+10, stdhtml.EscapeString(serviceLabel(s.label)))
 		}
 		sb.WriteString(`</g>`)
 	}
@@ -216,10 +184,6 @@ const meshFloatScript = `<script>(function(root){
   root.querySelectorAll('[data-mesh="breathe-host"]').forEach(function(el){
     Motion.animate(el,{scale:[1,1.045,1]},
       {duration:2.6+Math.random()*1.2,easing:'ease-in-out',repeat:Infinity,delay:Math.random()*0.8});
-  });
-  root.querySelectorAll('[data-mesh="breathe-svc"]').forEach(function(el){
-    Motion.animate(el,{scale:[1,1.1,1]},
-      {duration:2.0+Math.random()*1.4,easing:'ease-in-out',repeat:Infinity,delay:Math.random()*1.0});
   });
   root.querySelectorAll('[data-mesh="pulse"]').forEach(function(el){
     Motion.animate(el,{opacity:[1,0.35,1]},
@@ -313,11 +277,13 @@ func findHostOS(nodes []MeshNode, name string) string {
 	return ""
 }
 
-func serviceLabel(name string) string {
-	if len(name) > 11 {
-		return name[:10] + "…"
+func serviceCount(nodes []MeshNode, name string) int {
+	for _, n := range nodes {
+		if n.Name == name {
+			return len(n.Services)
+		}
 	}
-	return name
+	return 0
 }
 
 func osAbbrev(os string) string {

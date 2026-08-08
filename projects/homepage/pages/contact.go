@@ -79,6 +79,7 @@ func contactSection(num string, content hpdata.ContactContent, lang string) g.No
 								Placeholder: i18n.T(lang, "contact.name_placeholder"),
 								Signal:      "name",
 								Required:    true,
+								Attrs:       []g.Node{g.Attr("maxlength", "100")},
 							})),
 							uiform.Field(uiform.FieldProps{
 								Label:    i18n.T(lang, "contact.email_label"),
@@ -88,6 +89,7 @@ func contactSection(num string, content hpdata.ContactContent, lang string) g.No
 								Placeholder: i18n.T(lang, "contact.email_placeholder"),
 								Signal:      "email",
 								Required:    true,
+								Attrs:       []g.Node{g.Attr("maxlength", "254")},
 							})),
 							uiform.Field(uiform.FieldProps{
 								Label:    i18n.T(lang, "contact.message_label"),
@@ -97,6 +99,7 @@ func contactSection(num string, content hpdata.ContactContent, lang string) g.No
 								Signal:      "message",
 								Rows:        5,
 								Required:    true,
+								Attrs:       []g.Node{g.Attr("minlength", "10"), g.Attr("maxlength", "5000")},
 							})),
 							// altcha captcha widget
 							special.Captcha(special.CaptchaProps{ChallengeURL: "/api/altcha"}),
