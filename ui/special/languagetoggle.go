@@ -78,7 +78,7 @@ func LanguageToggle(p LanguageToggleProps) g.Node {
 			Attrs: []g.Node{
 				g.Attr("aria-label", ariaLabel),
 				g.Attr("title", ariaLabel),
-				g.Attr("onclick", clickExpr),
+				g.Attr("data-on:click", clickExpr),
 				g.Attr("style", "aspect-ratio:unset;padding:.55rem .75rem;display:inline-flex;align-items:center;gap:.4rem;"),
 			},
 		},
