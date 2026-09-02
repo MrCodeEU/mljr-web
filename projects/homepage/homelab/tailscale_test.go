@@ -7,48 +7,33 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func TestCollectInventoryHosts(t *testing.T) {
-	// Mirrors the real homelab-automation inventory shape: hosts can sit at
-	// any depth under nested "children" groups, and not every group has a
-	// "hosts" key (e.g. proxy_only's parent has none, only its children do).
+func TestInventoryFileParsesTailscaleHosts(t *testing.T) {
+	// Mirrors the real homelab-automation shape since the OpenVox cutover:
+	// a flat hostname -> tailscale_ip map, plus unrelated sibling keys
+	// (services_catalog etc.) that this type must simply ignore.
 	src := `
-all:
-  children:
-    managed:
-      children:
-        rocky:
-          hosts:
-            mljr:
-              tailscale_ip: 100.100.20.1
-            nuc:
-              tailscale_ip: 100.100.10.1
-        unraid:
-          hosts:
-            nas:
-              tailscale_ip: 100.100.10.2
-    proxy_only:
-      hosts:
-        homeassistant:
-          tailscale_ip: 100.100.10.200
-        monitoring:
-          ansible_host: 192.168.50.175
+tailscale_hosts:
+  mljr: '100.100.20.1'
+  nuc: '100.100.10.1'
+  nas: '100.100.10.2'
+  homeassistant: '100.100.10.200'
+
+services_catalog:
+  - name: authelia
 `
 	var inv inventoryFile
 	if err := yaml.Unmarshal([]byte(src), &inv); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	out := map[string]string{}
-	collectInventoryHosts(inv.All, out)
 
 	want := map[string]string{
 		"mljr":          "100.100.20.1",
 		"nuc":           "100.100.10.1",
 		"nas":           "100.100.10.2",
 		"homeassistant": "100.100.10.200",
-		// "monitoring" has no tailscale_ip and must be excluded, not zero-valued.
 	}
-	if !reflect.DeepEqual(out, want) {
-		t.Fatalf("collectInventoryHosts() = %#v, want %#v", out, want)
+	if !reflect.DeepEqual(inv.TailscaleHosts, want) {
+		t.Fatalf("inventoryFile.TailscaleHosts = %#v, want %#v", inv.TailscaleHosts, want)
 	}
 }
 
@@ -75,7 +60,7 @@ func TestFirstDomain(t *testing.T) {
 
 func TestFetchServicesSkipsDisabled(t *testing.T) {
 	src := `
-services:
+services_catalog:
   - name: authelia
     enabled: true
     domain: "auth.mljr.eu"

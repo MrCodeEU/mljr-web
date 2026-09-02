@@ -30,13 +30,14 @@ type HomelabConfig struct {
 	TailscaleAPIKey  string // Tailscale API key (read-only, devices scope); empty disables mesh panel
 	TailscaleTailnet string // tailnet name, e.g. "example.ts.net" or "-" for the default tailnet
 
-	// InventoryURL points at the public homelab-automation repo's Ansible
-	// inventory (raw GitHub URL), used to filter the Tailscale device list
-	// down to infra hosts and to learn each host's tailscale_ip.
+	// InventoryURL points at the public homelab-automation repo's OpenVox
+	// common.yaml (raw GitHub URL) - specifically its tailscale_hosts map -
+	// used to filter the Tailscale device list down to infra hosts and to
+	// learn each host's tailscale_ip.
 	InventoryURL string
-	// ServicesURL points at the public group_vars file listing each
-	// service's domain/port/host/description, used to build the mesh's
-	// service badges without hand-maintaining a mapping.
+	// ServicesURL points at the same public common.yaml, read for its
+	// services_catalog list (domain/port/host/description), used to build
+	// the mesh's service badges without hand-maintaining a mapping.
 	ServicesURL string
 
 	NtfyURL   string // ntfy server base URL for ops alerts
@@ -92,8 +93,8 @@ func Load() Config {
 			TailscaleAPIKey:  os.Getenv("TAILSCALE_API_KEY"),
 			TailscaleTailnet: envOr("TAILSCALE_TAILNET", "-"),
 
-			InventoryURL: envOr("HOMELAB_INVENTORY_URL", "https://raw.githubusercontent.com/MrCodeEU/homelab-automation/main/ansible/inventory/hosts.yml"),
-			ServicesURL:  envOr("HOMELAB_SERVICES_URL", "https://raw.githubusercontent.com/MrCodeEU/homelab-automation/main/ansible/inventory/group_vars/all/all.yml"),
+			InventoryURL: envOr("HOMELAB_INVENTORY_URL", "https://raw.githubusercontent.com/MrCodeEU/homelab-automation/main/openvox/data/common.yaml"),
+			ServicesURL:  envOr("HOMELAB_SERVICES_URL", "https://raw.githubusercontent.com/MrCodeEU/homelab-automation/main/openvox/data/common.yaml"),
 
 			NtfyURL:   envOr("NTFY_URL", "https://ntfy.mljr.eu"),
 			NtfyTopic: envOr("NTFY_TOPIC", "homepage"),

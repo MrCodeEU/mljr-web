@@ -183,8 +183,8 @@ type Options struct {
 	TailscaleAPIKey  string // empty disables the mesh panel entirely
 	TailscaleTailnet string
 
-	InventoryURL string // public homelab-automation Ansible inventory (raw YAML)
-	ServicesURL  string // public homelab-automation service registry (raw YAML)
+	InventoryURL string // public homelab-automation OpenVox tailscale_hosts map (raw YAML, common.yaml)
+	ServicesURL  string // public homelab-automation services_catalog (raw YAML, common.yaml)
 
 	NtfyURL   string // ops alert target, e.g. failed Tailscale API auth
 	NtfyTopic string

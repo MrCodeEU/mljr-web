@@ -189,27 +189,15 @@ func (p *Poller) fetchTailscaleDevices(ctx context.Context) ([]tsDevice, error) 
 }
 
 // ── Public inventory (homelab-automation, raw YAML) ────────────────────────
-
-type invNode struct {
-	Children map[string]invNode `yaml:"children"`
-	Hosts    map[string]struct {
-		TailscaleIP string `yaml:"tailscale_ip"`
-	} `yaml:"hosts"`
-}
+//
+// Since the 2026-09-02 OpenVox cutover, both the inventory and the service
+// registry live in the same public file (openvox/data/common.yaml) - a flat
+// hostname -> tailscale_ip map plus the services_catalog list already used
+// to drive the real deploy. InventoryURL and ServicesURL may point at the
+// same URL; each type only reads its own top-level key and ignores the rest.
 
 type inventoryFile struct {
-	All invNode `yaml:"all"`
-}
-
-func collectInventoryHosts(n invNode, out map[string]string) {
-	for name, h := range n.Hosts {
-		if h.TailscaleIP != "" {
-			out[name] = h.TailscaleIP
-		}
-	}
-	for _, child := range n.Children {
-		collectInventoryHosts(child, out)
-	}
+	TailscaleHosts map[string]string `yaml:"tailscale_hosts"`
 }
 
 func (p *Poller) fetchInventory(ctx context.Context) (map[string]string, error) {
@@ -221,9 +209,7 @@ func (p *Poller) fetchInventory(ctx context.Context) (map[string]string, error) 
 	if err := yaml.Unmarshal(body, &inv); err != nil {
 		return nil, err
 	}
-	out := map[string]string{}
-	collectInventoryHosts(inv.All, out)
-	return out, nil
+	return inv.TailscaleHosts, nil
 }
 
 // ── Public service registry (homelab-automation, raw YAML) ─────────────────
@@ -237,7 +223,7 @@ type rawService struct {
 }
 
 type servicesFile struct {
-	Services []rawService `yaml:"services"`
+	Services []rawService `yaml:"services_catalog"`
 }
 
 func firstDomain(v any) string {
