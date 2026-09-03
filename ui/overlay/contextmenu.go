@@ -57,7 +57,7 @@ func ContextMenu(p ContextMenuProps) g.Node {
 				g.Attr("data-slot", "item"),
 				h.Type("button"),
 				g.If(item.Disabled, g.Attr("disabled", "")),
-				g.If(clickExpr != "", g.Attr("onclick", "window._ctxClose(this);"+clickExpr)),
+				g.If(clickExpr != "", g.Attr("data-on:click", "window._ctxClose(el);"+clickExpr)),
 				g.Group(inner),
 			)
 		}
