@@ -76,7 +76,8 @@ vendor-js: ## vendor datastar.js + altcha.js (ESM browser bundle) into every pro
 	curl -fsSL https://cdn.jsdelivr.net/npm/altcha@$(ALTCHA_VERSION)/dist/workers/sha.js \
 		-o projects/homepage/assets/static/altcha-workers/sha.js
 	cp projects/homepage/assets/static/altcha.js projects/showcase/assets/static/altcha.js
-	cp -R projects/homepage/assets/static/altcha-workers projects/showcase/assets/static/altcha-workers
+	mkdir -p projects/showcase/assets/static/altcha-workers
+	cp -R projects/homepage/assets/static/altcha-workers/. projects/showcase/assets/static/altcha-workers/
 	# leaflet + markercluster: vendored map JS/CSS for the open-map component
 	curl -fsSL https://unpkg.com/leaflet@$(LEAFLET_VERSION)/dist/leaflet.js -o projects/homepage/assets/static/leaflet.js
 	curl -fsSL https://unpkg.com/leaflet@$(LEAFLET_VERSION)/dist/leaflet.css -o projects/homepage/assets/static/leaflet.css

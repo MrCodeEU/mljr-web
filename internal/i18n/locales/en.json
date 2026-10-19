@@ -459,7 +459,7 @@
       "note": "The game starts when the first visitor arrives and stops about 20 seconds after the last one leaves, so it costs nothing while nobody is watching.",
       "classic_link": "Prefer the classic version with four hand-written strategies? Open it here.",
       "desc_title": "How it works",
-      "desc_p1": "The game state lives on the server, not in your browser. A background loop asks the network for a move every 80 ms and streams the board to every open page over server-sent events, so all viewers see the identical game. The loop only runs while someone is watching.",
+      "desc_p1": "The game state lives on the server, not in your browser. A background loop asks the network for a move every 40 ms and streams the board to every open page over server-sent events, so all viewers see the identical game. The loop only runs while someone is watching.",
       "desc_p2": "The network was trained by imitation: a safe teacher strategy (a fixed loop through every cell, plus shortcuts to the apple whenever they are provably safe) played thousands of games, and the network learned to copy its moves from what it sees — the cells around the head, free space, and its position along that loop. It was then ported to plain Go, so no ML runtime is needed on the server.",
       "desc_p3": "It plays safely and fills the board, but it inherits the teacher's habits, including taking the long way around the loop when a shortcut would have been fine. Making it faster than its teacher is the next experiment."
     },

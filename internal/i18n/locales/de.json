@@ -459,7 +459,7 @@
       "note": "Das Spiel startet mit dem ersten Besucher und endet etwa 20 Sekunden nach dem letzten. Solange niemand zuschaut, kostet es nichts.",
       "classic_link": "Lieber die klassische Version mit vier handgeschriebenen Strategien? Hier öffnen.",
       "desc_title": "So funktioniert's",
-      "desc_p1": "Der Spielzustand liegt auf dem Server, nicht in deinem Browser. Eine Hintergrundschleife fragt das Netz alle 80 ms nach einem Zug und streamt das Spielfeld per Server-Sent Events an alle offenen Seiten, damit alle dasselbe Spiel sehen. Die Schleife läuft nur, solange jemand zuschaut.",
+      "desc_p1": "Der Spielzustand liegt auf dem Server, nicht in deinem Browser. Eine Hintergrundschleife fragt das Netz alle 40 ms nach einem Zug und streamt das Spielfeld per Server-Sent Events an alle offenen Seiten, damit alle dasselbe Spiel sehen. Die Schleife läuft nur, solange jemand zuschaut.",
       "desc_p2": "Das Netz wurde per Imitation trainiert: Eine sichere Lehrer-Strategie (eine feste Schleife durch alle Felder, plus Abkürzungen zum Apfel, wenn sie nachweislich sicher sind) hat tausende Spiele gespielt, und das Netz hat gelernt, ihre Züge aus dem zu kopieren, was es sieht — die Felder um den Kopf, freier Platz und die Position auf dieser Schleife. Danach wurde es nach reinem Go portiert, es braucht also keine ML-Runtime auf dem Server.",
       "desc_p3": "Es spielt sicher und füllt das Brett, übernimmt aber die Gewohnheiten des Lehrers, auch den Umweg über die Schleife, wo eine Abkürzung problemlos möglich wäre. Schneller als der Lehrer zu werden ist das nächste Experiment."
     },

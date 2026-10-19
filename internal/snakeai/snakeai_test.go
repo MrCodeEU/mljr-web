@@ -170,3 +170,19 @@ func TestRoomViewerCap(t *testing.T) {
 		t.Fatal("second viewer should be rejected")
 	}
 }
+
+// BenchmarkTick30 is the per-move cost on the production board (features + forward pass + step).
+func BenchmarkTick30(b *testing.B) {
+	m, err := DefaultModel()
+	if err != nil {
+		b.Fatal(err)
+	}
+	g := NewGame(30, rand.New(rand.NewPCG(7, 7))) //nolint:gosec // deterministic benchmark RNG
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if g.Dead || g.Full() {
+			g = NewGame(30, rand.New(rand.NewPCG(uint64(i), 7))) //nolint:gosec // deterministic benchmark RNG
+		}
+		g.Step(m.Act(g.Features()))
+	}
+}
