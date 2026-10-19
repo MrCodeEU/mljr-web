@@ -446,6 +446,23 @@
       "desc_p3": "Nur „Schleife (rein)“ ist tatsächlich beweisbar: Sie zieht immer zur nächsten Zelle in einer festen Schleife, die das gesamte Spielfeld genau einmal besucht, sodass ihr Körper garantiert ein zusammenhängendes, sich nie überschneidendes Stück bleibt — hier gibt es keine Vorausschau, die sich täuschen lässt. Die anderen drei verlassen sich auf diese Ein-Schritt-Sicherheitsprüfung, die von Natur aus kurzsichtig ist: Ein Zug kann völlig sicher aussehen und trotzdem ein paar Schritte später eine Tasche versiegelt haben. Es gibt noch eine zweite, leisere Fehlerart - eine Strategie kann dauerhaft „sicher“ bleiben, indem sie eine Schleife dreht, die nie wirklich näher an das Futter kommt, was auf den ersten Blick unauffällig wirkt, weil sie nie abstürzt - das zu erkennen brauchte eine Prüfung, ob der Punktestand noch steigt, statt nur, ob theoretisch ein Weg zum Futter existiert. Belastungstests aller vier mit beiden Prüfungen haben die Rangfolge bestätigt — Gierig stirbt ständig, Schleife+Abkürzungen und Gierig+Sicherheit scheitern beide gelegentlich (entweder durch Selbsteinsperrung oder durch endloses Kreisen ohne Fortschritt), und reines Schleifenfolgen ist über Hunderttausende simulierter Züge kein einziges Mal gescheitert.",
       "desc_p4": "Der Kompromiss ist Geschwindigkeit: Reines Schleifenfolgen steuert nie direkt auf den Apfel zu, das Wachstum hängt also davon ab, wie lange die Schleife braucht, um daran vorbeizukommen. Zu berechnen ist es trotzdem mit Abstand am schnellsten (ein einzelner Array-Zugriff, keine Suche) — nur beim Finden von Futter ist es nicht die schnellste Strategie."
     },
+    "ai_snake_live": {
+      "card_desc": "Ein Snake-Spiel läuft auf dem Server und wird von einem winzigen neuronalen Netz gespielt — alle auf der Seite sehen dasselbe Spiel live.",
+      "lede": "Ein gemeinsames Spiel, das auf dem Server läuft. Ein kleines neuronales Netz (rund 34.000 Parameter) entscheidet jeden Zug, und alle auf dieser Seite sehen exakt dasselbe Spielfeld.",
+      "score": "Punkte",
+      "best": "Rekord",
+      "games": "Spiele",
+      "viewers": "Zuschauer",
+      "status_playing": "Läuft",
+      "status_dead": "Game over — Neustart",
+      "status_complete": "Brett voll — Neustart",
+      "note": "Das Spiel startet mit dem ersten Besucher und endet etwa 20 Sekunden nach dem letzten. Solange niemand zuschaut, kostet es nichts.",
+      "classic_link": "Lieber die klassische Version mit vier handgeschriebenen Strategien? Hier öffnen.",
+      "desc_title": "So funktioniert's",
+      "desc_p1": "Der Spielzustand liegt auf dem Server, nicht in deinem Browser. Eine Hintergrundschleife fragt das Netz alle 80 ms nach einem Zug und streamt das Spielfeld per Server-Sent Events an alle offenen Seiten, damit alle dasselbe Spiel sehen. Die Schleife läuft nur, solange jemand zuschaut.",
+      "desc_p2": "Das Netz wurde per Imitation trainiert: Eine sichere Lehrer-Strategie (eine feste Schleife durch alle Felder, plus Abkürzungen zum Apfel, wenn sie nachweislich sicher sind) hat tausende Spiele gespielt, und das Netz hat gelernt, ihre Züge aus dem zu kopieren, was es sieht — die Felder um den Kopf, freier Platz und die Position auf dieser Schleife. Danach wurde es nach reinem Go portiert, es braucht also keine ML-Runtime auf dem Server.",
+      "desc_p3": "Es spielt sicher und füllt das Brett, übernimmt aber die Gewohnheiten des Lehrers, auch den Umweg über die Schleife, wo eine Abkürzung problemlos möglich wäre. Schneller als der Lehrer zu werden ist das nächste Experiment."
+    },
     "minenfeld": {
       "card_desc": "Ein Minenfeld Reihe für Reihe durchqueren — ein falscher Schritt und es ist vorbei.",
       "lede": "Minenfeld [20x20] — mit den Pfeiltasten durchqueren, ohne eine Mine zu treffen.",

@@ -446,6 +446,23 @@
       "desc_p3": "Only \"cycle (pure)\" is actually provable: it always moves to the next cell in one fixed loop that visits the whole board exactly once, so its body is guaranteed to stay one contiguous, non-crossing arc - there's no lookahead to fool. The other three rely on that one-step safety check, which is inherently short-sighted: a move can look completely safe and still turn out to have sealed off a pocket a few steps later. There's a second, quieter failure mode too - a strategy can end up permanently \"safe\" by orbiting a loop that never actually gets any closer to food, which looks fine at a glance since it never crashes, so catching it needed watching whether the score is still climbing rather than just whether a path to the food exists in theory. Stress-testing all four with both checks in place confirmed the ranking: greedy dies constantly, cycle-shortcuts and greedy-safe both occasionally fail (either by trapping themselves or by looping forever without progress), and pure cycle-following has never failed once across hundreds of thousands of simulated moves.",
       "desc_p4": "The trade-off is speed: pure cycle-following never beelines for the apple, so growth depends on however long the loop takes to sweep past it. It's still by far the fastest strategy to compute (a single array lookup, no search at all) - it's simply not the fastest at finding food."
     },
+    "ai_snake_live": {
+      "card_desc": "One snake game running on the server, played by a tiny neural network — everyone on the page watches the same game live.",
+      "lede": "One shared game, running on the server. A small neural network (about 34,000 parameters) decides every move, and everyone on this page sees exactly the same board.",
+      "score": "Score",
+      "best": "Best",
+      "games": "Games",
+      "viewers": "Watching",
+      "status_playing": "Playing",
+      "status_dead": "Game over — restarting",
+      "status_complete": "Board filled — restarting",
+      "note": "The game starts when the first visitor arrives and stops about 20 seconds after the last one leaves, so it costs nothing while nobody is watching.",
+      "classic_link": "Prefer the classic version with four hand-written strategies? Open it here.",
+      "desc_title": "How it works",
+      "desc_p1": "The game state lives on the server, not in your browser. A background loop asks the network for a move every 80 ms and streams the board to every open page over server-sent events, so all viewers see the identical game. The loop only runs while someone is watching.",
+      "desc_p2": "The network was trained by imitation: a safe teacher strategy (a fixed loop through every cell, plus shortcuts to the apple whenever they are provably safe) played thousands of games, and the network learned to copy its moves from what it sees — the cells around the head, free space, and its position along that loop. It was then ported to plain Go, so no ML runtime is needed on the server.",
+      "desc_p3": "It plays safely and fills the board, but it inherits the teacher's habits, including taking the long way around the loop when a shortcut would have been fine. Making it faster than its teacher is the next experiment."
+    },
     "minenfeld": {
       "card_desc": "Cross a minefield one row at a time — one wrong step and it's over.",
       "lede": "Minefield [20x20] — cross it with the arrow keys without hitting a mine.",

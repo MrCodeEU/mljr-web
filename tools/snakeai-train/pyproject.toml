@@ -1,0 +1,14 @@
+[project]
+name = "snakenet"
+version = "0.1.0"
+description = "Offline training pipeline for the snake policy net (imitation + DAgger). Exports weights for the Go runtime."
+requires-python = ">=3.11"
+dependencies = ["numpy", "torch", "onnx", "onnxscript"]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
