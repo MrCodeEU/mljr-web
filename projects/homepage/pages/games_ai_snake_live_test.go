@@ -2,6 +2,7 @@ package pages
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 )
@@ -31,4 +32,18 @@ func TestPlaygroundListsAISnakeLive(t *testing.T) {
 		}
 	}
 	t.Fatal("playground does not list /games/ai-snake-live")
+}
+
+// The page calls window.snakeLiveRender and draws into #ai-snake-live-canvas; the
+// renderer script must define/use exactly those names or the board stays blank.
+func TestAISnakeLiveRendererMatchesPage(t *testing.T) {
+	js, err := os.ReadFile("../assets/static/games/ai-snake-live/renderer.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"window.snakeLiveRender", "ai-snake-live-canvas"} {
+		if !strings.Contains(string(js), want) {
+			t.Errorf("renderer.js does not contain %q", want)
+		}
+	}
 }

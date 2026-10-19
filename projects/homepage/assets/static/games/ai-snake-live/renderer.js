@@ -1,14 +1,14 @@
-// Canvas renderer for the shared snake game. Datastar patches the `snake`
-// signal on every server tick; data-effect calls window.snakeAIRender.
+// Canvas renderer for the live AI snake page. Datastar patches the `snake`
+// signal on every server tick; data-effect calls window.snakeLiveRender.
 (function () {
     var CELL = 20;
     function css(name, fallback) {
         var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
         return v || fallback;
     }
-    window.snakeAIRender = function (s) {
+    window.snakeLiveRender = function (s) {
         if (!s || !s.n) return;
-        var canvas = document.getElementById('snake-ai-canvas');
+        var canvas = document.getElementById('ai-snake-live-canvas');
         if (!canvas) return;
         var size = s.n * CELL;
         if (canvas.width !== size) { canvas.width = size; canvas.height = size; }

@@ -111,7 +111,18 @@ icons: ## regenerate ui/icon/icons_gen.go from tools/icongen/icons.txt
 	go run ./tools/icongen
 
 # --- dev / build ---------------------------------------------------------------
-dev: $(TAILWIND) $(AIR) sync-assets data-update ## hot-reload a project:  make dev PROJECT=homepage
+# Files a fresh clone lacks (gitignored / submodule). `make dev|build` fetch them on demand,
+# so `make setup` is only needed for the first-time tool installs (tailwind, air).
+VENDORED_SENTINEL  := projects/homepage/assets/static/datastar.js
+SUBMODULE_SENTINEL := mljr-data/README.md
+
+$(VENDORED_SENTINEL):
+	$(MAKE) vendor-js
+
+$(SUBMODULE_SENTINEL):
+	git submodule update --init mljr-data
+
+dev: $(TAILWIND) $(AIR) $(VENDORED_SENTINEL) sync-assets data-update ## hot-reload a project:  make dev PROJECT=homepage
 	$(TAILWIND) -i $(CSS_IN) -o $(CSS_OUT)
 	@$(URL_LINE) $(PORT)
 	@$(TAILWIND) -i $(CSS_IN) -o $(CSS_OUT) --watch & TW=$$!; \
@@ -120,7 +131,7 @@ dev: $(TAILWIND) $(AIR) sync-assets data-update ## hot-reload a project:  make d
 	  MLJR_ENV=dev PORT=$(PORT) AIR_MAIN_PKG=$(PKG) AIR_BUILD_TAGS= \
 	    $(AIR) -c .air.toml
 
-dev-showcase: $(TAILWIND) $(AIR) ## run the catalogue (build tag: showcase)
+dev-showcase: $(TAILWIND) $(AIR) $(VENDORED_SENTINEL) ## run the catalogue (build tag: showcase)
 	$(TAILWIND) -i projects/showcase/assets/css/input.css -o projects/showcase/assets/static/app.css
 	@$(URL_LINE) 8091
 	@$(TAILWIND) -i projects/showcase/assets/css/input.css -o projects/showcase/assets/static/app.css --watch & TW=$$!; \
@@ -129,7 +140,7 @@ dev-showcase: $(TAILWIND) $(AIR) ## run the catalogue (build tag: showcase)
 	  MLJR_ENV=dev PORT=8091 AIR_MAIN_PKG=./projects/showcase AIR_BUILD_TAGS=showcase \
 	    $(AIR) -c .air.toml
 
-dev-regex: $(TAILWIND) $(AIR) ## run the regex lab (port 8092)
+dev-regex: $(TAILWIND) $(AIR) $(VENDORED_SENTINEL) ## run the regex lab (port 8092)
 	$(TAILWIND) -i projects/regex/assets/css/input.css -o projects/regex/assets/static/app.css
 	@$(URL_LINE) 8092
 	@$(TAILWIND) -i projects/regex/assets/css/input.css -o projects/regex/assets/static/app.css --watch & TW=$$!; \
@@ -137,7 +148,7 @@ dev-regex: $(TAILWIND) $(AIR) ## run the regex lab (port 8092)
 	  MLJR_ENV=dev PORT=8092 AIR_MAIN_PKG=./projects/regex AIR_BUILD_TAGS= \
 	    $(AIR) -c .air.toml
 
-dev-cron: $(TAILWIND) $(AIR) ## run the cron explorer (port 8093)
+dev-cron: $(TAILWIND) $(AIR) $(VENDORED_SENTINEL) ## run the cron explorer (port 8093)
 	$(TAILWIND) -i projects/cron/assets/css/input.css -o projects/cron/assets/static/app.css
 	@$(URL_LINE) 8093
 	@$(TAILWIND) -i projects/cron/assets/css/input.css -o projects/cron/assets/static/app.css --watch & TW=$$!; \
@@ -145,7 +156,7 @@ dev-cron: $(TAILWIND) $(AIR) ## run the cron explorer (port 8093)
 	  MLJR_ENV=dev PORT=8093 AIR_MAIN_PKG=./projects/cron AIR_BUILD_TAGS= \
 	    $(AIR) -c .air.toml
 
-dev-codec: $(TAILWIND) $(AIR) ## run the codec tool (port 8094)
+dev-codec: $(TAILWIND) $(AIR) $(VENDORED_SENTINEL) ## run the codec tool (port 8094)
 	$(TAILWIND) -i projects/codec/assets/css/input.css -o projects/codec/assets/static/app.css
 	@$(URL_LINE) 8094
 	@$(TAILWIND) -i projects/codec/assets/css/input.css -o projects/codec/assets/static/app.css --watch & TW=$$!; \
@@ -153,7 +164,7 @@ dev-codec: $(TAILWIND) $(AIR) ## run the codec tool (port 8094)
 	  MLJR_ENV=dev PORT=8094 AIR_MAIN_PKG=./projects/codec AIR_BUILD_TAGS= \
 	    $(AIR) -c .air.toml
 
-dev-newsletter: $(TAILWIND) $(AIR) ## run the newsletter app (port 8096)
+dev-newsletter: $(TAILWIND) $(AIR) $(VENDORED_SENTINEL) ## run the newsletter app (port 8096)
 	$(TAILWIND) -i projects/newsletter/assets/css/input.css -o projects/newsletter/assets/static/app.css
 	@$(URL_LINE) 8096
 	@$(TAILWIND) -i projects/newsletter/assets/css/input.css -o projects/newsletter/assets/static/app.css --watch & TW=$$!; \
@@ -162,7 +173,7 @@ dev-newsletter: $(TAILWIND) $(AIR) ## run the newsletter app (port 8096)
 	  MLJR_ENV=dev PORT=8096 AIR_MAIN_PKG=./projects/newsletter AIR_BUILD_TAGS= \
 	    $(AIR) -c .air.toml
 
-build: $(TAILWIND) sync-assets ## static binary -> bin/$(PROJECT)
+build: $(TAILWIND) $(VENDORED_SENTINEL) sync-assets ## static binary -> bin/$(PROJECT)
 	$(TAILWIND) -i $(CSS_IN) -o $(CSS_OUT) --minify
 	CGO_ENABLED=0 go build $(BUILD_TAG_FLAGS) -buildvcs=false -trimpath -ldflags="-s -w -X mljr-web/internal/version.Tag=$$(cat VERSION 2>/dev/null || echo dev)" -o bin/$(PROJECT) $(PKG)
 
@@ -172,6 +183,9 @@ docker: ## per-project image:  make docker PROJECT=homepage TAG=v1
 # --- data ------------------------------------------------------------------
 data-update: ## regenerate mljr-data/generated/site-data.json + update seed-cache (needs GITHUB_TOKEN)
 	@if [ -f projects/homepage/.env ]; then set -a; . projects/homepage/.env; set +a; fi; \
+	  if [ -z "$$GITHUB_TOKEN" ]; then \
+	    echo "data-update: GITHUB_TOKEN is not set. Put it in projects/homepage/.env or run: GITHUB_TOKEN=\$$(gh auth token) make dev"; exit 1; \
+	  fi; \
 	  cd mljr-data/generator && \
 	  GITHUB_TOKEN="$$GITHUB_TOKEN" GITHUB_USER="$${GITHUB_USERNAME:-MrCodeEU}" \
 	  INTERVALS_API_KEY="$$INTERVALS_API_KEY" INTERVALS_ATHLETE_ID="$$INTERVALS_ATHLETE_ID" \
@@ -182,7 +196,7 @@ data-update: ## regenerate mljr-data/generated/site-data.json + update seed-cach
 data-pull: ## fetch latest mljr-data submodule from origin
 	git submodule update --remote --merge mljr-data
 
-sync-assets: ## copy mljr-data portfolio images into projects/homepage/assets/static/portfolio
+sync-assets: $(SUBMODULE_SENTINEL) ## copy mljr-data portfolio images into projects/homepage/assets/static/portfolio
 	@rm -rf projects/homepage/assets/static/portfolio
 	@mkdir -p projects/homepage/assets/static/portfolio
 	@cp -r mljr-data/assets/portfolio/. projects/homepage/assets/static/portfolio/
