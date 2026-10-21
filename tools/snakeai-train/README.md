@@ -1,7 +1,27 @@
 # snakeai-train
 
 Offline training pipeline for the live AI snake (`/games/ai-snake-live`). It produces the
-weights that `internal/snakeai` runs in plain Go (no ML runtime on the server).
+weights that `internal/snakesim` runs in plain Go (no ML runtime on the server).
+
+## Current pipeline (v4, 50x50): Go teacher + DAgger
+
+The teacher, simulator, features and data generation are in Go (`internal/snakesim`, `tools/snakesim`);
+Python (`snakenet/dagger_go.py`) only fits the MLP and exports `model.json`.
+
+- **Teacher** (`internal/snakesim/teacher.go`): shortest path to the apple, tie-broken toward the straight
+  line from where the apple appeared (diagonal staircases), accepted only if a simulated snake that walked
+  the path could still reach its tail; otherwise chase the tail. Never died in 600k steps on 50x50.
+- **Features** (v4, 105 values, `features.go`): per action reach/tail/food/line/safe-path terms, global
+  terms, a 7x7 ego window and a 5x5 body-density map. No cycle inputs, any board size.
+- **Training**: `go build -o out50/snakesim ../../tools/snakesim`, then
+  `uv run python -m snakenet.dagger_go --sim out50/snakesim --out out50 --hours 4`. It builds a late-game
+  snapshot library, runs DAgger rounds (Go plays the net, the teacher labels every state), fits in torch and
+  checks each round's net against the teacher on 50x50: (a) share of games reaching 25% fill alive,
+  (b) steps per apple in the first 150 apples, (c) median score at the step cap. `out50/model_best.json`
+  goes to `internal/snakesim/model.json`.
+
+Everything below this section documents the earlier 30x30 cycle-teacher pipeline (feature version 3),
+kept for reference.
 
 ## What it does
 
@@ -73,3 +93,20 @@ no teacher anchor; `--mask cycle|tail`). 40 games per size, no mask at inference
 
 No meaningful speedup over the teacher; the shipped model stays. The eval fitness during training moved
 within noise of 1.0 (16 games), so do not trust single readings.
+
+## Teacher benchmark (2026-10)
+
+`python -m snakenet.teacher_bench --n 20 --games 16 --cap 60000 --teachers cycle,bfs` plays teachers alone and
+reports fill steps, deaths and steps per apple by snake-length band. 20x20, 16 games:
+
+| teacher | steps/apple [<25% <50% <75% rest] | result |
+|---|---|---|
+| cycle (comb + shortcuts, shipped) | 32 / 73 / 76 / 26 | fills 16/16, 20757 steps |
+| bfs (shortest path + virtual-snake check) | 19 / 41 / 68 / 112 | reaches ~393/399 in ~22k steps, then loops and starves (15/16) |
+| bfs + noise / relaxed safety (`teacher2.py`) | similar | worse: collisions and starvation |
+| cycle on random spanning-tree cycles (`cycles.py`) | 38 / 76 / 77 / 25 | no better than the comb, 21.4-21.9k steps |
+
+BFS is about twice as fast as the cycle in the first half of the game but stalls in a loop at the end, so
+total time is about equal. Best case for a hybrid (BFS first half, cycle after) is roughly 20% faster, but it
+needs a Hamiltonian cycle through the current body, which is dynamic and cannot be imitated from the fixed-cycle
+features the net sees.

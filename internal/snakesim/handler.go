@@ -1,4 +1,4 @@
-package snakeai
+package snakesim
 
 import "net/http"
 

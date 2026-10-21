@@ -58,6 +58,11 @@ func AISnakeLive(lang string, a AnalyticsConfig) g.Node {
 						status("complete", "games.ai_snake_live.status_complete"),
 					),
 					h.Canvas(h.ID("ai-snake-live-canvas")),
+					h.Div(h.Class("snake-live-net"),
+						h.H2(g.Text(t("games.ai_snake_live.net_title"))),
+						h.Canvas(h.ID("ai-snake-live-net")),
+						h.P(h.Class("snake-live-note"), g.Text(t("games.ai_snake_live.net_caption"))),
+					),
 				),
 				h.P(h.Class("snake-live-note"), g.Text(t("games.ai_snake_live.note"))),
 				h.P(h.A(h.Href("/games/ai-snake"), g.Text(t("games.ai_snake_live.classic_link")))),
@@ -84,7 +89,7 @@ const aiSnakeLiveCSS = `
   align-items: baseline;
   justify-content: center;
   gap: var(--sp-2) var(--sp-6);
-  width: min(100%, 640px);
+  width: min(100%, 800px);
 }
 .snake-live-label {
   color: var(--muted);
@@ -99,7 +104,7 @@ const aiSnakeLiveCSS = `
 }
 .snake-live-status[data-status="playing"] { color: var(--accent); }
 .snake-live canvas {
-  width: min(100%, 640px);
+  width: min(100%, 800px);
   aspect-ratio: 1;
   display: block;
   background: var(--surface);
@@ -107,10 +112,38 @@ const aiSnakeLiveCSS = `
   image-rendering: pixelated;
 }
 .snake-live-note { color: var(--muted); }
+.snake-live-net {
+  width: min(100%, 800px);
+}
+.snake-live-net h2 { font-size: 1.1rem; margin-bottom: var(--sp-2); }
+.snake-live-net canvas {
+  width: 100%;
+  aspect-ratio: 800 / 260;
+  display: block;
+  background: var(--surface);
+  border: var(--bw-2) solid var(--line);
+}
 `
 
 func aiSnakeLiveDescriptionSection(lang string) g.Node {
 	return gameDescriptionSection(lang, "games.ai_snake_live.desc_title",
-		[]string{"games.ai_snake_live.desc_p1", "games.ai_snake_live.desc_p2", "games.ai_snake_live.desc_p3"},
-		aiSnakeDiagram(), "")
+		[]string{"games.ai_snake_live.desc_p1", "games.ai_snake_live.desc_p2", "games.ai_snake_live.desc_p3",
+			"games.ai_snake_live.desc_p4", "games.ai_snake_live.desc_p5", "games.ai_snake_live.desc_p6",
+			"games.ai_snake_live.desc_p7", "games.ai_snake_live.desc_p8"},
+		aiSnakeLiveDiagram(), "games.ai_snake_live.desc_diagram_caption")
+}
+
+// aiSnakeLiveDiagram contrasts a hard-cornered shortest path with the staircase the teacher picks.
+func aiSnakeLiveDiagram() g.Node {
+	return g.El("svg",
+		g.Attr("viewBox", "0 0 260 220"),
+		g.Attr("xmlns", "http://www.w3.org/2000/svg"),
+		gridLines(260, 220, 24),
+		g.El("path", g.Attr("d", "M20 190 L20 40 L212 40"),
+			g.Attr("style", "stroke:var(--muted);stroke-width:2.5;fill:none;stroke-dasharray:6 5;stroke-linejoin:round")),
+		g.El("path", g.Attr("d", "M20 190 L20 166 L44 166 L44 142 L68 142 L68 118 L92 118 L92 94 L116 94 L116 70 L140 70 L140 46 L212 46 L212 40"),
+			g.Attr("style", "stroke:#78b4ff;stroke-width:2.5;fill:none;stroke-linejoin:round")),
+		g.El("rect", g.Attr("x", "206"), g.Attr("y", "34"), g.Attr("width", "12"), g.Attr("height", "12"),
+			g.Attr("style", "fill:var(--accent)")),
+	)
 }
