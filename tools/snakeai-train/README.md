@@ -1,7 +1,27 @@
 # snakeai-train
 
 Offline training pipeline for the live AI snake (`/games/ai-snake-live`). It produces the
-weights that `internal/snakeai` runs in plain Go (no ML runtime on the server).
+weights that `internal/snakesim` runs in plain Go (no ML runtime on the server).
+
+## Current pipeline (v4, 50x50): Go teacher + DAgger
+
+The teacher, simulator, features and data generation are in Go (`internal/snakesim`, `tools/snakesim`);
+Python (`snakenet/dagger_go.py`) only fits the MLP and exports `model.json`.
+
+- **Teacher** (`internal/snakesim/teacher.go`): shortest path to the apple, tie-broken toward the straight
+  line from where the apple appeared (diagonal staircases), accepted only if a simulated snake that walked
+  the path could still reach its tail; otherwise chase the tail. Never died in 600k steps on 50x50.
+- **Features** (v4, 105 values, `features.go`): per action reach/tail/food/line/safe-path terms, global
+  terms, a 7x7 ego window and a 5x5 body-density map. No cycle inputs, any board size.
+- **Training**: `go build -o out50/snakesim ../../tools/snakesim`, then
+  `uv run python -m snakenet.dagger_go --sim out50/snakesim --out out50 --hours 4`. It builds a late-game
+  snapshot library, runs DAgger rounds (Go plays the net, the teacher labels every state), fits in torch and
+  checks each round's net against the teacher on 50x50: (a) share of games reaching 25% fill alive,
+  (b) steps per apple in the first 150 apples, (c) median score at the step cap. `out50/model_best.json`
+  goes to `internal/snakesim/model.json`.
+
+Everything below this section documents the earlier 30x30 cycle-teacher pipeline (feature version 3),
+kept for reference.
 
 ## What it does
 

@@ -13,13 +13,19 @@ This file tells future Claude/agent runs **how to extend this repo without break
 5. **No `class=` even via `g.Attr("class", ...)` in `ui/`.** The grep guard catches both.
 6. **Datastar SDK is `github.com/starfederation/datastar-go/datastar`** (v1.2.x). API: `NewSSE`, `PatchElements`, `PatchSignals`, `RemoveElements`, `ExecuteScript`, `Redirect`, `ReadSignals`, `MarshalAndPatchSignals`.
 
-## Live AI snake (`internal/snakeai`)
+## Live AI snake (`internal/snakesim`)
 
-`/games/ai-snake-live` shows one server-side game driven by a small MLP; every visitor watches the same
-state over SSE (`/api/snake-ai/stream`, under `/api/` so the gzip middleware skips it). The room only runs
-while someone is watching (20 s grace), and the model is dropped when idle. `internal/snakeai/model.json`
-and `testdata/golden.json` are produced by `tools/snakeai-train`; the feature layout is a Python/Go contract
-guarded by `go test ./internal/snakeai/...` — see `tools/snakeai-train/README.md` before touching features.
+`/games/ai-snake-live` shows one server-side 50x50 game driven by a small MLP; every visitor watches the same
+state over SSE (`/api/snake-ai/stream`, under `/api/` so the gzip middleware skips it). The room runs at a
+fixed number of moves per second timed on the real clock (`SNAKE_AI_MPS`, default 30), only while someone
+is watching (20 s grace), and the model is dropped when idle. Each SSE message carries the last 4 moves
+(`m`); a full state (`full` + `body`) is sent on connect and every 60 moves. `renderer.js` mirrors the
+catch-up logic tested in `internal/snakesim/room_test.go`.
+
+`internal/snakesim/model.json` is produced by `tools/snakeai-train` (`snakenet/dagger_go.py`). The feature
+layout lives only in Go (`features.go`, `FeatureVersion`): Python reads Go-generated training data, so there
+is no Python/Go feature drift; bump `FeatureVersion` when a feature changes and retrain. The teacher
+(`teacher.go`) is the reference behaviour; `go run ./tools/snakesim bench|gif|gen|warmlib`.
 
 ## Module path
 

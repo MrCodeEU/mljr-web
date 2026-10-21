@@ -84,7 +84,7 @@ const aiSnakeLiveCSS = `
   align-items: baseline;
   justify-content: center;
   gap: var(--sp-2) var(--sp-6);
-  width: min(100%, 640px);
+  width: min(100%, 800px);
 }
 .snake-live-label {
   color: var(--muted);
@@ -99,7 +99,7 @@ const aiSnakeLiveCSS = `
 }
 .snake-live-status[data-status="playing"] { color: var(--accent); }
 .snake-live canvas {
-  width: min(100%, 640px);
+  width: min(100%, 800px);
   aspect-ratio: 1;
   display: block;
   background: var(--surface);

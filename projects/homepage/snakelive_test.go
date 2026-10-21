@@ -45,7 +45,7 @@ func TestSnakeLiveStreamIsUncompressedSSE(t *testing.T) {
 			data = line
 		}
 	}
-	if event != "event: datastar-patch-signals" || !strings.Contains(data, `"snake":{"n":30`) {
+	if event != "event: datastar-patch-signals" || !strings.Contains(data, `"snake":{"n":50`) {
 		t.Fatalf("unexpected first frame: %q / %q", event, data)
 	}
 }
