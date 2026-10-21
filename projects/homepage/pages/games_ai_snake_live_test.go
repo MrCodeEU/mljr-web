@@ -14,7 +14,7 @@ func TestAISnakeLiveRendersStreamHookup(t *testing.T) {
 			t.Fatalf("%s render: %v", lang, err)
 		}
 		body := buf.String()
-		for _, want := range []string{AISnakeStreamPath, `id="ai-snake-live-canvas"`, "/static/games/ai-snake-live/renderer.js", "snakeLiveRender"} {
+		for _, want := range []string{AISnakeStreamPath, `id="ai-snake-live-canvas"`, `id="ai-snake-live-net"`, "/static/games/ai-snake-live/renderer.js", "snakeLiveRender"} {
 			if !strings.Contains(body, want) {
 				t.Errorf("%s page missing %q", lang, want)
 			}

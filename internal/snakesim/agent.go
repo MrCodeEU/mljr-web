@@ -61,3 +61,26 @@ func GuardedAct(m *Model, feat []float32) int {
 	}
 	return order[0]
 }
+
+// Trace is what the network saw and computed for one move, for the page's visualisation.
+type Trace struct {
+	Input  []float32   // the NFeatures inputs
+	Layers [][]float32 // hidden activations, then the 3 logits
+	Top    int         // the net's own favourite action
+	Chosen int         // the action played after the guard
+}
+
+// ActTrace is Act plus the data behind the decision.
+func (a *Agent) ActTrace(g *Game) (int, *Trace) {
+	a.t.Features(g, a.feat)
+	chosen := GuardedAct(a.m, a.feat)
+	layers := a.m.Trace(a.feat)
+	logits := layers[len(layers)-1]
+	top := 0
+	for i := 1; i < len(logits); i++ {
+		if logits[i] > logits[top] {
+			top = i
+		}
+	}
+	return chosen, &Trace{Input: append([]float32(nil), a.feat...), Layers: layers, Top: top, Chosen: chosen}
+}

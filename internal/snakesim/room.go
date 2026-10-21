@@ -1,7 +1,9 @@
 package snakesim
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"math"
 	"math/rand/v2"
 	"sync"
 	"time"
@@ -118,17 +120,83 @@ func (r *Room) Viewers() int {
 // state is the shared signal object. Full states carry the body; every state carries the last few moves,
 // so a client that missed a message catches up without waiting for the next full state.
 type state struct {
-	N       int    `json:"n,omitempty"`
-	Full    uint64 `json:"full,omitempty"` // increments with every full state; clients rebuild when it changes
-	Body    []int  `json:"body,omitempty"` // cell indices y*n+x, head first
-	Moves   []int  `json:"m,omitempty"`    // last moves as head cell, grew (0/1) pairs, oldest first; the newest is this tick
-	Food    int    `json:"food"`
-	Score   int    `json:"score"`
-	Best    int    `json:"best"`
-	Games   int    `json:"games"`
-	Viewers int    `json:"viewers"`
-	Status  string `json:"status"` // playing | dead | complete
-	Tick    uint64 `json:"tick"`
+	N       int     `json:"n,omitempty"`
+	Full    uint64  `json:"full,omitempty"` // increments with every full state; clients rebuild when it changes
+	Body    []int   `json:"body,omitempty"` // cell indices y*n+x, head first
+	Moves   []int   `json:"m,omitempty"`    // last moves as head cell, grew (0/1) pairs, oldest first; the newest is this tick
+	Food    int     `json:"food"`
+	Score   int     `json:"score"`
+	Best    int     `json:"best"`
+	Games   int     `json:"games"`
+	Viewers int     `json:"viewers"`
+	Status  string  `json:"status"` // playing | dead | complete
+	Tick    uint64  `json:"tick"`
+	Net     *netViz `json:"net,omitempty"` // present on every vizEvery-th move
+}
+
+// netViz is a compact picture of one forward pass: inputs and both hidden layers as bytes (base64), the
+// softmax over the three actions, the net's favourite and the move the guard allowed.
+type netViz struct {
+	T      uint64     `json:"t"`  // tick of the move this belongs to
+	In     string     `json:"in"` // NFeatures bytes, value = (b/255-0.5)*2
+	H1     string     `json:"h1"` // hidden activations, b/255*S1
+	H2     string     `json:"h2"`
+	S1     float32    `json:"s1"`
+	S2     float32    `json:"s2"`
+	P      [3]float32 `json:"p"` // left, straight, right
+	Top    int        `json:"top"`
+	Chosen int        `json:"chosen"`
+}
+
+// vizEvery is how often (in moves) a network picture is sent: about 10 per second at 30 moves per second.
+const vizEvery = 3
+
+func quantize(v []float32, scale float32) string {
+	b := make([]byte, len(v))
+	for i, x := range v {
+		q := float64(x / scale * 255)
+		b[i] = byte(math.Max(0, math.Min(255, math.Round(q))))
+	}
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+func maxOf(v []float32) float32 {
+	m := float32(1e-6)
+	for _, x := range v {
+		if x > m {
+			m = x
+		}
+	}
+	return m
+}
+
+func newNetViz(tick uint64, tr *Trace) *netViz {
+	in := make([]float32, len(tr.Input))
+	for i, x := range tr.Input {
+		in[i] = (x*0.5 + 0.5) // inputs live in [-1, 1]
+		if in[i] < 0 {
+			in[i] = 0
+		}
+	}
+	h1, h2, lg := tr.Layers[0], tr.Layers[1], tr.Layers[len(tr.Layers)-1]
+	v := &netViz{T: tick, In: quantize(in, 1), S1: maxOf(h1), S2: maxOf(h2), Top: tr.Top, Chosen: tr.Chosen}
+	v.H1, v.H2 = quantize(h1, v.S1), quantize(h2, v.S2)
+	mx := lg[0]
+	for _, x := range lg {
+		if x > mx {
+			mx = x
+		}
+	}
+	var sum float64
+	var e [3]float64
+	for i := 0; i < 3; i++ {
+		e[i] = math.Exp(float64(lg[i] - mx))
+		sum += e[i]
+	}
+	for i := 0; i < 3; i++ {
+		v.P[i] = float32(math.Round(e[i]/sum*100) / 100)
+	}
+	return v
 }
 
 // encode wraps a state as a Datastar patch-signals SSE message.
@@ -177,7 +245,7 @@ func (r *Room) stopIfIdle() bool {
 const movesKept = 4
 
 // emit builds and broadcasts the message for this move. withBody forces a full state.
-func (r *Room) emit(g *Game, ate bool, status string, withBody bool) {
+func (r *Room) emit(g *Game, ate bool, status string, withBody bool, tr *Trace) {
 	r.mu.Lock()
 	r.tick++
 	if r.needFull {
@@ -204,6 +272,9 @@ func (r *Room) emit(g *Game, ate bool, status string, withBody bool) {
 		r.last = s.Body
 	}
 	s.Moves = append([]int(nil), r.moves...)
+	if tr != nil {
+		s.Net = newNetViz(r.tick, tr)
+	}
 	r.mu.Unlock()
 	r.broadcast(encode(s))
 }
@@ -238,15 +309,22 @@ func (r *Room) loop() {
 	}
 	for {
 		g := NewGame(r.cfg.N, rng)
-		r.emit(g, false, "playing", true)
+		r.emit(g, false, "playing", true, nil)
 		for moves := 1; !g.Dead; moves++ {
 			if !wait() {
 				return
 			}
 			before := g.Score
-			g.Step(agent.Act(g))
+			var tr *Trace
+			var a int
+			if moves%vizEvery == 0 {
+				a, tr = agent.ActTrace(g)
+			} else {
+				a = agent.Act(g)
+			}
+			g.Step(a)
 			if !g.Dead {
-				r.emit(g, g.Score > before, "playing", moves%r.cfg.FullEvery == 0)
+				r.emit(g, g.Score > before, "playing", moves%r.cfg.FullEvery == 0, tr)
 			}
 		}
 		status := "dead"
@@ -259,7 +337,7 @@ func (r *Room) loop() {
 			r.best = g.Score
 		}
 		r.mu.Unlock()
-		r.emit(g, false, status, true)
+		r.emit(g, false, status, true, nil)
 		for end := time.Now().Add(r.cfg.RestartDelay); time.Now().Before(end); {
 			if !wait() {
 				return

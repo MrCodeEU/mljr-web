@@ -58,6 +58,11 @@ func AISnakeLive(lang string, a AnalyticsConfig) g.Node {
 						status("complete", "games.ai_snake_live.status_complete"),
 					),
 					h.Canvas(h.ID("ai-snake-live-canvas")),
+					h.Div(h.Class("snake-live-net"),
+						h.H2(g.Text(t("games.ai_snake_live.net_title"))),
+						h.Canvas(h.ID("ai-snake-live-net")),
+						h.P(h.Class("snake-live-note"), g.Text(t("games.ai_snake_live.net_caption"))),
+					),
 				),
 				h.P(h.Class("snake-live-note"), g.Text(t("games.ai_snake_live.note"))),
 				h.P(h.A(h.Href("/games/ai-snake"), g.Text(t("games.ai_snake_live.classic_link")))),
@@ -107,6 +112,17 @@ const aiSnakeLiveCSS = `
   image-rendering: pixelated;
 }
 .snake-live-note { color: var(--muted); }
+.snake-live-net {
+  width: min(100%, 800px);
+}
+.snake-live-net h2 { font-size: 1.1rem; margin-bottom: var(--sp-2); }
+.snake-live-net canvas {
+  width: 100%;
+  aspect-ratio: 800 / 260;
+  display: block;
+  background: var(--surface);
+  border: var(--bw-2) solid var(--line);
+}
 `
 
 func aiSnakeLiveDescriptionSection(lang string) g.Node {

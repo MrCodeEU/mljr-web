@@ -2,6 +2,7 @@ package snakesim
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -176,6 +177,41 @@ func TestNewViewerGetsFullStateQuickly(t *testing.T) {
 			if s := decode(t, msg); s.Body != nil && s.N == 20 && s.Status == "playing" {
 				return
 			}
+		}
+	}
+}
+
+// Every third move carries a picture of the forward pass with the expected sizes.
+func TestNetVizPresentEveryThirdMove(t *testing.T) {
+	r := NewRoom(Config{N: 20, Speed: 400, Seed: 4, Grace: time.Hour})
+	sub := r.Subscribe()
+	defer sub.Close()
+	seen := 0
+	deadline := time.After(20 * time.Second)
+	for seen < 5 {
+		select {
+		case <-deadline:
+			t.Fatal("timed out waiting for network pictures")
+		case msg := <-sub.C:
+			s := decode(t, msg)
+			if s.Net == nil {
+				continue
+			}
+			if s.Net.T != s.Tick {
+				t.Fatalf("picture for tick %d sent with tick %d", s.Net.T, s.Tick)
+			}
+			for name, want := range map[string]int{"in": NFeatures, "h1": 256, "h2": 256} {
+				enc := map[string]string{"in": s.Net.In, "h1": s.Net.H1, "h2": s.Net.H2}[name]
+				raw, err := base64.StdEncoding.DecodeString(enc)
+				if err != nil || len(raw) != want {
+					t.Fatalf("%s: %d bytes (%v), want %d", name, len(raw), err, want)
+				}
+			}
+			sum := s.Net.P[0] + s.Net.P[1] + s.Net.P[2]
+			if sum < 0.97 || sum > 1.03 || s.Net.Chosen < 0 || s.Net.Chosen > 2 || s.Net.Top < 0 || s.Net.Top > 2 {
+				t.Fatalf("bad picture %+v", s.Net)
+			}
+			seen++
 		}
 	}
 }

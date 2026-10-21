@@ -88,3 +88,26 @@ func (m *Model) Width() int {
 	}
 	return w
 }
+
+// Trace runs the forward pass and returns every layer's output: post-ReLU activations for the hidden layers,
+// raw logits last. It allocates, so use it only where the values are shown (live visualisation).
+func (m *Model) Trace(x []float32) [][]float32 {
+	acts := make([][]float32, 0, len(m.Layers))
+	cur := x
+	for i, l := range m.Layers {
+		out := make([]float32, len(l.B))
+		for o := range out {
+			s := l.B[o]
+			for j, v := range cur {
+				s += l.W[o][j] * v
+			}
+			if i < len(m.Layers)-1 && s < 0 {
+				s = 0
+			}
+			out[o] = s
+		}
+		acts = append(acts, out)
+		cur = out
+	}
+	return acts
+}
