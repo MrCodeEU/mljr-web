@@ -5,14 +5,20 @@
 package main
 
 import (
+	"bufio"
+	"encoding/binary"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"image"
 	"image/color"
 	"image/gif"
+	"math"
 	"math/rand/v2"
 	"os"
 	"sort"
+	"strconv"
+	"strings"
 	"sync"
 
 	"mljr-web/internal/snakesim"
@@ -28,6 +34,10 @@ func main() {
 		bench(os.Args[2:])
 	case "gif":
 		render(os.Args[2:])
+	case "gen":
+		gen(os.Args[2:])
+	case "warmlib":
+		warmlib(os.Args[2:])
 	default:
 		fmt.Fprintln(os.Stderr, "unknown command", os.Args[1])
 		os.Exit(2)
@@ -48,6 +58,7 @@ type result struct {
 }
 
 type cfg struct {
+	model    *snakesim.Model
 	riskFrac float64
 	riskWait int
 	room     float64
@@ -62,8 +73,19 @@ func play(n int, seed uint64, maxSteps int, c cfg) result {
 	steps150, turns, moves := 0, 0, 0
 	lastAte := 0
 	prevHeading := g.Heading
+	var feat, bufA, bufB []float32
+	if c.model != nil {
+		feat = make([]float32, snakesim.NFeatures)
+		bufA, bufB = make([]float32, c.model.Width()), make([]float32, c.model.Width())
+	}
 	for !g.Dead && r.steps < maxSteps {
-		a := t.Action(g)
+		var a int
+		if c.model != nil {
+			t.Features(g, feat)
+			a = c.model.Act(feat, bufA, bufB)
+		} else {
+			a = t.Action(g)
+		}
 		before := g.Score
 		b := band(g.Len(), n)
 		g.Step(a)
@@ -127,8 +149,12 @@ func bench(args []string) {
 	riskFrac := fs.Float64("risk", 2, "fill fraction past which risky rules apply")
 	riskWait := fs.Int("wait", 0, "steps without food before the room rule applies")
 	room := fs.Float64("room", 1.2, "free-space margin of the room rule")
+	modelPath := fs.String("model", "", "play with this model.json instead of the teacher")
 	_ = fs.Parse(args)
-	c := cfg{*riskFrac, *riskWait, *room}
+	c := cfg{nil, *riskFrac, *riskWait, *room}
+	if *modelPath != "" {
+		c.model = loadModel(*modelPath)
+	}
 	if *maxSteps == 0 {
 		*maxSteps = 40 * *n * *n
 	}
@@ -248,4 +274,176 @@ func render(args []string) {
 		os.Exit(1)
 	}
 	fmt.Printf("wrote %s: %d frames, %d apples, dead=%v\n", *out, len(anim.Image), g.Score, g.Dead)
+}
+
+func loadModel(path string) *snakesim.Model {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	m, err := snakesim.LoadModel(data)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	return m
+}
+
+// gen plays games and writes (teacher label, features) records for DAgger: 1 byte label then
+// NFeatures little-endian float32. With -model the net drives (probability 1-beta per step) and the
+// teacher still labels every state.
+func gen(args []string) {
+	fs := flag.NewFlagSet("gen", flag.ExitOnError)
+	games := fs.Int("games", 400, "games to play")
+	sizes := fs.String("sizes", "20,30,40,50", "board sizes, cycled")
+	maxSteps := fs.Int("steps", 1500, "recorded steps per game")
+	seed := fs.Uint64("seed", 1, "first seed")
+	beta := fs.Float64("beta", 1, "probability of executing the teacher action")
+	warm := fs.Float64("warm", 0.75, "share of games that start from a library snapshot")
+	libPath := fs.String("lib", "", "warm-start library from the warmlib command")
+	modelPath := fs.String("model", "", "model.json driving the non-teacher steps")
+	out := fs.String("out", "data.bin", "output file")
+	procs := fs.Int("procs", 16, "parallel workers")
+	_ = fs.Parse(args)
+	var model *snakesim.Model
+	if *modelPath != "" {
+		model = loadModel(*modelPath)
+	}
+	var ns []int
+	for _, f := range strings.Split(*sizes, ",") {
+		v, err := strconv.Atoi(strings.TrimSpace(f))
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "bad -sizes:", err)
+			os.Exit(2)
+		}
+		ns = append(ns, v)
+	}
+	lib := map[int][]snakesim.Snapshot{}
+	if *libPath != "" {
+		data, err := os.ReadFile(*libPath)
+		if err == nil {
+			err = json.Unmarshal(data, &lib)
+		}
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+	}
+	f, err := os.Create(*out)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	w := bufio.NewWriterSize(f, 1<<20)
+	var mu sync.Mutex
+	records, deaths := 0, 0
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, *procs)
+	for i := 0; i < *games; i++ {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func() {
+			defer wg.Done()
+			defer func() { <-sem }()
+			n := ns[i%len(ns)]
+			sd := *seed*1_000_003 + uint64(i)
+			rng := rand.New(rand.NewPCG(sd, sd^0x9e3779b97f4a7c15)) //nolint:gosec // deterministic data generation
+			g := snakesim.NewGame(n, rng)
+			t := snakesim.NewTeacher(n)
+			if snaps := lib[n]; len(snaps) > 0 && rng.Float64() < *warm {
+				g = snakesim.Restore(snaps[rng.IntN(len(snaps))], rng)
+			}
+			feat := make([]float32, snakesim.NFeatures)
+			var bufA, bufB []float32
+			if model != nil {
+				bufA, bufB = make([]float32, model.Width()), make([]float32, model.Width())
+			}
+			buf := make([]byte, 0, *maxSteps*(1+4*snakesim.NFeatures))
+			count := 0
+			for step := 0; step < *maxSteps && !g.Dead && !g.Full(); step++ {
+				label := t.Action(g)
+				t.Features(g, feat)
+				buf = append(buf, byte(label))
+				for _, v := range feat {
+					buf = binary.LittleEndian.AppendUint32(buf, math.Float32bits(v))
+				}
+				count++
+				a := label
+				if model != nil && rng.Float64() >= *beta {
+					a = model.Act(feat, bufA, bufB)
+				}
+				g.Step(a)
+			}
+			mu.Lock()
+			_, _ = w.Write(buf)
+			records += count
+			if g.Dead && !g.Full() {
+				deaths++
+			}
+			mu.Unlock()
+		}()
+	}
+	wg.Wait()
+	if err := w.Flush(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	_ = f.Close()
+	fmt.Printf("wrote %s: %d records (%d bytes each), %d/%d games ended in a death\n", *out, records, 1+4*snakesim.NFeatures, deaths, *games)
+}
+
+// warmlib plays teacher games per board size and snapshots them every 2% of fill up to -max, so that
+// training rounds can start from late-game states without replaying the whole game.
+func warmlib(args []string) {
+	fs := flag.NewFlagSet("warmlib", flag.ExitOnError)
+	sizes := fs.String("sizes", "20,30,40,50", "board sizes")
+	per := fs.Int("games", 24, "teacher games per size")
+	maxFill := fs.Float64("max", 0.6, "stop a game at this fill fraction")
+	out := fs.String("out", "warmlib.json", "output file")
+	_ = fs.Parse(args)
+	lib := map[int][]snakesim.Snapshot{}
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, 16)
+	for _, f := range strings.Split(*sizes, ",") {
+		n, err := strconv.Atoi(strings.TrimSpace(f))
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "bad -sizes:", err)
+			os.Exit(2)
+		}
+		for i := 0; i < *per; i++ {
+			wg.Add(1)
+			sem <- struct{}{}
+			go func() {
+				defer wg.Done()
+				defer func() { <-sem }()
+				sd := uint64(9_000_000 + n*1000 + i)
+				rng := rand.New(rand.NewPCG(sd, sd^0x9e3779b97f4a7c15)) //nolint:gosec // deterministic library
+				g := snakesim.NewGame(n, rng)
+				t := snakesim.NewTeacher(n)
+				var snaps []snakesim.Snapshot
+				next := 0.02
+				for k := 0; k < 400*n*n && !g.Dead && float64(g.Len()) < *maxFill*float64(n*n); k++ {
+					g.Step(t.Action(g))
+					if float64(g.Len()) >= next*float64(n*n) && !g.Dead {
+						snaps = append(snaps, g.Snapshot())
+						next += 0.02
+					}
+				}
+				mu.Lock()
+				lib[n] = append(lib[n], snaps...)
+				mu.Unlock()
+			}()
+		}
+	}
+	wg.Wait()
+	data, _ := json.Marshal(lib)
+	if err := os.WriteFile(*out, data, 0o644); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	for n, s := range lib {
+		fmt.Printf("n=%d: %d snapshots\n", n, len(s))
+	}
 }

@@ -74,3 +74,37 @@ func TestOpeningNeverDies(t *testing.T) {
 		}
 	}
 }
+
+func TestFeaturesShapeAndRange(t *testing.T) {
+	for _, n := range []int{10, 30, 50} {
+		g := NewGame(n, newRNG(uint64(n)))
+		te := NewTeacher(n)
+		x := make([]float32, NFeatures)
+		for i := 0; i < 400 && !g.Dead; i++ {
+			te.Features(g, x)
+			for k, v := range x {
+				if v != v || v < -1.0001 || v > 2.0001 {
+					t.Fatalf("n=%d step %d feature %d out of range: %v", n, i, k, v)
+				}
+			}
+			g.Step(te.Action(g))
+		}
+	}
+}
+
+// Features are egocentric: a state and its mirror image give mirrored per-action blocks.
+func TestFeaturesDeterministic(t *testing.T) {
+	g := NewGame(20, newRNG(9))
+	te := NewTeacher(20)
+	for i := 0; i < 200 && !g.Dead; i++ {
+		g.Step(te.Action(g))
+	}
+	a, b := make([]float32, NFeatures), make([]float32, NFeatures)
+	te.Features(g, a)
+	te.Features(g, b)
+	for i := range a {
+		if a[i] != b[i] {
+			t.Fatalf("feature %d differs between calls", i)
+		}
+	}
+}

@@ -126,3 +126,35 @@ func (g *Game) Step(action int) {
 
 // Full reports whether the snake filled the board.
 func (g *Game) Full() bool { return g.Food < 0 }
+
+// Snapshot is a serialisable game state, used for warm starts.
+type Snapshot struct {
+	N         int   `json:"n"`
+	Heading   int   `json:"heading"`
+	Body      []int `json:"body"` // head first
+	Food      int   `json:"food"`
+	LegStart  int   `json:"leg_start"`
+	Score     int   `json:"score"`
+	SinceFood int   `json:"since_food"`
+}
+
+// Snapshot captures the state.
+func (g *Game) Snapshot() Snapshot {
+	b := make([]int, g.size)
+	for i := range b {
+		b[i] = g.Cell(i)
+	}
+	return Snapshot{g.N, g.Heading, b, g.Food, g.LegStart, g.Score, g.SinceFood}
+}
+
+// Restore builds a game from a snapshot with a fresh random source.
+func Restore(s Snapshot, rng *rand.Rand) *Game {
+	g := &Game{N: s.N, body: make([]int32, s.N*s.N), occ: make([]bool, s.N*s.N), rng: rng,
+		Heading: s.Heading, Food: s.Food, LegStart: s.LegStart, Score: s.Score, SinceFood: s.SinceFood}
+	for i, c := range s.Body {
+		g.body[i] = int32(c)
+		g.occ[c] = true
+	}
+	g.size = len(s.Body)
+	return g
+}

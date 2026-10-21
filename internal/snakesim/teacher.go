@@ -24,6 +24,7 @@ type Teacher struct {
 	LastRule int
 
 	dist  []int32
+	tdist []int32
 	queue []int32
 	seen  []int32
 	blk   []int32
@@ -38,6 +39,7 @@ func NewTeacher(n int) *Teacher {
 		StallRoom: 1.2,
 		RiskFrac:  2, // risk rules off by default: they killed every game at ~26% fill
 		dist:      make([]int32, n*n),
+		tdist:     make([]int32, n*n),
 		queue:     make([]int32, n*n),
 		seen:      make([]int32, n*n),
 		blk:       make([]int32, n*n),
