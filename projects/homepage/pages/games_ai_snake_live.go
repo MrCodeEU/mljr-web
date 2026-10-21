@@ -111,6 +111,23 @@ const aiSnakeLiveCSS = `
 
 func aiSnakeLiveDescriptionSection(lang string) g.Node {
 	return gameDescriptionSection(lang, "games.ai_snake_live.desc_title",
-		[]string{"games.ai_snake_live.desc_p1", "games.ai_snake_live.desc_p2", "games.ai_snake_live.desc_p3"},
-		aiSnakeDiagram(), "")
+		[]string{"games.ai_snake_live.desc_p1", "games.ai_snake_live.desc_p2", "games.ai_snake_live.desc_p3",
+			"games.ai_snake_live.desc_p4", "games.ai_snake_live.desc_p5", "games.ai_snake_live.desc_p6",
+			"games.ai_snake_live.desc_p7", "games.ai_snake_live.desc_p8"},
+		aiSnakeLiveDiagram(), "games.ai_snake_live.desc_diagram_caption")
+}
+
+// aiSnakeLiveDiagram contrasts a hard-cornered shortest path with the staircase the teacher picks.
+func aiSnakeLiveDiagram() g.Node {
+	return g.El("svg",
+		g.Attr("viewBox", "0 0 260 220"),
+		g.Attr("xmlns", "http://www.w3.org/2000/svg"),
+		gridLines(260, 220, 24),
+		g.El("path", g.Attr("d", "M20 190 L20 40 L212 40"),
+			g.Attr("style", "stroke:var(--muted);stroke-width:2.5;fill:none;stroke-dasharray:6 5;stroke-linejoin:round")),
+		g.El("path", g.Attr("d", "M20 190 L20 166 L44 166 L44 142 L68 142 L68 118 L92 118 L92 94 L116 94 L116 70 L140 70 L140 46 L212 46 L212 40"),
+			g.Attr("style", "stroke:#78b4ff;stroke-width:2.5;fill:none;stroke-linejoin:round")),
+		g.El("rect", g.Attr("x", "206"), g.Attr("y", "34"), g.Attr("width", "12"), g.Attr("height", "12"),
+			g.Attr("style", "fill:var(--accent)")),
+	)
 }

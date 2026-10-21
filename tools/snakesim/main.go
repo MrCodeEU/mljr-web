@@ -38,6 +38,8 @@ func main() {
 		gen(os.Args[2:])
 	case "warmlib":
 		warmlib(os.Args[2:])
+	case "autopsy":
+		autopsy(os.Args[2:])
 	default:
 		fmt.Fprintln(os.Stderr, "unknown command", os.Args[1])
 		os.Exit(2)
@@ -62,6 +64,7 @@ type cfg struct {
 	riskFrac float64
 	riskWait int
 	room     float64
+	guard    bool
 }
 
 func play(n int, seed uint64, maxSteps int, c cfg) result {
@@ -82,7 +85,11 @@ func play(n int, seed uint64, maxSteps int, c cfg) result {
 		var a int
 		if c.model != nil {
 			t.Features(g, feat)
-			a = c.model.Act(feat, bufA, bufB)
+			if c.guard {
+				a = snakesim.GuardedAct(c.model, feat)
+			} else {
+				a = c.model.Act(feat, bufA, bufB)
+			}
 		} else {
 			a = t.Action(g)
 		}
@@ -150,8 +157,9 @@ func bench(args []string) {
 	riskWait := fs.Int("wait", 0, "steps without food before the room rule applies")
 	room := fs.Float64("room", 1.2, "free-space margin of the room rule")
 	modelPath := fs.String("model", "", "play with this model.json instead of the teacher")
+	guard := fs.Bool("guard", false, "veto net moves that trap the snake (tail unreachable)")
 	_ = fs.Parse(args)
-	c := cfg{nil, *riskFrac, *riskWait, *room}
+	c := cfg{nil, *riskFrac, *riskWait, *room, *guard}
 	if *modelPath != "" {
 		c.model = loadModel(*modelPath)
 	}
@@ -231,7 +239,12 @@ func render(args []string) {
 	cell := fs.Int("cell", 10, "pixels per cell")
 	delay := fs.Int("delay", 3, "frame delay in 1/100 s")
 	out := fs.String("out", "teacher.gif", "output file")
+	modelPath := fs.String("model", "", "play with this model.json instead of the teacher")
 	_ = fs.Parse(args)
+	var agent *snakesim.Agent
+	if *modelPath != "" {
+		agent = snakesim.NewAgent(loadModel(*modelPath), *n)
+	}
 	rng := rand.New(rand.NewPCG(*seed, *seed^0x9e3779b97f4a7c15)) //nolint:gosec // deterministic replay RNG
 	g := snakesim.NewGame(*n, rng)
 	t := snakesim.NewTeacher(*n)
@@ -260,7 +273,11 @@ func render(args []string) {
 	}
 	frame()
 	for !g.Dead && g.Score < *apples && len(anim.Image) < 20000 {
-		g.Step(t.Action(g))
+		if agent != nil {
+			g.Step(agent.Act(g))
+		} else {
+			g.Step(t.Action(g))
+		}
 		frame()
 	}
 	f, err := os.Create(*out)
@@ -290,8 +307,8 @@ func loadModel(path string) *snakesim.Model {
 	return m
 }
 
-// gen plays games and writes (teacher label, features) records for DAgger: 1 byte label then
-// NFeatures little-endian float32. With -model the net drives (probability 1-beta per step) and the
+// gen plays games and writes (teacher label, teacher rule, features) records for DAgger: 1 byte label,
+// 1 byte flags (rule 1-4, bit 4 net disagreed, bit 5 within 60 moves of a death), then NFeatures little-endian float32. With -model the net drives (probability 1-beta per step) and the
 // teacher still labels every state.
 func gen(args []string) {
 	fs := flag.NewFlagSet("gen", flag.ExitOnError)
@@ -359,21 +376,35 @@ func gen(args []string) {
 			if model != nil {
 				bufA, bufB = make([]float32, model.Width()), make([]float32, model.Width())
 			}
-			buf := make([]byte, 0, *maxSteps*(1+4*snakesim.NFeatures))
+			buf := make([]byte, 0, *maxSteps*(2+4*snakesim.NFeatures))
 			count := 0
 			for step := 0; step < *maxSteps && !g.Dead && !g.Full(); step++ {
 				label := t.Action(g)
 				t.Features(g, feat)
-				buf = append(buf, byte(label))
+				flags := byte(t.LastRule) // bits 0-3 teacher rule, bit 4 net disagreed, bit 5 within 60 moves of a death
+				na := label
+				if model != nil {
+					na = model.Act(feat, bufA, bufB)
+					if na != label {
+						flags |= 1 << 4
+					}
+				}
+				buf = append(buf, byte(label), flags)
 				for _, v := range feat {
 					buf = binary.LittleEndian.AppendUint32(buf, math.Float32bits(v))
 				}
 				count++
 				a := label
 				if model != nil && rng.Float64() >= *beta {
-					a = model.Act(feat, bufA, bufB)
+					a = na
 				}
 				g.Step(a)
+			}
+			if g.Dead && !g.Full() { // mark the run-up to the death
+				rec := 2 + 4*snakesim.NFeatures
+				for k := 1; k <= 60 && k*rec <= len(buf); k++ {
+					buf[len(buf)-k*rec+1] |= 1 << 5
+				}
 			}
 			mu.Lock()
 			_, _ = w.Write(buf)
@@ -390,7 +421,7 @@ func gen(args []string) {
 		os.Exit(1)
 	}
 	_ = f.Close()
-	fmt.Printf("wrote %s: %d records (%d bytes each), %d/%d games ended in a death\n", *out, records, 1+4*snakesim.NFeatures, deaths, *games)
+	fmt.Printf("wrote %s: %d records (%d bytes each), %d/%d games ended in a death\n", *out, records, 2+4*snakesim.NFeatures, deaths, *games)
 }
 
 // warmlib plays teacher games per board size and snapshots them every 2% of fill up to -max, so that
@@ -446,4 +477,62 @@ func warmlib(args []string) {
 	for n, s := range lib {
 		fmt.Printf("n=%d: %d snapshots\n", n, len(s))
 	}
+}
+
+// autopsy plays the net and describes how each game that dies ended: length, fill, steps since the last
+// apple, and how often the net disagreed with the teacher in the last 30 moves.
+func autopsy(args []string) {
+	fs := flag.NewFlagSet("autopsy", flag.ExitOnError)
+	n := fs.Int("n", 50, "board size")
+	games := fs.Int("games", 64, "games")
+	maxSteps := fs.Int("steps", 60000, "step cap")
+	modelPath := fs.String("model", "", "model.json")
+	_ = fs.Parse(args)
+	model := loadModel(*modelPath)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, 16)
+	for i := 0; i < *games; i++ {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func() {
+			defer wg.Done()
+			defer func() { <-sem }()
+			sd := uint64(777000 + i)
+			rng := rand.New(rand.NewPCG(sd, sd^0x9e3779b97f4a7c15)) //nolint:gosec // deterministic
+			g := snakesim.NewGame(*n, rng)
+			t := snakesim.NewTeacher(*n)
+			agent := snakesim.NewAgent(model, *n)
+			var hist [30]int // 1 = disagreement
+			var first, steps int
+			for !g.Dead && steps < *maxSteps {
+				label := t.Action(g)
+				a := agent.Act(g)
+				if a != label {
+					if first == 0 {
+						first = steps
+					}
+				}
+				copy(hist[:], hist[1:])
+				hist[29] = 0
+				if a != label {
+					hist[29] = 1
+				}
+				g.Step(a)
+				steps++
+			}
+			if !g.Dead {
+				return
+			}
+			dis := 0
+			for _, v := range hist {
+				dis += v
+			}
+			mu.Lock()
+			fmt.Printf("seed %d died at step %d: score=%d fill=%.0f%% sinceFood=%d disagreements in last 30 moves=%d teacherRule=%d\n",
+				sd, steps, g.Score, 100*float64(g.Len())/float64(*n**n), g.SinceFood, dis, t.LastRule)
+			mu.Unlock()
+		}()
+	}
+	wg.Wait()
 }

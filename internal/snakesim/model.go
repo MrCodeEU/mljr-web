@@ -58,6 +58,26 @@ func (m *Model) Act(x []float32, bufA, bufB []float32) int {
 	return best
 }
 
+// Logits runs the forward pass and returns the 3 action logits (allocating; use Act in loops).
+func (m *Model) Logits(x []float32) []float32 {
+	cur := x
+	for i, l := range m.Layers {
+		out := make([]float32, len(l.B))
+		for o := range out {
+			s := l.B[o]
+			for j, v := range cur {
+				s += l.W[o][j] * v
+			}
+			if i < len(m.Layers)-1 && s < 0 {
+				s = 0
+			}
+			out[o] = s
+		}
+		cur = out
+	}
+	return cur
+}
+
 // Width is the widest layer output, for sizing scratch buffers.
 func (m *Model) Width() int {
 	w := 0

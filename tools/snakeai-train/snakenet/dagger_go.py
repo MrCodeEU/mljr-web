@@ -21,8 +21,8 @@ import torch
 import torch.nn as nn
 
 N_FEATURES = 105
-FEATURE_VERSION = 4
-REC = np.dtype([("y", "u1"), ("x", "<f4", (N_FEATURES,))])
+FEATURE_VERSION = 5
+REC = np.dtype([("y", "u1"), ("rule", "u1"), ("x", "<f4", (N_FEATURES,))])
 
 
 def make_model(hidden):
@@ -60,11 +60,11 @@ def checks(net, teacher):
     return a, b, c, (a >= 0.95 and b <= 1.10 and c >= 0.60)
 
 
-def fit(model, X, Y, epochs, lr, batch=1024):
-    X, Y = torch.from_numpy(X), torch.from_numpy(Y)
+def fit(model, X, Y, W, epochs, lr, batch=1024):
+    X, Y, W = torch.from_numpy(X), torch.from_numpy(Y), torch.from_numpy(W)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, epochs, eta_min=lr / 20)
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.CrossEntropyLoss(reduction="none")
     loss_v = 0.0
     for _ in range(epochs):
         perm = torch.randperm(len(X))
@@ -72,7 +72,7 @@ def fit(model, X, Y, epochs, lr, batch=1024):
         for i in range(0, len(X), batch):
             idx = perm[i:i + batch]
             opt.zero_grad()
-            loss = loss_fn(model(X[idx]), Y[idx])
+            loss = (loss_fn(model(X[idx]), Y[idx]) * W[idx]).sum() / W[idx].sum()
             loss.backward()
             opt.step()
             tot += loss.item() * len(idx)
@@ -98,6 +98,9 @@ def main():
     ap.add_argument("--eval-games", type=int, default=24)
     ap.add_argument("--eval-steps", type=int, default=40000)
     ap.add_argument("--max-records", type=int, default=7_000_000)
+    ap.add_argument("--chase-weight", type=float, default=3.0, help="loss weight of tail-chase states (teacher rule 3)")
+    ap.add_argument("--disagree-weight", type=float, default=5.0, help="loss weight where the net disagreed with the teacher")
+    ap.add_argument("--predeath-weight", type=float, default=5.0, help="loss weight for the 60 moves before a death")
     ap.add_argument("--init", default=None, help="warm-start weights (state_dict .pt)")
     a = ap.parse_args()
     out = Path(a.out)
@@ -114,7 +117,7 @@ def main():
     model = make_model(a.hidden)
     if a.init:
         model.load_state_dict(torch.load(a.init, weights_only=True))
-    data_x, data_y = [], []
+    data_x, data_y, data_w = [], [], []
     best_score, best_round, bad = -1.0, -1, 0
     rnd = 0
     while time.time() < t_end:
@@ -131,12 +134,17 @@ def main():
         f.unlink()
         data_x.append(rec["x"].copy())
         data_y.append(rec["y"].astype(np.int64))
+        rule, flags = rec["rule"] & 15, rec["rule"]
+        w = np.where(rule == 3, a.chase_weight, 1.0)
+        w = w * np.where(flags & 16, a.disagree_weight, 1.0) * np.where(flags & 32, a.predeath_weight, 1.0)
+        data_w.append(w.astype(np.float32))
         while sum(len(d) for d in data_y) > a.max_records and len(data_y) > 1:
             data_x.pop(0)
             data_y.pop(0)
-        X, Y = np.concatenate(data_x), np.concatenate(data_y)
+            data_w.pop(0)
+        X, Y, Wt = np.concatenate(data_x), np.concatenate(data_y), np.concatenate(data_w)
         t1 = time.time()
-        loss, acc = fit(model, X, Y, a.epochs0 if rnd == 0 else a.epochs, a.lr if rnd == 0 else a.lr / 2)
+        loss, acc = fit(model, X, Y, Wt, a.epochs0 if rnd == 0 else a.epochs, a.lr if rnd == 0 else a.lr / 2)
         export(model, cur)
         t2 = time.time()
         net = bench(a.sim, 50, a.eval_games, a.eval_steps, cur)

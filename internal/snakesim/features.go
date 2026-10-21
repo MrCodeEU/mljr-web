@@ -5,7 +5,7 @@ import "math"
 // Feature layout version of the policy input. Bump it whenever the layout or any formula changes and
 // regenerate the model: the Go runtime refuses a model with another version.
 const (
-	FeatureVersion = 4
+	FeatureVersion = 5
 	win            = 3 // ego window radius
 	grid           = 5 // coarse ego body-density map is grid×grid bins
 	perAction      = 7
@@ -13,34 +13,6 @@ const (
 	// NFeatures = 3 actions×7 + 10 global + (2·win+1)² window + grid² density.
 	NFeatures = 3*perAction + nGlobal + (2*win+1)*(2*win+1) + grid*grid
 )
-
-// tailField fills tdist with BFS distances from the tail over free cells (the tail cell is distance 0).
-func (t *Teacher) tailField(g *Game) {
-	n := g.N
-	for i := 0; i < n*n; i++ {
-		t.tdist[i] = -1
-	}
-	tail := g.Tail()
-	t.tdist[tail] = 0
-	q := append(t.queue[:0], int32(tail))
-	for h := 0; h < len(q); h++ {
-		c := int(q[h])
-		cx, cy := c%n, c/n
-		for d := 0; d < 4; d++ {
-			x, y := cx+dx[d], cy+dy[d]
-			if x < 0 || x >= n || y < 0 || y >= n {
-				continue
-			}
-			m := y*n + x
-			if t.tdist[m] >= 0 || g.occ[m] {
-				continue
-			}
-			t.tdist[m] = t.tdist[c] + 1
-			q = append(q, int32(m))
-		}
-	}
-	t.queue = q
-}
 
 // regions returns the number of free-space components, the largest and the total free cells (tail free).
 func (t *Teacher) regions(g *Game) (count, largest, total int) {
@@ -93,7 +65,6 @@ func (t *Teacher) Features(g *Game, out []float32) {
 	n := g.N
 	nf := float64(n)
 	t.foodField(g)
-	t.tailField(g)
 	tail := g.Tail()
 	for a := 0; a < 3; a++ {
 		o := a * perAction
@@ -113,7 +84,7 @@ func (t *Teacher) Features(g *Game, out []float32) {
 			}
 			t.virt = v
 		}
-		count, tailOK := t.flood(g, v)
+		count, tailOK, tailDist := t.floodDist(g, v)
 		out[o+1] = clip(float64(count)/float64(g.size), 0, 2) / 2
 		if tailOK {
 			out[o+2] = 1
@@ -128,9 +99,9 @@ func (t *Teacher) Features(g *Game, out []float32) {
 		if l != unreachable {
 			out[o+3] = clip(float64(l)/(2*nf), 0, 1)
 		}
-		out[o+4] = 1
-		if t.tdist[c] >= 0 {
-			out[o+4] = clip(float64(t.tdist[c])/(2*nf), 0, 1)
+		out[o+4] = 1 // distance from the new head to the tail after the move, as the tail chase measures it
+		if tailDist >= 0 {
+			out[o+4] = clip(float64(tailDist)/(2*nf), 0, 1)
 		}
 		off := lineOffset(g, c)
 		out[o+5] = clip(off/3, 0, 1)

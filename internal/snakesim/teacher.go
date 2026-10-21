@@ -162,6 +162,48 @@ func (t *Teacher) flood(g *Game, virt []int32) (count int, tailOK bool) {
 	return len(q), tailOK
 }
 
+// floodDist is flood plus the BFS distance from the head of virt to its tail (-1 when unreachable).
+func (t *Teacher) floodDist(g *Game, virt []int32) (count int, tailOK bool, tailDist int) {
+	n := g.N
+	t.gen++
+	gen := t.gen
+	if len(virt) > 2 {
+		for _, c := range virt[1 : len(virt)-1] {
+			t.blk[c] = gen
+		}
+	}
+	head, tail := int(virt[0]), int(virt[len(virt)-1])
+	q := append(t.queue[:0], int32(head))
+	t.seen[head] = gen
+	t.tdist[head] = 0
+	tailDist = -1
+	if head == tail {
+		tailOK, tailDist = true, 0
+	}
+	for h := 0; h < len(q); h++ {
+		c := int(q[h])
+		cx, cy := c%n, c/n
+		for d := 0; d < 4; d++ {
+			x, y := cx+dx[d], cy+dy[d]
+			if x < 0 || x >= n || y < 0 || y >= n {
+				continue
+			}
+			m := y*n + x
+			if t.seen[m] == gen || t.blk[m] == gen {
+				continue
+			}
+			t.seen[m] = gen
+			t.tdist[m] = t.tdist[c] + 1
+			if m == tail {
+				tailOK, tailDist = true, int(t.tdist[m])
+			}
+			q = append(q, int32(m))
+		}
+	}
+	t.queue = q
+	return len(q), tailOK, tailDist
+}
+
 // virtualAfter returns the body (head first) after walking path and eating, one cell longer.
 func (t *Teacher) virtualAfter(g *Game, path []int32) []int32 {
 	v := t.virt[:0]
@@ -185,6 +227,7 @@ type cand struct {
 
 // Action returns the teacher's relative action for the current state.
 func (t *Teacher) Action(g *Game) int {
+	t.LastRule = 0
 	t.foodField(g)
 	var cs [3]cand
 	nc := 0
@@ -286,10 +329,9 @@ func (t *Teacher) chaseTail(g *Game, cs []cand) int {
 			virt = append(virt, int32(g.Cell(i)))
 		}
 		t.virt = virt
-		count, tailOK := t.flood(g, virt)
-		dist := 0
-		if tailOK {
-			dist = t.distTo(g, virt)
+		count, tailOK, dist := t.floodDist(g, virt)
+		if dist < 0 {
+			dist = 0
 		}
 		ok := 0
 		if tailOK {
@@ -304,45 +346,4 @@ func (t *Teacher) chaseTail(g *Game, cs []cand) int {
 		}
 	}
 	return best
-}
-
-// distTo is the BFS distance from virt's head to its tail.
-func (t *Teacher) distTo(g *Game, virt []int32) int {
-	n := g.N
-	t.gen++
-	gen := t.gen
-	if len(virt) > 2 {
-		for _, c := range virt[1 : len(virt)-1] {
-			t.blk[c] = gen
-		}
-	}
-	head, tail := int(virt[0]), int(virt[len(virt)-1])
-	q := t.queue[:0]
-	q = append(q, int32(head))
-	t.seen[head] = gen
-	steps := make(map[int]int, 64)
-	steps[head] = 0
-	for h := 0; h < len(q); h++ {
-		c := int(q[h])
-		if c == tail {
-			t.queue = q
-			return steps[c]
-		}
-		cx, cy := c%n, c/n
-		for d := 0; d < 4; d++ {
-			x, y := cx+dx[d], cy+dy[d]
-			if x < 0 || x >= n || y < 0 || y >= n {
-				continue
-			}
-			m := y*n + x
-			if t.seen[m] == gen || t.blk[m] == gen {
-				continue
-			}
-			t.seen[m] = gen
-			steps[m] = steps[c] + 1
-			q = append(q, int32(m))
-		}
-	}
-	t.queue = q
-	return 0
 }

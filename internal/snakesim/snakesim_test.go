@@ -1,7 +1,9 @@
 package snakesim
 
 import (
+	"encoding/json"
 	"math/rand/v2"
+	"os"
 	"testing"
 )
 
@@ -106,5 +108,71 @@ func TestFeaturesDeterministic(t *testing.T) {
 		if a[i] != b[i] {
 			t.Fatalf("feature %d differs between calls", i)
 		}
+	}
+}
+
+// The embedded model's forward pass must match the independent numpy implementation that wrote the
+// golden vectors (tools/snakeai-train/snakenet/golden.py). Regenerate both together with the model.
+func TestModelMatchesGolden(t *testing.T) {
+	data, err := os.ReadFile("testdata/golden.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var golden struct {
+		FeatureVersion int `json:"feature_version"`
+		Cases          []struct {
+			Features []float32 `json:"features"`
+			Logits   []float32 `json:"logits"`
+			Action   int       `json:"action"`
+		} `json:"cases"`
+	}
+	if err := json.Unmarshal(data, &golden); err != nil {
+		t.Fatal(err)
+	}
+	if golden.FeatureVersion != FeatureVersion || len(golden.Cases) == 0 {
+		t.Fatalf("golden is for feature v%d with %d cases", golden.FeatureVersion, len(golden.Cases))
+	}
+	m, err := DefaultModel()
+	if err != nil {
+		t.Fatal(err)
+	}
+	bufA, bufB := make([]float32, m.Width()), make([]float32, m.Width())
+	for i, c := range golden.Cases {
+		got := m.Logits(c.Features)
+		for k := range got {
+			if d := got[k] - c.Logits[k]; d > 1e-3 || d < -1e-3 {
+				t.Fatalf("case %d logit %d: go %v python %v", i, k, got[k], c.Logits[k])
+			}
+		}
+		if a := m.Act(c.Features, bufA, bufB); a != c.Action {
+			t.Fatalf("case %d: Act %d, golden %d", i, a, c.Action)
+		}
+	}
+}
+
+// The guard must never pick a blocked move or one that loses the tail when a safe one exists, and must
+// otherwise follow the net's ranking.
+func TestGuardedActVetoesTrappingMoves(t *testing.T) {
+	m, err := DefaultModel()
+	if err != nil {
+		t.Fatal(err)
+	}
+	feat := make([]float32, NFeatures)
+	for trial := 0; trial < 3; trial++ {
+		for i := range feat {
+			feat[i] = 0
+		}
+		feat[0*perAction+2] = 1 // left: open, tail reachable
+		feat[1*perAction] = 1   // straight: blocked
+		feat[2*perAction] = 0   // right: open but trap
+		got := GuardedAct(m, feat)
+		if got != Left {
+			t.Fatalf("expected Left (only safe move), got %d", got)
+		}
+	}
+	feat[0*perAction] = 1 // left blocked too: only the trap remains
+	feat[0*perAction+2] = 0
+	if got := GuardedAct(m, feat); got != Right {
+		t.Fatalf("expected Right (only unblocked move), got %d", got)
 	}
 }
