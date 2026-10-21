@@ -36,18 +36,28 @@ func main() {
 
 type result struct {
 	score, steps  int
+	died          bool
 	openingDeath  bool
 	spa150        float64 // steps per apple over the first 150 apples, 0 if not reached
 	stallApples   int     // apples that took more than 4N steps
 	reached25     bool
 	stepsTo25pct  int
 	diagonalShare float64 // share of moves in the first 150 apples that turned
+	bandSteps     [5]int
+	bandApples    [5]int
 }
 
-func play(n int, seed uint64, maxSteps int) result {
+type cfg struct {
+	riskFrac float64
+	riskWait int
+	room     float64
+}
+
+func play(n int, seed uint64, maxSteps int, c cfg) result {
 	rng := rand.New(rand.NewPCG(seed, seed^0x9e3779b97f4a7c15)) //nolint:gosec // deterministic benchmark RNG
 	g := snakesim.NewGame(n, rng)
 	t := snakesim.NewTeacher(n)
+	t.RiskFrac, t.RiskWait, t.StallRoom = c.riskFrac, c.riskWait, c.room
 	var r result
 	steps150, turns, moves := 0, 0, 0
 	lastAte := 0
@@ -55,8 +65,11 @@ func play(n int, seed uint64, maxSteps int) result {
 	for !g.Dead && r.steps < maxSteps {
 		a := t.Action(g)
 		before := g.Score
+		b := band(g.Len(), n)
 		g.Step(a)
 		r.steps++
+		r.bandSteps[b]++
+		r.bandApples[b] += g.Score - before
 		if g.Score < 150 || (g.Score == 150 && before < 150) {
 			moves++
 			if g.Heading != prevHeading {
@@ -78,6 +91,7 @@ func play(n int, seed uint64, maxSteps int) result {
 		}
 	}
 	r.score = g.Score
+	r.died = g.Dead
 	r.openingDeath = g.Dead && !g.Full() && g.Len() < n*n/4
 	if steps150 > 0 {
 		r.spa150 = float64(steps150) / 150
@@ -88,13 +102,33 @@ func play(n int, seed uint64, maxSteps int) result {
 	return r
 }
 
+// band maps snake length to a fill band: <10%, <25%, <50%, <75%, rest.
+func band(length, n int) int {
+	f := float64(length) / float64(n*n)
+	switch {
+	case f < 0.10:
+		return 0
+	case f < 0.25:
+		return 1
+	case f < 0.50:
+		return 2
+	case f < 0.75:
+		return 3
+	}
+	return 4
+}
+
 func bench(args []string) {
 	fs := flag.NewFlagSet("bench", flag.ExitOnError)
 	n := fs.Int("n", 50, "board size")
 	games := fs.Int("games", 40, "games")
 	maxSteps := fs.Int("steps", 0, "step cap (default 40*n*n)")
 	seed := fs.Uint64("seed", 777000, "first seed")
+	riskFrac := fs.Float64("risk", 2, "fill fraction past which risky rules apply")
+	riskWait := fs.Int("wait", 0, "steps without food before the room rule applies")
+	room := fs.Float64("room", 1.2, "free-space margin of the room rule")
 	_ = fs.Parse(args)
+	c := cfg{*riskFrac, *riskWait, *room}
 	if *maxSteps == 0 {
 		*maxSteps = 40 * *n * *n
 	}
@@ -106,13 +140,14 @@ func bench(args []string) {
 		sem <- struct{}{}
 		go func() {
 			defer wg.Done()
-			res[i] = play(*n, *seed+uint64(i), *maxSteps)
+			res[i] = play(*n, *seed+uint64(i), *maxSteps, c)
 			<-sem
 		}()
 	}
 	wg.Wait()
 	scores := make([]int, len(res))
-	deaths, reach25, stalls := 0, 0, 0
+	deaths, reach25, stalls, died := 0, 0, 0, 0
+	stepSum := 0
 	var spaSum, turnSum float64
 	spaN := 0
 	for i, r := range res {
@@ -124,19 +159,40 @@ func bench(args []string) {
 			reach25++
 		}
 		stalls += r.stallApples
+		stepSum += r.steps
+		if r.died {
+			died++
+		}
 		if r.spa150 > 0 {
 			spaSum += r.spa150
 			spaN++
 		}
 		turnSum += r.diagonalShare
 	}
+	var bs, ba [5]int
+	for _, r := range res {
+		for i := range bs {
+			bs[i] += r.bandSteps[i]
+			ba[i] += r.bandApples[i]
+		}
+	}
 	sort.Ints(scores)
 	spa := 0.0
 	if spaN > 0 {
 		spa = spaSum / float64(spaN)
 	}
-	fmt.Printf("n=%d games=%d  median score=%d (min %d, max %d)  opening deaths (<25%% fill)=%d/%d  reached 25%%=%d/%d\n",
-		*n, *games, scores[len(scores)/2], scores[0], scores[len(scores)-1], deaths, *games, reach25, *games)
+	fmt.Printf("risk=%.2f wait=%d room=%.1f  ", *riskFrac, *riskWait, *room)
+	fmt.Printf("n=%d games=%d  median score=%d (min %d, max %d)  opening deaths (<25%% fill)=%d/%d  reached 25%%=%d/%d  died=%d/%d  mean steps=%d\n",
+		*n, *games, scores[len(scores)/2], scores[0], scores[len(scores)-1], deaths, *games, reach25, *games, died, *games, stepSum / *games)
+	fmt.Print("steps/apple by fill [<10% <25% <50% <75% rest]:")
+	for i := range bs {
+		if ba[i] == 0 {
+			fmt.Print("      -")
+			continue
+		}
+		fmt.Printf(" %6.1f", float64(bs[i])/float64(ba[i]))
+	}
+	fmt.Println()
 	fmt.Printf("steps/apple over first 150 apples=%.1f (%d games reached it)  turn share of moves=%.2f  slow apples (>4N steps) per game=%.1f\n",
 		spa, spaN, turnSum/float64(*games), float64(stalls)/float64(*games))
 }

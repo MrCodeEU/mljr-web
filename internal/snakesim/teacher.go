@@ -7,14 +7,19 @@ import "math"
 //  1. Take the shortest path to the apple, tie-broken toward the straight line from where the apple
 //     appeared (so open-field runs look like diagonal staircases), if a virtual snake that walked the
 //     path could still reach its own tail.
-//  2. Past 25% fill, otherwise take the shortest path anyway when at least StallRoom*length free
+//  2. Optional (off by default), past RiskFrac fill, otherwise take the shortest path anyway when at least StallRoom*length free
 //     cells stay reachable after eating (accepting a later death beats a visible loop).
-//  3. Otherwise chase the tail; past 25% fill, after 2N steps without food take the shortest path unsafely.
+//  3. Otherwise chase the tail; with risk enabled, after 2N steps without food take the shortest path unsafely.
 //
 // A Teacher owns scratch buffers and is not safe for concurrent use; make one per goroutine.
 type Teacher struct {
 	// StallRoom is the free-space margin of rule 2 (default 1.2).
 	StallRoom float64
+	// RiskFrac is the fill fraction past which rules 2 and 4 may take risks. The default (2) turns them off:
+	// the safe rules alone never died in 600k steps on 50x50, the risky ones died at ~26% fill.
+	RiskFrac float64
+	// RiskWait is how many steps without food must pass before rule 2 applies (default 0).
+	RiskWait int
 	// LastRule is the rule that produced the last action: 1 safe path, 2 room margin, 3 tail chase, 4 unsafe path.
 	LastRule int
 
@@ -31,6 +36,7 @@ type Teacher struct {
 func NewTeacher(n int) *Teacher {
 	return &Teacher{
 		StallRoom: 1.2,
+		RiskFrac:  2, // risk rules off by default: they killed every game at ~26% fill
 		dist:      make([]int32, n*n),
 		queue:     make([]int32, n*n),
 		seen:      make([]int32, n*n),
@@ -217,9 +223,10 @@ func (t *Teacher) Action(g *Game) int {
 		}
 	}
 	// rules 2 and 4 take risks, so they only apply once the opening is over (25% fill)
-	late := g.size*4 >= g.N*g.N
+	late := float64(g.size) >= t.RiskFrac*float64(g.N*g.N)
+	waited := g.SinceFood >= t.RiskWait
 	// rule 2: shortest path with enough room left
-	for i := 0; late && i < nc; i++ {
+	for i := 0; late && waited && i < nc; i++ {
 		c := cs[i]
 		if c.length == unreachable {
 			break
