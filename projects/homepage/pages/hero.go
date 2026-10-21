@@ -152,7 +152,7 @@ func heroBento(li hpdata.LinkedInData, hero hpdata.HeroContent, lang string, pro
 			h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2);height:100%"),
 				icon.Icon("lucide:building-2", icon.Props{Size: "1.8rem"}),
 				h.Div(h.Style(kickerStyle+";margin-top:var(--sp-1)"), g.Text(bento.Focus.Label)),
-				h.Div(h.Style("font-size:clamp(1.2rem,2vw,1.8rem);font-weight:950;line-height:1.1"), g.Text(bento.Focus.Value)),
+				h.Div(h.Style("font-size:clamp(1.2rem,2vw,1.8rem);font-weight:950;line-height:1.3"), g.Text(bento.Focus.Value)),
 				h.Div(h.Style(labelStyle+";margin-top:auto"), g.Text(bento.Focus.Sub)),
 			),
 		),

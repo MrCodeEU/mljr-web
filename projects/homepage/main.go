@@ -80,6 +80,9 @@ func main() {
 	e.GET("/games/ai-snake", func(c echo.Context) error {
 		return web.Render(c, 200, pages.AISnake(web.Lang(c), analytics))
 	})
+	e.GET("/games/ai-snake-live", func(c echo.Context) error {
+		return web.Render(c, 200, pages.AISnakeLive(web.Lang(c), analytics))
+	})
 	e.GET("/games/double-pendulum", func(c echo.Context) error {
 		return web.Render(c, 200, pages.DoublePendulum(web.Lang(c), analytics))
 	})
@@ -166,6 +169,7 @@ func main() {
 
 	registerHandlers(e, cfg.AltchaKey, contactMailer)
 	registerHomelabHandler(e, hlSnapshot)
+	registerSnakeLive(e)
 
 	log.Printf("homepage listening on :%s (env=%s)", cfg.Port, cfg.Env)
 	if err := e.Start(":" + cfg.Port); err != nil {

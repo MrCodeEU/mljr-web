@@ -13,6 +13,14 @@ This file tells future Claude/agent runs **how to extend this repo without break
 5. **No `class=` even via `g.Attr("class", ...)` in `ui/`.** The grep guard catches both.
 6. **Datastar SDK is `github.com/starfederation/datastar-go/datastar`** (v1.2.x). API: `NewSSE`, `PatchElements`, `PatchSignals`, `RemoveElements`, `ExecuteScript`, `Redirect`, `ReadSignals`, `MarshalAndPatchSignals`.
 
+## Live AI snake (`internal/snakeai`)
+
+`/games/ai-snake-live` shows one server-side game driven by a small MLP; every visitor watches the same
+state over SSE (`/api/snake-ai/stream`, under `/api/` so the gzip middleware skips it). The room only runs
+while someone is watching (20 s grace), and the model is dropped when idle. `internal/snakeai/model.json`
+and `testdata/golden.json` are produced by `tools/snakeai-train`; the feature layout is a Python/Go contract
+guarded by `go test ./internal/snakeai/...` — see `tools/snakeai-train/README.md` before touching features.
+
 ## Module path
 
 `mljr-web`. Imports: `mljr-web/ui/primitive`, `mljr-web/ui/layout`, `mljr-web/internal/web`, etc.

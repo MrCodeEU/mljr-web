@@ -20,6 +20,7 @@ type playgroundItem struct {
 
 var playgroundItems = []playgroundItem{
 	{Label: "AI Snake", DescKey: "games.ai_snake.card_desc", Href: "/games/ai-snake", Icon: "lucide:bot"},
+	{Label: "AI Snake Live", DescKey: "games.ai_snake_live.card_desc", Href: "/games/ai-snake-live", Icon: "lucide:brain"},
 	{Label: "Snake", DescKey: "games.snake.card_desc", Href: "/games/snake", Icon: "lucide:gamepad-2"},
 	{Label: "Minenfeld", DescKey: "games.minenfeld.card_desc", Href: "/games/minenfeld", Icon: "lucide:bomb"},
 	{Label: "Double Pendulum", DescKey: "games.pendulum.card_desc", Href: "/games/double-pendulum", Icon: "lucide:orbit"},

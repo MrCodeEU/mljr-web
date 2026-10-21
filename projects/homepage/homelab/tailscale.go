@@ -22,7 +22,7 @@ import (
 const cacheRefresh = 10 * time.Minute
 
 // ServiceEntry is one entry from the public homelab-automation service
-// registry (ansible/inventory/group_vars/all/all.yml's `services:` list).
+// registry (openvox/data/common.yaml's `services_catalog:` list).
 type ServiceEntry struct {
 	Name        string
 	Domain      string

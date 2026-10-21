@@ -346,7 +346,7 @@ func pingCard(snap homelab.Snapshot) g.Node {
 
 // archCard explains how the homelab hangs together: three devices on a
 // Tailscale mesh, one public Caddy ingress, everything provisioned by
-// Ansible. Static content — no live data needed.
+// OpenVox (Puppet). Static content — no live data needed.
 func archCard() g.Node {
 	deviceBox := func(ic, name, role string, items []string) g.Node {
 		tags := make([]g.Node, len(items))
@@ -374,10 +374,10 @@ func archCard() g.Node {
 					h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("Architecture")),
 					h.H3(h.Style("font-size:var(--t-xl);font-weight:900;margin:var(--sp-1) 0 0"), g.Text("How it hangs together")),
 				),
-				primitive.Tag(primitive.TagProps{Tone: token.ToneLime, Icon: "simple-icons:ansible"}, g.Text("100% IaC")),
+				primitive.Tag(primitive.TagProps{Tone: token.ToneLime, Icon: "simple-icons:puppet"}, g.Text("100% IaC")),
 			),
 			h.P(h.Style("font-size:var(--t-sm);color:var(--muted);line-height:1.6;margin:0 0 var(--sp-4);max-width:78ch"),
-				g.Text("All public traffic enters through Caddy on the VPS, with CrowdSec banning attackers at the edge and Authelia guarding private apps. Behind that, three machines talk over an encrypted Tailscale mesh — no open ports at home. Every host, container and config file is declared in one Ansible repo: a single make deploy converges the whole fleet."),
+				g.Text("All public traffic enters through Caddy on the VPS, with CrowdSec banning attackers at the edge and Authelia guarding private apps. Behind that, three machines talk over an encrypted Tailscale mesh — no open ports at home. Every host, container and config file is declared in one OpenVox (Puppet) repo; each machine runs an agent that applies it, so there is no central server and no SSH fan-out."),
 			),
 			special.OpenMap(special.OpenMapProps{
 				CenterLat: 49.1,
@@ -416,11 +416,11 @@ func archCard() g.Node {
 						[]string{"storage", "backups", "media"}),
 				),
 			),
-			// Ansible bar
+			// OpenVox bar
 			h.Div(
 				h.Style("display:flex;align-items:center;gap:var(--sp-2);border:var(--bw-2) solid var(--ink);background:var(--lime-bg,#d9f99d);padding:var(--sp-2) var(--sp-3);margin-top:var(--sp-2);font-size:var(--t-xs);font-weight:800"),
-				icon.Icon("simple-icons:ansible", icon.Props{Size: "1rem"}),
-				g.Text("Ansible provisions all three hosts — inventory, hardening, Docker Compose services, deploy hooks. No snowflakes."),
+				icon.Icon("simple-icons:puppet", icon.Props{Size: "1rem"}),
+				g.Text("OpenVox agents provision the hosts — hardening, Docker Compose services, Caddy snippets, monitoring. Agent-based instead of push over SSH. No snowflakes."),
 			),
 		),
 	)
