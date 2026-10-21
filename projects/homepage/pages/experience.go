@@ -242,6 +242,7 @@ func experienceLocationMap(d hpdata.SiteData, lang string) g.Node {
 func orgLocation2(org string) (orgLocation, bool) {
 	m := map[string]orgLocation{
 		"Dynatrace":                        {48.314822011928605, 14.305210279591181},
+		"Land Oberösterreich":              {48.29144053833716, 14.289947711349612},
 		"Johannes Kepler University Linz":  {48.3371, 14.3196},
 		"Johannes Kepler Universität Linz": {48.3371, 14.3196},
 		"ventopay gmbh":                    {48.3678, 14.5165},

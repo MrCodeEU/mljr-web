@@ -133,6 +133,9 @@ simple-icons:tailwindcss
 simple-icons:html5
 simple-icons:css3
 simple-icons:ansible
+simple-icons:puppet
+simple-icons:strava
+simple-icons:pocketbase
 simple-icons:tailscale
 simple-icons:csharp
 simple-icons:grafana

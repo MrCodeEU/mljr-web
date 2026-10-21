@@ -58,3 +58,18 @@ the teacher's level. The policy's entropy collapsed to about 0.002, so it never 
 temperature on the logits plus a larger entropy bonus, start from an imitation of the faster BFS teacher
 (`--teacher bfs`) with the cycle features as inputs only (never as labels), and judge by deaths = 0 and
 steps-to-fill below the cycle teacher.
+
+## RL experiment (negative result, 2026-10)
+
+`snakenet/rl.py` runs masked PPO from the imitation net (safety mask, temperature-calibrated exploration,
+no teacher anchor; `--mask cycle|tail`). 40 games per size, no mask at inference:
+
+| model | 20x20 score / deaths | 30x30 score / deaths |
+|---|---|---|
+| cycle teacher | 129.6 | 201.0 |
+| model_v3 (shipped) | 128.2 / 0 | 190.9 / 3 |
+| rl_cycle | 128.4 / 0 | 194.6 / 2 |
+| rl_tail | 59.7 / 40 | 67.7 / 40 (depends on the mask) |
+
+No meaningful speedup over the teacher; the shipped model stays. The eval fitness during training moved
+within noise of 1.0 (16 games), so do not trust single readings.

@@ -26,7 +26,7 @@ func statsSection(d hpdata.SiteData) g.Node {
 		{"simple-icons:python", "Python"},
 		{"simple-icons:docker", "Docker"},
 		{"simple-icons:linux", "Linux"},
-		{"simple-icons:ansible", "Ansible"},
+		{"simple-icons:puppet", "Puppet"},
 		{"simple-icons:tailscale", "Tailscale"},
 		{"simple-icons:grafana", "Grafana"},
 		{"simple-icons:svelte", "Svelte"},
