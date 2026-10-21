@@ -73,3 +73,20 @@ no teacher anchor; `--mask cycle|tail`). 40 games per size, no mask at inference
 
 No meaningful speedup over the teacher; the shipped model stays. The eval fitness during training moved
 within noise of 1.0 (16 games), so do not trust single readings.
+
+## Teacher benchmark (2026-10)
+
+`python -m snakenet.teacher_bench --n 20 --games 16 --cap 60000 --teachers cycle,bfs` plays teachers alone and
+reports fill steps, deaths and steps per apple by snake-length band. 20x20, 16 games:
+
+| teacher | steps/apple [<25% <50% <75% rest] | result |
+|---|---|---|
+| cycle (comb + shortcuts, shipped) | 32 / 73 / 76 / 26 | fills 16/16, 20757 steps |
+| bfs (shortest path + virtual-snake check) | 19 / 41 / 68 / 112 | reaches ~393/399 in ~22k steps, then loops and starves (15/16) |
+| bfs + noise / relaxed safety (`teacher2.py`) | similar | worse: collisions and starvation |
+| cycle on random spanning-tree cycles (`cycles.py`) | 38 / 76 / 77 / 25 | no better than the comb, 21.4-21.9k steps |
+
+BFS is about twice as fast as the cycle in the first half of the game but stalls in a loop at the end, so
+total time is about equal. Best case for a hybrid (BFS first half, cycle after) is roughly 20% faster, but it
+needs a Hamiltonian cycle through the current body, which is dynamic and cannot be imitated from the fixed-cycle
+features the net sees.
