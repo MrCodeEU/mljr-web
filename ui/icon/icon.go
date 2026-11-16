@@ -55,3 +55,7 @@ func All() []string {
 	sort.Strings(names)
 	return names
 }
+
+// SVG returns the raw SVG markup of a registered icon, for client-side code
+// that swaps icons at runtime (e.g. the swiss flap board).
+func SVG(name string) (string, bool) { s, ok := icons[name]; return s, ok }

@@ -20,11 +20,12 @@ import (
 func ComponentDetail(c *registry.Component) g.Node {
 	return layout.PageShell(
 		layout.PageProps{
-			Title: c.Name + " — mljr-ui showcase",
-			Theme: token.ThemeSwissBrut,
-			Mode:  token.ModeLight,
+			Title:    c.Name + " — mljr-ui showcase",
+			Theme:    token.ThemeSwiss,
+			AutoMode: true,
+			Mode:     token.ModeLight,
 		},
-		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
+		special.ThemeToggleRoot(token.ThemeSwiss, token.ModeLight),
 		h.Div(g.Attr("data-signals", buildDetailSignals(c))),
 
 		layout.Navbar(layout.NavbarProps{},

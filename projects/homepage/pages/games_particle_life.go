@@ -5,7 +5,6 @@ import (
 	h "maragu.dev/gomponents/html"
 
 	"mljr-web/internal/i18n"
-	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/special"
 	"mljr-web/ui/token"
@@ -16,18 +15,21 @@ func ParticleLife(lang string, a AnalyticsConfig) g.Node {
 		layout.PageProps{
 			Title:       "Particle Life - Michael Reinegger",
 			Description: "Colored particles that attract and repel by simple pairwise rules, organizing into life-like emergent clusters.",
-			Theme:       token.ThemeSwissBrut,
+			Theme:       token.ThemeSwiss,
+			AutoMode:    true,
+			LockTheme:   true,
 			Mode:        token.ModeLight,
 			Lang:        lang,
 			HeadExtra:   append([]g.Node{g.El("style", g.Raw(homepageCSS+gameCSS+boidsCSS+gameDescCSS))}, AnalyticsHead(a)...),
 		},
-		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
+		special.ThemeToggleRoot(token.ThemeSwiss, token.ModeLight),
 		siteNavbar(lang),
-		h.Main(h.Class("game-page"),
-			h.Div(h.Class("game-shell"),
-				h.A(h.Href("/"), h.Class("legal-back"), icon.Icon("lucide:arrow-left"), g.Text(i18n.T(lang, "legal.back"))),
+		h.Main(h.ID("main"), h.Class("game-page sub-page"),
+			subHead("/#playground", tr(lang, "Labor", "Lab"), 9,
 				h.H1(g.Text("Particle Life")),
 				h.P(h.Class("game-lede"), g.Text(i18n.T(lang, "games.particle_life.lede"))),
+			),
+			h.Div(h.Class("game-shell sub-body"),
 				h.Div(h.ID("particle-life-game"), h.Class("game-canvas-wrap")),
 				h.Div(h.Class("control-row"),
 					h.Label(h.For("particle-life-count"), g.Text(i18n.T(lang, "games.particle_life.label_count"))),

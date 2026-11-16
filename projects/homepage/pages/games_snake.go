@@ -7,7 +7,6 @@ import (
 	h "maragu.dev/gomponents/html"
 
 	"mljr-web/internal/i18n"
-	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/special"
 	"mljr-web/ui/token"
@@ -18,18 +17,21 @@ func Snake(lang string, a AnalyticsConfig) g.Node {
 		layout.PageProps{
 			Title:       "Snake - Michael Reinegger",
 			Description: "A classic keyboard-controlled snake game ported from an old side project.",
-			Theme:       token.ThemeSwissBrut,
+			Theme:       token.ThemeSwiss,
+			AutoMode:    true,
+			LockTheme:   true,
 			Mode:        token.ModeLight,
 			Lang:        lang,
 			HeadExtra:   append([]g.Node{g.El("style", g.Raw(homepageCSS+gameCSS+gameDescCSS))}, AnalyticsHead(a)...),
 		},
-		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
+		special.ThemeToggleRoot(token.ThemeSwiss, token.ModeLight),
 		siteNavbar(lang),
-		h.Main(h.Class("game-page"),
-			h.Div(h.Class("game-shell"),
-				h.A(h.Href("/"), h.Class("legal-back"), icon.Icon("lucide:arrow-left"), g.Text(i18n.T(lang, "legal.back"))),
+		h.Main(h.ID("main"), h.Class("game-page sub-page"),
+			subHead("/#playground", tr(lang, "Labor", "Lab"), 10,
 				h.H1(g.Text("Snake")),
 				h.P(h.Class("game-lede"), g.Text(i18n.T(lang, "games.snake.lede"))),
+			),
+			h.Div(h.Class("game-shell sub-body"),
 				h.Div(h.ID("snake-game"), h.Class("game-canvas-wrap")),
 			),
 		),

@@ -52,6 +52,9 @@ type Theme string
 const (
 	ThemeSwissBrut Theme = "swissbrut"
 	ThemeInk       Theme = "ink"
+	// ThemeSwiss is the International Typographic Style theme mljr.eu ships.
+	// Light = "Klein-Blau", dark = "Klein-Nacht" (different colourways per mode).
+	ThemeSwiss Theme = "swiss"
 )
 
 type Mode string

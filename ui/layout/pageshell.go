@@ -17,6 +17,11 @@ type PageProps struct {
 	HeadExtra   []g.Node
 	BodyAttrs   []g.Node
 	Lang        string // BCP-47 language code for <html lang>, default "en"
+	// LockTheme ignores a theme stored in localStorage, so a site that ships a
+	// single theme isn't overridden by a visitor's old choice. Mode still persists.
+	LockTheme bool
+	// AutoMode follows prefers-color-scheme when the visitor has no stored mode.
+	AutoMode bool
 }
 
 // PageShell renders the full HTML document. The pre-paint inline script reads
@@ -30,7 +35,7 @@ func PageShell(p PageProps, body ...g.Node) g.Node {
 		p.Mode = token.ModeLight
 	}
 	if p.CSSPath == "" {
-		p.CSSPath = "/static/app.css?v=20260610-snake"
+		p.CSSPath = "/static/app.css?v=20261116-swiss"
 	}
 	if p.JSPath == "" {
 		p.JSPath = "/static/datastar.js"
@@ -41,7 +46,15 @@ func PageShell(p PageProps, body ...g.Node) g.Node {
 
 	// Pre-paint: read localStorage, set data-theme/data-mode on <html>,
 	// expose values as window.__mljr* so Datastar signal seeds can read them.
-	prepaint := `(function(){var t='` + string(p.Theme) + `',m='` + string(p.Mode) + `';try{t=localStorage.getItem('mljr-theme')||t;m=localStorage.getItem('mljr-mode')||m;}catch(e){}var r=document.documentElement;r.setAttribute('data-theme',t);r.setAttribute('data-mode',m);window.__mljrTheme=t;window.__mljrMode=m;})();`
+	readTheme := `t=localStorage.getItem('mljr-theme')||t;`
+	if p.LockTheme {
+		readTheme = ""
+	}
+	autoMode := ""
+	if p.AutoMode {
+		autoMode = `if(!localStorage.getItem('mljr-mode')&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)m='dark';`
+	}
+	prepaint := `(function(){var t='` + string(p.Theme) + `',m='` + string(p.Mode) + `';try{` + readTheme + autoMode + `m=localStorage.getItem('mljr-mode')||m;}catch(e){}var r=document.documentElement;r.setAttribute('data-theme',t);r.setAttribute('data-mode',m);window.__mljrTheme=t;window.__mljrMode=m;})();`
 
 	return g.Group{
 		g.Raw("<!doctype html>"),

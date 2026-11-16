@@ -5,7 +5,6 @@ import (
 	h "maragu.dev/gomponents/html"
 
 	"mljr-web/internal/i18n"
-	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/special"
 	"mljr-web/ui/token"
@@ -16,18 +15,21 @@ func Boids(lang string, a AnalyticsConfig) g.Node {
 		layout.PageProps{
 			Title:       "Boids - Michael Reinegger",
 			Description: "A flocking simulation built from Craig Reynolds' three classic boid rules: separation, alignment, and cohesion.",
-			Theme:       token.ThemeSwissBrut,
+			Theme:       token.ThemeSwiss,
+			AutoMode:    true,
+			LockTheme:   true,
 			Mode:        token.ModeLight,
 			Lang:        lang,
 			HeadExtra:   append([]g.Node{g.El("style", g.Raw(homepageCSS+gameCSS+boidsCSS+gameDescCSS))}, AnalyticsHead(a)...),
 		},
-		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
+		special.ThemeToggleRoot(token.ThemeSwiss, token.ModeLight),
 		siteNavbar(lang),
-		h.Main(h.Class("game-page"),
-			h.Div(h.Class("game-shell"),
-				h.A(h.Href("/"), h.Class("legal-back"), icon.Icon("lucide:arrow-left"), g.Text(i18n.T(lang, "legal.back"))),
+		h.Main(h.ID("main"), h.Class("game-page sub-page"),
+			subHead("/#playground", tr(lang, "Labor", "Lab"), 3,
 				h.H1(g.Text("Boids")),
 				h.P(h.Class("game-lede"), g.Text(i18n.T(lang, "games.boids.lede"))),
+			),
+			h.Div(h.Class("game-shell sub-body"),
 				h.Div(h.ID("boids-game"), h.Class("game-canvas-wrap")),
 				h.Div(h.Class("control-row"),
 					h.Label(h.For("boids-separation"), g.Text(i18n.T(lang, "games.boids.label_separation"))),

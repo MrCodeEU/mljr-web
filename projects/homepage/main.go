@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"embed"
+	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -24,11 +26,13 @@ var assets embed.FS
 func main() {
 	cfg := config.Load()
 	e := web.NewEcho()
+	e.Pre(web.LangPrefix())
 
 	if err := registerAnalyticsProxy(e, cfg.Analytics); err != nil {
 		log.Fatal(err)
 	}
 	web.MountStatic(e, assets, "projects/homepage/assets/static", web.IsDev())
+	web.MountFonts(e)
 	web.MountLogos(e, assets, "projects/homepage/assets/static", web.IsDev())
 	web.MountDataAssets(e, cfg.Data.File)
 
@@ -38,6 +42,17 @@ func main() {
 		UmamiWebsiteID: cfg.Analytics.UmamiWebsiteID,
 		UmamiHostURL:   cfg.Analytics.UmamiHostURL,
 		UmamiDomains:   cfg.Analytics.UmamiDomains,
+	}
+	// unknown pages get the site's 404 page; everything else the default
+	defaultErr := e.HTTPErrorHandler
+	e.HTTPErrorHandler = func(err error, c echo.Context) {
+		var he *echo.HTTPError
+		if errors.As(err, &he) && he.Code == http.StatusNotFound && !c.Response().Committed &&
+			strings.Contains(c.Request().Header.Get("Accept"), "text/html") {
+			_ = web.Render(c, http.StatusNotFound, pages.NotFound(web.Lang(c), analytics))
+			return
+		}
+		defaultErr(err, c)
 	}
 	// Live homelab panel: background poller, 60s cadence.
 	hlPoller := homelab.New(homelab.Options{
@@ -56,8 +71,19 @@ func main() {
 	hlPoller.Start(context.Background(), 60*time.Second)
 	hlSnapshot := func() homelab.Snapshot {
 		snap := hlPoller.Snapshot()
-		if !snap.KumaOK && web.IsDev() {
+		if !web.IsDev() {
+			return snap
+		}
+		if !snap.KumaOK {
 			return homelab.Sample()
+		}
+		// Dev without HOMELAB_PROM_URL: live Kuma, sample PromQL parts, so
+		// bans, CPU and the attack heatmap can still be reviewed locally.
+		if snap.ActiveBans < 0 {
+			sm := homelab.Sample()
+			snap.ActiveBans, snap.Attacks24h, snap.SecurityEvents, snap.HostsOnline = sm.ActiveBans, sm.Attacks24h, sm.SecurityEvents, sm.HostsOnline
+			snap.BansCommunity, snap.BansLocal, snap.TopThreats = sm.BansCommunity, sm.BansLocal, sm.TopThreats
+			snap.AttackDays, snap.CPUUtil, snap.CPULabels = sm.AttackDays, sm.CPUUtil, sm.CPULabels
 		}
 		return snap
 	}
@@ -105,7 +131,7 @@ func main() {
 		d := dataStore.Current()
 		p, ok := d.ProjectByID(c.Param("id"))
 		if !ok || !pages.HasProjectDetail(p) {
-			return c.NoContent(404)
+			return echo.ErrNotFound
 		}
 		return web.Render(c, 200, pages.ProjectDetail(d, p, web.Lang(c), analytics))
 	})
@@ -127,18 +153,29 @@ func main() {
 		c.Response().Header().Set("Content-Type", "application/xml; charset=utf-8")
 		var b strings.Builder
 		b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
-		b.WriteString(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` + "\n")
-		b.WriteString(`  <url><loc>https://mljr.eu/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>` + "\n")
-		b.WriteString(`  <url><loc>https://mljr.eu/impressum</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>` + "\n")
-		b.WriteString(`  <url><loc>https://mljr.eu/datenschutz</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>` + "\n")
+		b.WriteString(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">` + "\n")
+		// every page twice, English and German, each listing both versions
+		add := func(path, freq, prio string) {
+			de := "/de" + path
+			if path == "/" {
+				de = "/de/"
+			}
+			alt := fmt.Sprintf(`<xhtml:link rel="alternate" hreflang="en" href="%[1]s%[2]s"/><xhtml:link rel="alternate" hreflang="de" href="%[1]s%[3]s"/><xhtml:link rel="alternate" hreflang="x-default" href="%[1]s%[2]s"/>`, web.SiteURL, path, de)
+			for _, loc := range []string{path, de} {
+				fmt.Fprintf(&b, "  <url><loc>%s%s</loc>%s<changefreq>%s</changefreq><priority>%s</priority></url>\n", web.SiteURL, loc, alt, freq, prio)
+			}
+		}
+		add("/", "weekly", "1.0")
+		add("/impressum", "monthly", "0.3")
+		add("/datenschutz", "monthly", "0.3")
 		for _, it := range pages.PlaygroundURLPaths() {
-			fmt.Fprintf(&b, "  <url><loc>https://mljr.eu%s</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>\n", it)
+			add(it, "yearly", "0.4")
 		}
 		for _, p := range dataStore.Current().GitHub {
 			if !p.HasDetailPage() {
 				continue
 			}
-			fmt.Fprintf(&b, "  <url><loc>https://mljr.eu/projects/%s</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n", p.ID)
+			add("/projects/"+p.ID, "monthly", "0.6")
 		}
 		b.WriteString(`</urlset>`)
 		return c.String(200, b.String())

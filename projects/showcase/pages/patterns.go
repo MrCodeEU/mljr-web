@@ -62,8 +62,8 @@ func PatternsListing() g.Node {
 	}
 
 	return layout.PageShell(
-		layout.PageProps{Title: "Patterns — mljr-ui", Theme: token.ThemeSwissBrut, Mode: token.ModeLight},
-		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
+		layout.PageProps{Title: "Patterns — mljr-ui", Theme: token.ThemeSwiss, AutoMode: true, Mode: token.ModeLight},
+		special.ThemeToggleRoot(token.ThemeSwiss, token.ModeLight),
 		layout.Navbar(layout.NavbarProps{},
 			g.Text("mljr-ui · patterns"),
 			g.Group{
@@ -92,7 +92,7 @@ func PatternsListing() g.Node {
 // PatternDetail renders /patterns/{slug} — full detail with open-in-new-tab link.
 func PatternDetail(p *registry.Pattern, theme token.Theme, mode token.Mode) g.Node {
 	if theme == "" {
-		theme = token.ThemeSwissBrut
+		theme = token.ThemeSwiss
 	}
 	if mode == "" {
 		mode = token.ModeLight
@@ -138,7 +138,7 @@ func PatternDetail(p *registry.Pattern, theme token.Theme, mode token.Mode) g.No
 // PatternPreview renders just the pattern content (used in iframes).
 func PatternPreview(p *registry.Pattern, theme token.Theme, mode token.Mode) g.Node {
 	if theme == "" {
-		theme = token.ThemeSwissBrut
+		theme = token.ThemeSwiss
 	}
 	if mode == "" {
 		mode = token.ModeLight

@@ -2,200 +2,174 @@ package pages
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
-	"mljr-web/internal/i18n"
 	"mljr-web/projects/homepage/homelab"
-	uidata "mljr-web/ui/data"
-	"mljr-web/ui/icon"
-	"mljr-web/ui/layout"
-	"mljr-web/ui/primitive"
-	"mljr-web/ui/special"
-	"mljr-web/ui/token"
+	"mljr-web/ui/swiss"
 )
 
-// homelabSection renders the live infrastructure panel. The inner panel
-// (#homelab-panel) is re-fetched every 60s via Datastar and patched in place.
-func homelabSection(num string, snap homelab.Snapshot, lang string) g.Node {
-	return h.Section(
-		h.ID("homelab"),
-		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink)"),
-		g.Attr("data-on-interval__duration.60s", "@get('/api/homelab')"),
-		layout.Container(layout.ContainerProps{},
-			sectionHeader(num, i18n.T(lang, "sections.homelab.title"), i18n.T(lang, "sections.homelab.sub"), token.ToneBlush),
-			HomelabPanel(snap),
-			archCard(),
-		),
+// homelabSection ("Heimnetz"): a control-room board ("Leitstand") that the
+// /api/homelab SSE endpoint re-renders every 60s, plus the architecture as
+// a numbered flowchart.
+func homelabSection(p swiss.SectionProps, snap homelab.Snapshot, lang string) g.Node {
+	p.Note = tr(lang, "Leitstand: alle 60 s live aktualisiert über Uptime Kuma + VictoriaMetrics.", "Control room: refreshed live every 60 s from Uptime Kuma + VictoriaMetrics.")
+	p.Attrs = []g.Node{g.Attr("data-on-interval__duration.60s", "@get('/api/homelab')")}
+	return swiss.Section(p,
+		HomelabPanel(snap),
+		archFlow(lang),
 	)
 }
 
-// HomelabPanel renders the patchable panel. Exported: the /api/homelab
-// fragment handler re-renders it with a fresh snapshot.
+// HomelabPanel renders the patchable Leitstand. Exported: the /api/homelab
+// fragment handler re-renders it with a fresh snapshot. Labels are
+// bilingual (German / English) because the SSE handler has no language.
 func HomelabPanel(snap homelab.Snapshot) g.Node {
 	if !snap.KumaOK && snap.ActiveBans < 0 {
-		// No data from any source yet (first poll pending or sources offline).
-		return h.Div(h.ID("homelab-panel"),
-			primitive.Callout(primitive.CalloutProps{Variant: primitive.CalloutInfo},
-				g.Text("Telemetry warming up — live homelab data appears here once the first poll lands."),
+		return h.Div(h.ID("homelab-panel"), h.Class("lab-panel"),
+			swiss.Cell(swiss.CellProps{},
+				swiss.Kicker("Leitstand / Control room", g.Text("◷")),
+				h.P(h.Class("cell-text"), g.Text("Telemetrie startet — Live-Daten erscheinen nach der ersten Abfrage. / Telemetry warming up.")),
 			),
 		)
 	}
-
+	num := func(v int) string {
+		if v < 0 {
+			return "—"
+		}
+		return fmt.Sprint(v)
+	}
 	total := len(snap.Services)
-
-	return h.Div(
-		h.ID("homelab-panel"),
-		h.Div(
-			h.Class("homelab-grid"),
-			h.Style("display:grid;grid-template-columns:minmax(0,1.25fr) minmax(360px,.95fr);gap:var(--sp-5);align-items:start"),
-			h.Div(
-				h.Style("display:flex;flex-direction:column;gap:var(--sp-4);min-width:0"),
-				servicesCard(snap, total),
-				meshCard(snap),
-			),
-			h.Div(
-				h.Style("display:flex;flex-direction:column;gap:var(--sp-4);min-width:0"),
-				pingCard(snap),
-				cpuCard(snap),
-				crowdsecCard(snap),
-				threatsCard(snap),
-				attacksHeatmapCard(snap),
-			),
-		),
-		h.Div(
-			h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-3);font-size:var(--t-xs);color:var(--muted);font-weight:700"),
-			h.Span(h.Style("width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse-dot 2s ease infinite;flex-shrink:0")),
-			g.Text("live — uptime kuma + victoriametrics over tailscale · updated "+snap.FetchedAt.Format("15:04:05")),
-		),
-	)
-}
-
-func servicesCard(snap homelab.Snapshot, total int) g.Node {
-	chips := make([]g.Node, 0, total)
-	for _, svc := range snap.Services {
-		dotColor := "#22c55e"
-		if !svc.Up {
-			dotColor = "var(--danger,#ef4444)"
-		}
-		ping := ""
-		if svc.Up && svc.Ping > 0 {
-			ping = fmt.Sprintf("%.0f ms", svc.Ping)
-		}
-		chips = append(chips, h.Div(
-			h.Style("display:flex;align-items:center;gap:var(--sp-2);border:var(--bw-1) solid var(--ink);background:var(--bg);padding:var(--sp-2) var(--sp-3);min-width:0"),
-			h.Span(h.Style("width:9px;height:9px;border-radius:50%;flex-shrink:0;border:1px solid var(--ink);background:"+dotColor)),
-			h.Span(h.Style("font-size:var(--t-xs);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"), g.Text(svc.Name)),
-			g.If(ping != "", h.Span(h.Style("font-size:var(--t-xs);font-family:var(--font-mono,monospace);color:var(--muted);margin-left:auto;flex-shrink:0"), g.Text(ping))),
-		))
+	avg := 0.0
+	if n := len(snap.PingHistory); n > 0 {
+		avg = snap.PingHistory[n-1]
 	}
-
-	upBadgeTone := token.ToneLime
+	upVariant := "block"
 	if snap.UpCount < total {
-		upBadgeTone = token.ToneYellow
+		upVariant = "second"
 	}
-
-	return primitive.Card(primitive.CardProps{Tone: token.ToneBlush},
-		h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-4)"),
-			h.Div(
-				h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("Services")),
-				h.H3(h.Style("font-size:var(--t-xl);font-weight:900;margin:var(--sp-1) 0 0"), g.Text("Self-hosted fleet")),
-			),
-			primitive.Tag(primitive.TagProps{Tone: upBadgeTone},
-				g.Text(fmt.Sprintf("%d / %d up", snap.UpCount, total))),
-		),
-		h.Div(
-			h.Style("display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-2)"),
-			g.Group(chips),
-		),
-	)
-}
-
-func crowdsecCard(snap homelab.Snapshot) g.Node {
-	stat := func(value int, label string) g.Node {
-		display := "—"
-		if value >= 0 {
-			display = fmt.Sprintf("%d", value)
+	onlineMesh := 0
+	for _, m := range snap.Mesh {
+		if m.Online {
+			onlineMesh++
 		}
-		return h.Div(
-			h.Style("border:var(--bw-2) solid var(--ink);background:var(--bg);padding:var(--sp-3);text-align:center;color:var(--ink)"),
-			h.Div(h.Style("font-size:clamp(1.6rem,2.5vw,2.2rem);font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:var(--ink)"), g.Text(display)),
-			h.Div(h.Style("font-size:var(--t-xs);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:var(--sp-1)"), g.Text(label)),
+	}
+
+	// service matrix: one square per monitor
+	svcs := append([]homelab.Service(nil), snap.Services...)
+	sort.Slice(svcs, func(i, j int) bool { return svcs[i].Name < svcs[j].Name })
+	tiles := make([]g.Node, len(svcs))
+	bars := make([]barItem, 0, len(svcs))
+	for i, s := range svcs {
+		name, host := splitHost(s.Name)
+		state := "up"
+		if !s.Up {
+			state = "down"
+		}
+		ping := "—"
+		if s.Ping > 0 {
+			ping = fmt.Sprintf("%.0f ms", s.Ping)
+			bars = append(bars, barItem{Label: name, Value: ping, N: s.Ping})
+		}
+		tiles[i] = h.Li(h.Class("lt-tile lt-"+state), h.Title(s.Name),
+			h.Span(h.Class("lt-state"), g.Text(map[string]string{"up": "● in Betrieb", "down": "▲ gestört"}[state])),
+			h.B(g.Text(name)),
+			h.Span(h.Class("lt-meta"), g.Text(host+" · "+ping)),
 		)
 	}
-
-	// Community vs local origin split as a stacked bar.
-	var originSplit g.Node
-	if snap.BansCommunity >= 0 && snap.BansLocal >= 0 && snap.BansCommunity+snap.BansLocal > 0 {
-		totalBans := snap.BansCommunity + snap.BansLocal
-		commPct := float64(snap.BansCommunity) / float64(totalBans) * 100
-		originSplit = h.Div(
-			h.Style("margin-top:var(--sp-3)"),
-			h.Div(h.Style("display:flex;justify-content:space-between;gap:var(--sp-2);font-size:var(--t-xs);font-weight:800;margin-bottom:var(--sp-1)"),
-				h.Span(h.Style("color:var(--accent-ink)"), g.Textf("Community blocklist · %d", snap.BansCommunity)),
-				h.Span(h.Style("color:var(--muted)"), g.Textf("caught here · %d", snap.BansLocal)),
-			),
-			h.Div(
-				h.Style("display:flex;height:14px;border:var(--bw-2) solid var(--ink);background:var(--bg);overflow:hidden"),
-				h.Div(h.Style(fmt.Sprintf("width:%.1f%%;background:var(--violet-bg,#ddd6fe);border-right:var(--bw-1) solid var(--ink)", commPct))),
-				h.Div(h.Style("flex:1;background:var(--accent)")),
-			),
-		)
+	sort.Slice(bars, func(i, j int) bool { return bars[i].N > bars[j].N })
+	if len(bars) > 8 {
+		bars = bars[:8]
 	}
 
-	return primitive.Card(primitive.CardProps{Tone: token.ToneViolet},
-		h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3)"),
-			icon.Icon("lucide:shield-check", icon.Props{Size: "1.3rem"}),
-			h.H3(h.Style("font-size:var(--t-base);font-weight:900;margin:0"), g.Text("CrowdSec perimeter")),
-		),
-		h.Div(
-			h.Style("display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-2)"),
-			stat(snap.ActiveBans, "Active bans"),
-			stat(snap.Attacks24h, "Blocked · 24h"),
-			stat(snap.SecurityEvents, "Alerts · total"),
-			stat(snap.HostsOnline, "Hosts online"),
-		),
-		originSplit,
-	)
-}
-
-// threatsCard ranks what the perimeter is actually blocking right now.
-func threatsCard(snap homelab.Snapshot) g.Node {
-	if len(snap.TopThreats) == 0 {
-		return nil
-	}
-	maxVal := snap.TopThreats[0].Value
-	if maxVal < 1 {
-		maxVal = 1
-	}
-	rows := make([]g.Node, 0, len(snap.TopThreats))
+	threats := make([]barItem, 0, len(snap.TopThreats))
 	for _, t := range snap.TopThreats {
-		pct := float64(t.Value) / float64(maxVal) * 100
-		if pct < 2 {
-			pct = 2
-		}
-		rows = append(rows, h.Div(
-			h.Div(h.Style("display:flex;justify-content:space-between;gap:var(--sp-2);font-size:var(--t-xs);font-weight:800;margin-bottom:2px"),
-				h.Span(g.Text(threatLabel(t.Name))),
-				h.Span(h.Style("font-family:var(--font-mono,monospace);color:var(--muted)"), g.Textf("%d", t.Value)),
-			),
-			h.Div(h.Style("height:12px;border:var(--bw-1) solid var(--ink);background:var(--bg)"),
-				h.Div(h.Style(fmt.Sprintf("width:%.1f%%;height:100%%;background:var(--accent)", pct))),
-			),
-		))
+		threats = append(threats, barItem{Label: threatLabel(t.Name), Value: fmt.Sprint(t.Value), N: float64(t.Value), Variant: "third"})
 	}
-	return primitive.Card(primitive.CardProps{Tone: token.ToneYellow},
-		h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3)"),
-			icon.Icon("lucide:radar", icon.Props{Size: "1.3rem"}),
-			h.H3(h.Style("font-size:var(--t-base);font-weight:900;margin:0"), g.Text("Top threats · active bans")),
+	var attackDays []dayCount
+	for _, d := range snap.AttackDays {
+		attackDays = append(attackDays, dayCount{d.Date, d.Count})
+	}
+	// slowest list beside the mesh table; either takes the full row alone
+	sSpan, mSpan := 4, 5
+	if len(snap.Mesh) == 0 {
+		sSpan = 9
+	}
+	// threat list beside the attack heatmap; either takes the full row alone
+	tSpan, hSpan := 3, 6
+	if len(attackDays) == 0 {
+		tSpan = 9
+	}
+	if len(threats) == 0 {
+		hSpan = 9
+	}
+	meshRows := make([]g.Node, len(snap.Mesh))
+	for i, m := range snap.Mesh {
+		st := "● online"
+		if !m.Online {
+			st = "○ offline"
+		} else if m.Relay {
+			st = "◐ relay"
+		}
+		meshRows[i] = h.Tr(h.Td(h.B(g.Text(m.Name))), h.Td(g.Text(m.OS)), h.Td(g.Text(st)), h.Td(g.Text(fmt.Sprint(len(m.Services)))))
+	}
+
+	return h.Div(h.ID("homelab-panel"), h.Class("lab-panel"),
+		swiss.Cell(swiss.CellProps{Variant: "flush"},
+			figRow([]figure{
+				{"Dienste / Services", fmt.Sprintf("%d/%d", snap.UpCount, total), "in Betrieb / up", upVariant, "lucide:server"},
+				{"Antwortzeit / Latency", fmt.Sprintf("%.0f", avg), "ms · Ø aktuell / avg now", "", "lucide:clock"},
+				{"Sperren / Bans", num(snap.ActiveBans), "CrowdSec aktiv / active", "third", "lucide:shield"},
+				{"Angriffe / Attacks", num(snap.Attacks24h), "letzte 24 h / last 24 h", "", "lucide:alert-triangle"},
+				{"Hosts", num(snap.HostsOnline), "online", "", "lucide:network"},
+				{"Alarme / Alerts", num(snap.SecurityEvents), "seit Start / since start", "", "lucide:bell"},
+			}),
 		),
-		h.Div(h.Style("display:flex;flex-direction:column;gap:var(--sp-2)"), g.Group(rows)),
+		swiss.Cell(swiss.CellProps{},
+			swiss.Kicker("A. Dienstmatrix / Service matrix", h.Span(h.Class("lt-live"), g.Text("● live · "+snap.FetchedAt.Format("15:04:05")))),
+			h.Ul(h.Class("lt-grid"), g.Group(tiles)),
+		),
+		swiss.Cell(swiss.CellProps{Span: sSpan},
+			swiss.Kicker("B. Langsamste Antworten / Slowest responses", nil),
+			barList(bars),
+		),
+		g.If(len(meshRows) > 0, swiss.Cell(swiss.CellProps{Span: mSpan},
+			swiss.Kicker("C. Tailscale-Mesh", g.Text(fmt.Sprintf("%d/%d online", onlineMesh, len(snap.Mesh)))),
+			h.Table(h.Class("lt-table"),
+				h.THead(h.Tr(h.Th(g.Text("Host")), h.Th(g.Text("OS")), h.Th(g.Text("Status")), h.Th(g.Text("Dienste / Services")))),
+				h.TBody(meshRows...),
+			),
+		)),
+		g.If(len(threats) > 0, swiss.Cell(swiss.CellProps{Span: tSpan},
+			swiss.Kicker("D. Abwehr / Defence", g.Text(fmt.Sprintf("%s lokal · %s Community", num(snap.BansLocal), num(snap.BansCommunity)))),
+			barList(threats),
+		)),
+		g.If(len(attackDays) > 0, swiss.Cell(swiss.CellProps{Span: hSpan, Attrs: []g.Node{h.Class("lt-heat")}},
+			swiss.Kicker("E. Angriffs-Heatmap / Attack heatmap", g.Text(fmt.Sprintf("CrowdSec · %s %s", num(sumDays(attackDays)), "geblockt / blocked"))),
+			calendarSVG(attackDays, "var(--third)", "Angriffe / attacks", "de"),
+		)),
 	)
 }
 
-// threatLabel maps CrowdSec decision reasons to readable names.
+func sumDays(days []dayCount) int {
+	n := 0
+	for _, d := range days {
+		n += d.Count
+	}
+	return n
+}
+
+// splitHost turns "glance [mljr]" into ("glance", "mljr").
+func splitHost(s string) (string, string) {
+	if i := strings.LastIndex(s, " ["); i > 0 && strings.HasSuffix(s, "]") {
+		return s[:i], s[i+2 : len(s)-1]
+	}
+	return s, ""
+}
+
 func threatLabel(raw string) string {
 	m := map[string]string{
 		"http:scan":       "HTTP scanning",
@@ -213,215 +187,89 @@ func threatLabel(raw string) string {
 	return strings.ReplaceAll(s, "-", " ")
 }
 
-func cpuCard(snap homelab.Snapshot) g.Node {
-	if len(snap.CPUUtil) < 2 {
-		return nil
+// archFlow: the request path and the provisioning loop as a numbered
+// flowchart. No map — the two locations are named in the boxes.
+func archFlow(lang string) g.Node {
+	type box struct {
+		num, title, role, place string
+		items                   []string
+		variant                 string
 	}
-	last := snap.CPUUtil[len(snap.CPUUtil)-1]
-	return primitive.Card(primitive.CardProps{Tone: token.ToneLime},
-		h.Div(h.Style("display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
-			h.H3(h.Style("font-size:var(--t-base);font-weight:900;margin:0"), g.Text("Avg CPU · all hosts · 24h")),
-			h.Span(h.Style("font-family:var(--font-mono,monospace);font-weight:800;font-size:var(--t-sm)"),
-				g.Text(fmt.Sprintf("%.0f%%", last))),
-		),
-		uidata.LineChart(uidata.LineChartProps{
-			Height:   70,
-			Labels:   snap.CPULabels,
-			ShowGrid: true,
-			YAxis:    true,
-			Series: []uidata.LineChartSeries{{
-				Points: snap.CPUUtil,
-				Color:  "var(--accent)",
-				Fill:   true,
-			}},
-		}),
-	)
-}
-
-func meshCard(snap homelab.Snapshot) g.Node {
-	if !snap.MeshOK || len(snap.Mesh) == 0 {
-		return nil
+	steps := []box{
+		{"1", "Internet", tr(lang, "Besucher", "Visitors"), "", []string{"HTTPS :443"}, "ink"},
+		{"2", "mljr · VPS", tr(lang, "Öffentlicher Eingang", "Public entry"), "Frankfurt", []string{"Caddy", "CrowdSec", "Authelia", tr(lang, "öffentliche Apps", "public apps")}, "block"},
+		{"3", "Tailscale", tr(lang, "Verschlüsseltes Mesh", "Encrypted mesh"), "WireGuard", []string{tr(lang, "keine offenen Ports daheim", "no open ports at home")}, ""},
+		{"4", "nuc", tr(lang, "Heimserver", "Home server"), "Thaling", []string{"VictoriaMetrics", "Grafana", "Loki", tr(lang, "interne Dienste", "internal services")}, ""},
+		{"5", "nas", "Unraid NAS", "Thaling", []string{"Storage", "Backups", "Media"}, ""},
 	}
-	nodes := make([]uidata.MeshNode, len(snap.Mesh))
-	online := 0
-	for i, m := range snap.Mesh {
-		names := make([]string, len(m.Services))
-		for j, svc := range m.Services {
-			names[j] = svc.Name
+	nodes := make([]g.Node, 0, len(steps)*2)
+	for i, s := range steps {
+		if i > 0 {
+			nodes = append(nodes, h.Span(h.Class("af-arrow"), g.Attr("aria-hidden", "true"), g.Text("→")))
 		}
-		nodes[i] = uidata.MeshNode{
-			Name:     m.Name,
-			OS:       m.OS,
-			Online:   m.Online,
-			Relay:    m.Relay,
-			Services: names,
+		pills := make([]g.Node, len(s.items))
+		for j, it := range s.items {
+			pills[j] = swiss.Pill(g.Text(it))
 		}
-		if m.Online {
-			online++
+		cls := "af-box"
+		if s.variant != "" {
+			cls += " mono-" + s.variant
 		}
+		nodes = append(nodes, h.Div(h.Class(cls),
+			h.Span(h.Class("af-num"), g.Text(s.num)),
+			h.B(h.Class("af-title"), g.Text(s.title)),
+			swiss.Micro(g.Text(s.role+g2(s.place))),
+			swiss.Pills(pills...),
+		))
 	}
-
-	onlineTone := token.ToneLime
-	if online < len(snap.Mesh) {
-		onlineTone = token.ToneYellow
-	}
-
-	return primitive.Card(primitive.CardProps{Tone: token.ToneSky},
-		h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3);flex-wrap:wrap"),
-			h.Div(
-				h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("Tailscale mesh")),
-				h.H3(h.Style("font-size:var(--t-lg);font-weight:900;margin:var(--sp-1) 0 0"), g.Text("Live infra topology")),
-			),
-			primitive.Tag(primitive.TagProps{Tone: onlineTone},
-				g.Text(fmt.Sprintf("%d / %d online", online, len(snap.Mesh)))),
-		),
-		uidata.Mesh(uidata.MeshProps{}, nodes),
-	)
-}
-
-func attacksHeatmapCard(snap homelab.Snapshot) g.Node {
-	if len(snap.AttackDays) == 0 {
-		return nil
-	}
-	cells := make([]uidata.HeatmapCell, len(snap.AttackDays))
-	total := 0
-	maxDay := 0
-	for i, d := range snap.AttackDays {
-		cells[i] = uidata.HeatmapCell{
-			Date:  d.Date,
-			Value: d.Count,
-			Label: fmt.Sprintf("%d attacks blocked on %s", d.Count, d.Date.Format("Jan 2")),
-		}
-		total += d.Count
-		if d.Count > maxDay {
-			maxDay = d.Count
-		}
-	}
-	return primitive.Card(primitive.CardProps{
-		Tone:  token.ToneNone,
-		Attrs: []g.Node{h.Style("--accent:#ef4444;--surface-2:#fff7ed")},
-	},
-		h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3);flex-wrap:wrap"),
-			h.Div(
-				h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("CrowdSec · last 12 months")),
-				h.H3(h.Style("font-size:var(--t-lg);font-weight:900;margin:var(--sp-1) 0 0"), g.Text("Attacks blocked per day")),
-			),
-			primitive.Tag(primitive.TagProps{Tone: token.ToneViolet},
-				g.Text(fmt.Sprintf("%d total", total))),
-		),
-		uidata.Heatmap(uidata.HeatmapProps{
-			Weeks: 52, CellSize: 9, Gap: 3, MaxValue: maxDay,
-			ShowMonthLabels: true, ShowDayLabels: true,
-		}, cells),
-	)
-}
-
-func pingCard(snap homelab.Snapshot) g.Node {
-	if len(snap.PingHistory) < 2 {
-		return nil
-	}
-	last := snap.PingHistory[len(snap.PingHistory)-1]
-	labels := make([]string, len(snap.PingHistory))
-	labels[0] = "24h ago"
-	labels[len(labels)-1] = "now"
-	return primitive.Card(primitive.CardProps{Tone: token.ToneSky},
-		h.Div(h.Style("display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
-			h.H3(h.Style("font-size:var(--t-base);font-weight:900;margin:0"), g.Text("Avg response time")),
-			h.Span(h.Style("font-family:var(--font-mono,monospace);font-weight:800;font-size:var(--t-sm)"),
-				g.Text(fmt.Sprintf("%.0f ms", last))),
-		),
-		uidata.LineChart(uidata.LineChartProps{
-			Height:   70,
-			Labels:   labels,
-			ShowGrid: true,
-			YAxis:    true,
-			Series: []uidata.LineChartSeries{{
-				Points: snap.PingHistory,
-				Color:  "var(--accent)",
-				Fill:   true,
-			}},
-		}),
-	)
-}
-
-// archCard explains how the homelab hangs together: three devices on a
-// Tailscale mesh, one public Caddy ingress, everything provisioned by
-// OpenVox (Puppet). Static content — no live data needed.
-func archCard() g.Node {
-	deviceBox := func(ic, name, role string, items []string) g.Node {
-		tags := make([]g.Node, len(items))
-		for i, it := range items {
-			tags[i] = h.Span(
-				h.Style("border:var(--bw-1) solid var(--ink);background:var(--bg);padding:1px var(--sp-2);font-size:var(--t-xs);font-weight:700;white-space:nowrap"),
-				g.Text(it),
-			)
-		}
-		return h.Div(
-			h.Style("border:var(--bw-2) solid var(--ink);background:var(--surface);box-shadow:var(--shadow-sm);padding:var(--sp-4);min-width:0"),
-			h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-1)"),
-				icon.Icon(ic, icon.Props{Size: "1.3rem"}),
-				h.Div(h.Style("font-weight:900;font-size:var(--t-base);line-height:1.2"), g.Text(name)),
-			),
-			h.Div(h.Style("font-size:var(--t-xs);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--sp-2)"), g.Text(role)),
-			h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-1)"), g.Group(tags)),
-		)
-	}
-
-	return h.Div(h.Style("margin-top:var(--sp-5)"),
-		primitive.Card(primitive.CardProps{Tone: token.ToneNone},
-			h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3);flex-wrap:wrap"),
-				h.Div(
-					h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("Architecture")),
-					h.H3(h.Style("font-size:var(--t-xl);font-weight:900;margin:var(--sp-1) 0 0"), g.Text("How it hangs together")),
-				),
-				primitive.Tag(primitive.TagProps{Tone: token.ToneLime, Icon: "simple-icons:puppet"}, g.Text("100% IaC")),
-			),
-			h.P(h.Style("font-size:var(--t-sm);color:var(--muted);line-height:1.6;margin:0 0 var(--sp-4);max-width:78ch"),
-				g.Text("All public traffic enters through Caddy on the VPS, with CrowdSec banning attackers at the edge and Authelia guarding private apps. Behind that, three machines talk over an encrypted Tailscale mesh — no open ports at home. Every host, container and config file is declared in one OpenVox (Puppet) repo; each machine runs an agent that applies it, so there is no central server and no SSH fan-out."),
-			),
-			special.OpenMap(special.OpenMapProps{
-				CenterLat: 49.1,
-				CenterLng: 11.35,
-				Zoom:      6,
-				Height:    "260px",
-				ID:        "homelab-map",
-			},
-				special.MapPin{Lat: 50.1109, Lng: 8.6821, Label: "VPS · Contabo Frankfurt", Popup: "<strong>VPS · Contabo Frankfurt</strong><br>Caddy ingress · CrowdSec · Authelia"},
-				special.MapPin{Lat: 48.143, Lng: 14.461, Label: "Home · Thaling, Upper Austria", Popup: "<strong>Home · Thaling, Upper Austria</strong><br>nuc · nas · private services"},
-			),
-			// Internet → ingress
-			h.Div(
-				h.Style("display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap;margin:var(--sp-4) 0 var(--sp-2)"),
-				h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-2);border:var(--bw-2) solid var(--ink);background:var(--bg);padding:var(--sp-2) var(--sp-3);font-weight:900;font-size:var(--t-sm)"),
-					icon.Icon("lucide:globe", icon.Props{Size: "1.1rem"}),
-					g.Text("Internet"),
-				),
-				h.Span(h.Style("font-family:var(--font-mono,monospace);font-size:var(--t-xs);font-weight:700;color:var(--muted)"), g.Text("→ HTTPS :443 · Caddy ingress · CrowdSec at the edge →")),
-			),
-			// Tailscale mesh containing the three devices
-			h.Div(
-				h.Style("border:var(--bw-2) dashed var(--ink);padding:var(--sp-4);position:relative;background:color-mix(in srgb,var(--surface) 60%,transparent)"),
-				h.Div(h.Style("position:absolute;top:-11px;left:var(--sp-4);background:var(--surface);padding:0 var(--sp-2);font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:var(--sp-1)"),
-					icon.Icon("simple-icons:tailscale", icon.Props{Size: ".9rem"}),
-					g.Text("Tailscale mesh · WireGuard"),
-				),
-				h.Div(
-					h.Class("homelab-arch-grid"),
-					h.Style("display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-3)"),
-					deviceBox("lucide:cloud", "mljr", "VPS · public entry",
-						[]string{"Caddy", "CrowdSec", "Authelia", "public apps"}),
-					deviceBox("lucide:server", "nuc", "home server",
-						[]string{"VictoriaMetrics", "Grafana", "Loki", "internal services"}),
-					deviceBox("lucide:hard-drive", "nas", "Unraid NAS",
-						[]string{"storage", "backups", "media"}),
-				),
-			),
-			// OpenVox bar
-			h.Div(
-				h.Style("display:flex;align-items:center;gap:var(--sp-2);border:var(--bw-2) solid var(--ink);background:var(--lime-bg,#d9f99d);padding:var(--sp-2) var(--sp-3);margin-top:var(--sp-2);font-size:var(--t-xs);font-weight:800"),
-				icon.Icon("simple-icons:puppet", icon.Props{Size: "1rem"}),
-				g.Text("OpenVox agents provision the hosts — hardening, Docker Compose services, Caddy snippets, monitoring. Agent-based instead of push over SSH. No snowflakes."),
-			),
+	return swiss.Cell(swiss.CellProps{},
+		swiss.Kicker(tr(lang, "Aufbau", "Architecture"), g.Text("100% IaC")),
+		h.Div(h.Class("af"), g.Group(nodes)),
+		h.Div(h.Class("af-loop mono-second"),
+			h.Span(h.Class("af-num"), g.Text("6")),
+			h.P(g.Text(tr(lang,
+				"OpenVox-Agenten (Puppet) auf jedem Host wenden dasselbe Repo an — Härtung, Docker-Compose-Dienste, Caddy-Snippets, Monitoring. Kein zentraler Server, kein SSH-Fan-out, keine Schneeflocken.",
+				"OpenVox (Puppet) agents on every host apply the same repo — hardening, Docker Compose services, Caddy snippets, monitoring. No central server, no SSH fan-out, no snowflakes."))),
 		),
 	)
 }
+
+func g2(place string) string {
+	if place == "" {
+		return ""
+	}
+	return " · " + place
+}
+
+const leitstandCSS = `
+.lab-panel { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); grid-column: 1 / -1; }
+.lab-panel > * { grid-column: 1 / -1; }
+.lab-panel > [data-span] { grid-column: auto / span var(--span); }
+.lt-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 3px; }
+.lt-tile { min-height: 84px; gap: .4rem; padding: .55rem; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+.lt-tile b { font-size: .95rem; letter-spacing: -0.01em; line-height: 1.1; overflow-wrap: anywhere; }
+.lt-up { background: var(--block); color: var(--block-fg); }
+.lt-down { background: var(--second); color: var(--second-fg); }
+.lt-state, .lt-meta { font-family: var(--font-mono); font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.lt-meta { opacity: .8; }
+.lt-live { color: var(--main-text); }
+.lt-sub { display: block; margin: 1rem 0 .4rem; color: var(--muted); }
+.lt-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.lt-table th { text-align: left; font-family: var(--font-mono); font-size: .64rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--ink); padding: .25rem .3rem .25rem 0; }
+.lt-table td { border-bottom: 1px solid var(--rule-subtle); padding: .3rem .3rem .3rem 0; }
+.af { display: flex; align-items: stretch; gap: .4rem; overflow-x: auto; padding-bottom: .25rem; }
+.af-box { flex: 1 1 0; min-width: 150px; border: 1px solid var(--ink); padding: .75rem; display: flex; flex-direction: column; gap: .45rem; }
+.af-num { font-size: 2.4rem; font-weight: 900; letter-spacing: -0.05em; line-height: .85; }
+.af-title { font-size: 1.05rem; letter-spacing: -0.02em; }
+.af-arrow { align-self: center; font-size: 1.6rem; font-weight: 900; }
+.mono-block [data-component="swiss-pill"], .mono-ink [data-component="swiss-pill"], .mono-second [data-component="swiss-pill"], .mono-third [data-component="swiss-pill"] { border-color: currentColor; }
+.af-loop { display: flex; gap: 1rem; align-items: center; padding: .75rem; margin-top: .4rem; }
+.af-loop p { margin: 0; font-size: .9rem; font-weight: 600; }
+@media (max-width: 1024px) {
+  .lab-panel { grid-template-columns: minmax(0, 1fr); }
+  .lab-panel > [data-span] { grid-column: 1 / -1; }
+  .lt-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .af { flex-direction: column; }
+  .af-arrow { transform: rotate(90deg); }
+}
+`

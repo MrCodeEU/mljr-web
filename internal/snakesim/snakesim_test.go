@@ -63,6 +63,12 @@ func TestOccupancyMatchesBody(t *testing.T) {
 
 // The opening (below 25% fill) must be death-free: that is the part viewers see first.
 func TestOpeningNeverDies(t *testing.T) {
+	// Plays thousands of full games; under the race detector this exceeds the
+	// default 10m test timeout. The logic is single-goroutine, so -race adds
+	// nothing here — plain `go test` still covers it.
+	if raceEnabled {
+		t.Skip("too slow under -race; covered by the non-race run")
+	}
 	for _, n := range []int{10, 20, 30, 50} {
 		for seed := uint64(1); seed <= 4; seed++ {
 			g := NewGame(n, newRNG(seed*100+uint64(n)))

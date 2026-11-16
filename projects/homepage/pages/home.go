@@ -10,316 +10,111 @@ import (
 	"mljr-web/projects/homepage/homelab"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/overlay"
-	"mljr-web/ui/primitive"
 	"mljr-web/ui/special"
+	"mljr-web/ui/swiss"
 	"mljr-web/ui/token"
 )
 
-const perPage = 6
+// homeSection is one row of the homepage sheet. Num is assigned in order so
+// optional sections (live tools, Strava, papers) never leave gaps.
+type homeSection struct {
+	id, de, en string
+	render     func(p swiss.SectionProps) g.Node
+}
+
+// sectionField gives some anchors a solid colour field, so the sheet carries
+// large flat colour areas down the page instead of only at the top.
+var sectionField = map[string]string{
+	"projects": "second", "playground": "third", "experience": "block",
+	"homelab": "second", "skills": "third", "contact": "ink",
+}
 
 func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot) g.Node {
 	featured := d.FeaturedProjects()
-	liveTools := d.LiveToolProjects()
 	rest := d.AllProjects()
-	// Featured projects get their own spotlight section; the grid shows the rest.
-	gridProjects := rest
 	if len(featured) == 0 {
-		gridProjects = append(featured, rest...)
+		featured, rest = rest, nil
 	}
-	totalProjects := len(d.GitHub)
-	ogDescription := "Networks & IT Security · Go · self-hosted — no JS framework, no CDN, no adtech tracking."
+	liveTools := d.LiveToolProjects()
+	title := tr(lang, "Michael Reinegger — IT-Security-Engineer in Linz", "Michael Reinegger — IT Security Engineer, Linz")
+	ogDescription := tr(lang,
+		"Portfolio von Michael Reinegger: Dipl.-Ing. Netzwerke & IT-Sicherheit (JKU Linz), Go, selbst gehostete Infrastruktur, Projekte, Laufbahn und Homelab live.",
+		"Portfolio of Michael Reinegger: Dipl.-Ing. in Networks & IT Security (JKU Linz), Go, self-hosted infrastructure, projects, career and a live homelab.")
+	ogURL := tr(lang, "https://mljr.eu/de/", "https://mljr.eu/")
 	headExtra := append([]g.Node{
-		h.Script(h.Src("/static/motion.min.js")),
-		g.El("style", g.Raw(homepageCSS)),
-		g.El("meta", g.Attr("property", "og:title"), g.Attr("content", "Michael Reinegger — Portfolio")),
+		g.El("style", g.Raw(homepageCSS+homeCSS+chartCSS+netCSS+careerMapCSS+leitstandCSS+hoodCSS+contactCSS+bewegungCSS+catalogueCSS+tabsCSS+labCSS+skillsCSS)),
+		h.Script(h.Type("application/ld+json"), g.Raw(personJSONLD)),
+		g.El("meta", g.Attr("property", "og:title"), g.Attr("content", title)),
 		g.El("meta", g.Attr("property", "og:description"), g.Attr("content", ogDescription)),
 		g.El("meta", g.Attr("property", "og:type"), g.Attr("content", "website")),
-		g.El("meta", g.Attr("property", "og:url"), g.Attr("content", "https://mljr.eu")),
+		g.El("meta", g.Attr("property", "og:url"), g.Attr("content", ogURL)),
+		g.El("meta", g.Attr("property", "og:locale"), g.Attr("content", tr(lang, "de_AT", "en_US"))),
 		g.El("meta", g.Attr("property", "og:image"), g.Attr("content", "https://mljr.eu/assets/portfolio/mljr-web/0.webp")),
 		g.El("meta", g.Attr("name", "twitter:card"), g.Attr("content", "summary_large_image")),
-		g.El("meta", g.Attr("name", "twitter:title"), g.Attr("content", "Michael Reinegger — Portfolio")),
+		g.El("meta", g.Attr("name", "twitter:title"), g.Attr("content", title)),
 		g.El("meta", g.Attr("name", "twitter:description"), g.Attr("content", ogDescription)),
 		g.El("meta", g.Attr("name", "twitter:image"), g.Attr("content", "https://mljr.eu/assets/portfolio/mljr-web/0.webp")),
 	}, AnalyticsHead(a)...)
 
+	all := []homeSection{
+		{"hero", "Identität", "Identity", func(p swiss.SectionProps) g.Node { return heroSection(p, d, lang) }},
+		{"projects", "Werkkatalog", "Catalogue", func(p swiss.SectionProps) g.Node { return catalogueSection(p, featured, rest, liveTools, lang) }},
+		{"playground", "Labor", "Kinetic Lab", func(p swiss.SectionProps) g.Node { return labSection(p, lang) }},
+		{"opensource", "Quelltext", "Open Source", func(p swiss.SectionProps) g.Node { return githubSection(p, d, lang) }},
+		{"experience", "Laufbahn", "Career Network", func(p swiss.SectionProps) g.Node { return careerSection(p, d, lang) }},
+		{"papers", "Schriften", "Papers", func(p swiss.SectionProps) g.Node { return papersSection(p, d, lang) }},
+		{"homelab", "Heimnetz", "Homelab", func(p swiss.SectionProps) g.Node { return homelabSection(p, hl, lang) }},
+		{"activity", "Bewegung", "Training", func(p swiss.SectionProps) g.Node { return stravaSection(p, d, lang) }},
+		{"skills", "Kompetenzen", "Skills", func(p swiss.SectionProps) g.Node { return skillsSection(p, lang) }},
+		{"under-the-hood", "Maschinenraum", "Under the Hood", func(p swiss.SectionProps) g.Node { return codeShowcaseSection(p, lang) }},
+		{"contact", "Kontakt", "Contact", func(p swiss.SectionProps) g.Node { return contactSection(p, d.ContentFor(lang).Contact, lang) }},
+	}
+	var nodes []g.Node
+	var items []swiss.NavItem
+	for _, s := range all {
+		num := fmt.Sprintf("%02d", len(items))
+		n := s.render(swiss.SectionProps{ID: s.id, Num: num, Title: s.de, Sub: s.en, Field: sectionField[s.id], AnchorExtra: bauhausMark(len(items))})
+		if n == nil {
+			continue
+		}
+		nodes = append(nodes, n)
+		items = append(items, swiss.NavItem{ID: s.id, Num: num, Label: s.de, Sub: s.en})
+	}
+	nav := swiss.ColophonProps{
+		Brand:     "mljr.eu",
+		BrandSub:  "— Michael Reinegger · Linz (AT)",
+		Items:     items,
+		Actions:   siteActions(lang),
+		PageID:    "page",
+		SkipLabel: tr(lang, "Zum Inhalt springen", "Skip to content"),
+	}
+
 	return layout.PageShell(
 		layout.PageProps{
-			Title:       "Michael Reinegger — Portfolio",
-			Description: "Networks & IT Security · Go · self-hosted — no JS framework, no CDN, no adtech tracking.",
-			Theme:       token.ThemeSwissBrut,
+			Title:       title,
+			Description: ogDescription,
+			Theme:       token.ThemeSwiss,
+			AutoMode:    true,
+			LockTheme:   true,
 			Mode:        token.ModeLight,
 			HeadExtra:   headExtra,
 			Lang:        lang,
 		},
-		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
-
-		primitive.ReadProgress(primitive.ReadProgressProps{Height: "8px", Color: "var(--accent)", ZIndex: 100}),
-
-		siteNavbar(lang),
-
-		func() g.Node {
-			secN := 0
-			nextSec := func() string { secN++; return fmt.Sprintf("%02d", secN) }
-
-			featuredNode := featuredSection(nextSec(), featured, lang)
-			projectsNode := projectsSection(nextSec(), gridProjects, lang)
-			var liveNode g.Node
-			if len(liveTools) > 0 {
-				liveNode = liveToolsSection(nextSec(), liveTools, lang)
-			}
-			playgroundNode := playgroundSection(nextSec(), lang)
-			githubNode := githubSection(nextSec(), d, lang)
-			experienceNode := experienceSection(nextSec(), d, lang)
-			homelabNode := homelabSection(nextSec(), hl, lang)
-			stravaNode := stravaSection(nextSec(), d, lang)
-			skillsNode := skillsSection(nextSec(), lang)
-			codeNode := codeShowcaseSection(nextSec(), lang)
-			contactNode := contactSection(nextSec(), d.ContentFor(lang).Contact, lang)
-
-			return h.Main(
-				h.Style("position:relative"),
-				AnimatedLogoBackground(),
-				heroSection(d, lang, totalProjects),
-				statsSection(d),
-				featuredNode,
-				projectsNode,
-				liveNode,
-				playgroundNode,
-				githubNode,
-				experienceNode,
-				homelabNode,
-				stravaNode,
-				skillsNode,
-				codeNode,
-				contactNode,
-			)
-		}(),
-
-		siteFooter(lang),
-
+		special.ThemeToggleRoot(token.ThemeSwiss, token.ModeLight),
+		swiss.Colophon(nav),
+		h.Div(h.ID("page"),
+			swiss.Page("sheet",
+				special.LogoGrid(special.LogoGridProps{SlotID: "logo-slot", SheetID: "sheet", HeroID: "hero"}),
+				h.Main(append([]g.Node{h.ID("main")}, nodes...)...),
+			),
+			siteFooter(lang),
+		),
+		swiss.Register(nav),
 		overlay.Toaster(overlay.ToasterProps{}),
 		overlay.Portal("portal"),
+		h.Script(g.Raw(tabsJS)),
 	)
 }
 
-const homepageCSS = `
-/* homepage-specific responsive styles */
-@keyframes pulse-dot {
-  0%,100%{opacity:1;transform:scale(1)}
-  50%{opacity:.5;transform:scale(1.5)}
-}
-
-html, body { overflow-x: hidden; }
-main > section,
-main > div:not(#logo-svg-hp-bg) {
-  position: relative;
-  z-index: 1;
-}
-.tools-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--sp-5);
-}
-#skills { overflow-x: hidden; }
-#skills [data-component="marquee"] {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-[data-component="footer"][data-homepage-footer="true"] {
-  background: var(--surface);
-}
-[data-component="footer"][data-homepage-footer="true"] [data-slot="grid"] {
-  grid-template-columns: minmax(240px,1.35fr) repeat(3,minmax(150px,.75fr));
-  gap: 0;
-  padding: var(--sp-6) clamp(1rem,4vw,3rem);
-  align-items: stretch;
-}
-[data-component="footer"][data-homepage-footer="true"] [data-slot="brand"],
-[data-component="footer"][data-homepage-footer="true"] [data-slot="col"] {
-  border: var(--bw-2) solid var(--ink);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-  padding: var(--sp-4);
-  margin-left: -2px;
-}
-[data-component="footer"][data-homepage-footer="true"] [data-slot="brand"] {
-  margin-left: 0;
-  background: var(--bg);
-}
-[data-component="footer"][data-homepage-footer="true"] [data-slot="col-title"] {
-  background: var(--accent);
-  color: var(--accent-ink);
-  border: var(--bw-2) solid var(--ink);
-  box-shadow: var(--shadow-sm);
-  display: inline-block;
-  padding: var(--sp-1) var(--sp-2);
-  margin-bottom: var(--sp-3);
-}
-[data-component="footer"][data-homepage-footer="true"] [data-slot="tagline"] {
-  max-width: 31ch;
-  font-size: var(--t-xs);
-}
-[data-component="footer"][data-homepage-footer="true"] [data-slot="col-links"] {
-  gap: var(--sp-1);
-}
-[data-component="footer"][data-homepage-footer="true"] [data-slot="bottom"] {
-  background: var(--lime-bg,#d9f99d);
-  color: var(--ink);
-  padding-block: var(--sp-3);
-}
-.experience-mobile-timeline { display: none; }
-.hero-stat-tile:last-child { border-right: none; }
-
-/* Swiss-editorial section index numbers */
-.section-num {
-  font-size: clamp(2.4rem, 5vw, 3.6rem);
-  font-weight: 900;
-  line-height: 1;
-  color: transparent;
-  -webkit-text-stroke: 2px var(--ink);
-  paint-order: stroke;
-  opacity: .35;
-  letter-spacing: -.02em;
-  user-select: none;
-}
-
-/* heatmap SVG should shrink-wrap and scroll on small screens */
-#opensource [data-component="heatmap-wrap"] svg { max-width: 100%; height: auto; }
-
-@media (max-width: 900px) {
-  .featured-grid { column-count: 1 !important; }
-  .oss-grid { grid-template-columns: 1fr !important; }
-  .hood-grid { grid-template-columns: 1fr !important; }
-  .hood-grid > * { min-width: 0 !important; }
-  .hood-grid > div:first-child { position: static !important; }
-  .homelab-grid { grid-template-columns: 1fr !important; }
-  .skills-grid { grid-template-columns: 1fr !important; }
-  .homelab-arch-grid { grid-template-columns: 1fr !important; }
-}
-@media (max-width: 560px) {
-  .skills-grid > div:last-child { grid-template-columns: 1fr !important; }
-}
-
-/* ── Tablet (≤900px) ──────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .hero-grid {
-    grid-template-columns: 1fr !important;
-    gap: var(--sp-8) !important;
-  }
-  .bento-photo { min-height: 0 !important; }
-}
-
-/* ── Mobile landscape (≤768px) ────────────────────────────────── */
-@media (max-width: 768px) {
-  #hero { min-height: auto !important; padding: var(--sp-8) 0 !important; }
-  #hero [data-component="container"],
-  #hero-content,
-  .hero-grid {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
-  }
-  #hero-content {
-    gap: var(--sp-4) !important;
-  }
-  #hero h1 {
-    font-size: clamp(2rem, 14vw, 3rem) !important;
-    overflow-wrap: anywhere !important;
-  }
-  #hero p {
-    max-width: 100% !important;
-    overflow-wrap: anywhere !important;
-  }
-  #hero [data-component="typewriter"] {
-    white-space: normal !important;
-    overflow-wrap: anywhere !important;
-  }
-
-  .hero-grid {
-    grid-template-columns: 1fr !important;
-    gap: var(--sp-5) !important;
-  }
-
-  /* hide Experience + Skills nav links on small screens */
-  .nav-link-hide { display: none !important; }
-
-  /* compact mobile bento: keep the context stats, remove the photo. */
-  .hero-bento {
-    display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
-  }
-  .hero-bento [data-component="bento-grid"] {
-    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
-    grid-auto-rows: minmax(104px,auto) !important;
-    height: auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-  .bento-photo { display: none !important; }
-  .hero-bento [data-component="bento-item"] {
-    grid-column: span 1 !important;
-    grid-row: span 1 !important;
-    min-width: 0 !important;
-  }
-  .hero-bento [data-component="bento-item"]:first-child {
-    display: none !important;
-  }
-  .hero-bento [data-component="bento-item"]:last-child {
-    grid-column: span 2 !important;
-  }
-  .hero-bento [data-component="card"] {
-    min-width: 0 !important;
-    height: 100% !important;
-  }
-
-  /* stats: 2 col */
-  .hero-stat-grid {
-    grid-template-columns: 1fr 1fr !important;
-  }
-
-  /* experience: single column */
-  #experience [data-component="grid"] { grid-template-columns: 1fr !important; }
-  .experience-snake { display: none !important; }
-  .experience-mobile-timeline { display: block !important; }
-
-  /* projects grid → single or 2 col */
-  #projects [data-component="grid"] { grid-template-columns: repeat(auto-fill,minmax(280px,1fr)) !important; }
-
-  .activity-grid { grid-template-columns: 1fr !important; }
-  .activity-metrics { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
-  .activity-list-grid { grid-template-columns: 1fr !important; }
-
-  [data-component="footer"][data-homepage-footer="true"] [data-slot="grid"] {
-    grid-template-columns: 1fr !important;
-    gap: var(--sp-3) !important;
-  }
-  [data-component="footer"][data-homepage-footer="true"] [data-slot="brand"],
-  [data-component="footer"][data-homepage-footer="true"] [data-slot="col"] {
-    margin-left: 0 !important;
-  }
-
-  /* contact grid → single column */
-  #contact [data-component="grid"] { grid-template-columns: 1fr !important; }
-
-  /* logo scatter: hide on mobile (too distracting) */
-  #logo-svg-hp-bg { display: none !important; }
-}
-
-/* ── Mobile portrait (≤480px) ─────────────────────────────────── */
-@media (max-width: 480px) {
-  .hero-ctas { flex-direction: column !important; }
-  .hero-ctas a { width: 100% !important; }
-  .hero-ctas a [data-component="button"] { width: 100% !important; justify-content: center !important; }
-
-  /* stats: single column on very small */
-  .hero-stat-grid {
-    grid-template-columns: 1fr 1fr !important;
-    gap: var(--sp-3) !important;
-    padding: 0 var(--sp-4) !important;
-  }
-}
-`
+// personJSONLD tells search engines who the site is about (schema.org Person).
+const personJSONLD = `{"@context":"https://schema.org","@type":"Person","name":"Michael Reinegger","url":"https://mljr.eu/","jobTitle":"IT Security Engineer","address":{"@type":"PostalAddress","addressLocality":"Linz","addressCountry":"AT"},"alumniOf":[{"@type":"CollegeOrUniversity","name":"Johannes Kepler University Linz"},{"@type":"HighSchool","name":"HTL Steyr"}],"knowsAbout":["IT Security","Go","Networks","Self-hosting"],"sameAs":["https://github.com/MrCodeEU","https://www.linkedin.com/in/mrcodeeu/"]}`

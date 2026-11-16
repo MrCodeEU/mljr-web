@@ -484,6 +484,9 @@
   opacity: 1;
 }
 @keyframes tw-blink { 0%,100% { opacity:1 } 50% { opacity:0 } }
+@media (prefers-reduced-motion: reduce) {
+  [data-component="typewriter"][data-cursor="true"]::after { animation: none; }
+}
 
 /* ── media-card ───────────────────────────────────────────────── */
 [data-component="media-card"] {

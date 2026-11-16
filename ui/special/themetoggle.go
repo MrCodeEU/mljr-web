@@ -41,7 +41,7 @@ func ThemeToggle() g.Node {
 			Attrs: []g.Node{
 				g.Attr("aria-label", "Toggle theme"),
 				g.Attr("title", "Toggle theme"),
-				g.Attr("data-on:click", `$theme = $theme === 'swissbrut' ? 'ink' : 'swissbrut'`),
+				g.Attr("data-on:click", `$theme = $theme === 'swiss' ? 'swissbrut' : ($theme === 'swissbrut' ? 'ink' : 'swiss')`),
 			},
 		},
 		icon.Icon("lucide:palette"),

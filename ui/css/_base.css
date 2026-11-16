@@ -213,6 +213,77 @@ html[data-mode="dark"] [data-mode-icon="moon"] {
   --shadow-lg: 4px 10px 48px rgba(0,0,0,0.55);
 }
 
+/* ── swiss / light — "Klein-Blau" ──────────────────────────────────────────
+   International Typographic Style: paper, ink, one deep blue. Logo orange and
+   magenta are the 2nd/3rd colours. Every text pair is >= 4.5:1, graphics >= 3:1.
+   ─────────────────────────────────────────────────────────────────────────── */
+[data-theme="swiss"][data-mode="light"] {
+  --bg:        #f3f1ea;
+  --surface:   #f3f1ea;
+  --surface-2: #e5e3dc;
+  --ink:       #0e0f14;
+  --muted:     #555862;
+  --line:      #0e0f14;
+  --accent:        #002fa7;  --accent-ink:   #f3f1ea;
+  --accent-2:      #a40054;  --accent-2-ink: #f3f1ea;
+  --success: #1a7f45;  --warning: #d96200;
+  --danger:  #c42400;  --info:    #002fa7;
+  --highlight: #d96200; --on-highlight: #0e0f14;
+
+  --main-text: #002fa7;
+  --block: #002fa7;  --block-fg: #f3f1ea;
+  --second: #d96200; --second-fg: #0e0f14;
+  --third:  #a40054; --third-fg:  #f3f1ea;
+  --logo-m: #f28d1d; --logo-r: #a40054;
+  --rule-subtle: #cfccc3;
+  --kind-edu: #0e0f14;
+  --board: #0e0f14; --tile: #1c1e26; --tile-fg: #f3f1ea; --tile-hi: #f5962a;
+  /* signal yellow marks everything clickable (hover, markers, nav buttons); always with ink text */
+  --act: #ffd400; --act-fg: #0e0f14;
+}
+
+/* ── swiss / dark — "Klein-Nacht" ─────────────────────────────────────────
+   Blue loses its punch when lightened for dark paper, so dark mode swaps to
+   orange as the main colour and keeps Klein blue only as a full-strength block.
+   ─────────────────────────────────────────────────────────────────────────── */
+[data-theme="swiss"][data-mode="dark"] {
+  --bg:        #0b0d16;
+  --surface:   #0b0d16;
+  --surface-2: #151826;
+  --ink:       #eef0f6;
+  --muted:     #9a988f;
+  --line:      #7a7f8f;
+  --accent:        #ff7a1a;  --accent-ink:   #0b0d16;
+  --accent-2:      #e2357f;  --accent-2-ink: #0b0d16;
+  --success: #3ccf7a;  --warning: #f5962a;
+  --danger:  #ff5a4d;  --info:    #5a78ff;
+  --highlight: #5a78ff; --on-highlight: #0b0d16;
+
+  --main-text: #ff7a1a;
+  --block: #002fa7;  --block-fg: #f3f1ea;
+  --second: #5a78ff; --second-fg: #0b0d16;
+  --third:  #e2357f; --third-fg:  #0b0d16;
+  --logo-m: #f5962a; --logo-r: #e2357f;
+  --rule-subtle: #1e2230;
+  --kind-edu: #9a988f;
+  --board: #05060a; --tile: #151826; --tile-fg: #ffd400; --tile-hi: #ff7a1a;
+  --act: #ffd400; --act-fg: #0b0d16;
+}
+
+[data-theme="swiss"] {
+  --font-display: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-body:    "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+  --border-w: 1px;
+  --radius: 0px;
+  --btn-radius: 0px;
+  --shadow-xs: none; --shadow-sm: none; --shadow: none; --shadow-lg: none;
+  --tracking-wide: 0.08em;
+  --swiss-pad: clamp(1rem, .8rem + 1vw, 1.85rem);
+  --swiss-gutter: clamp(.85rem, 2.5vw, 2.75rem);
+  --swiss-hdr: 52px;
+}
+
 /* ============================================================================
  * 4. Tone modifiers — controlled color on demand via data-tone.
  * ========================================================================== */

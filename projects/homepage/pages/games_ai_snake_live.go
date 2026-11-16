@@ -6,7 +6,6 @@ import (
 
 	"mljr-web/internal/i18n"
 	"mljr-web/ui"
-	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/special"
 	"mljr-web/ui/token"
@@ -32,18 +31,21 @@ func AISnakeLive(lang string, a AnalyticsConfig) g.Node {
 		layout.PageProps{
 			Title:       "AI Snake Live - Michael Reinegger",
 			Description: "One snake game running on the server, played by a tiny neural network, watched live by everyone on the page.",
-			Theme:       token.ThemeSwissBrut,
+			Theme:       token.ThemeSwiss,
+			AutoMode:    true,
+			LockTheme:   true,
 			Mode:        token.ModeLight,
 			Lang:        lang,
 			HeadExtra:   append([]g.Node{g.El("style", g.Raw(homepageCSS+gameCSS+aiSnakeLiveCSS+gameDescCSS))}, AnalyticsHead(a)...),
 		},
-		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
+		special.ThemeToggleRoot(token.ThemeSwiss, token.ModeLight),
 		siteNavbar(lang),
-		h.Main(h.Class("game-page"),
-			h.Div(h.Class("game-shell"),
-				h.A(h.Href("/"), h.Class("legal-back"), icon.Icon("lucide:arrow-left"), g.Text(t("legal.back"))),
+		h.Main(h.ID("main"), h.Class("game-page sub-page"),
+			subHead("/#playground", tr(lang, "Labor", "Lab"), 1,
 				h.H1(g.Text("AI Snake Live")),
 				h.P(h.Class("game-lede"), g.Text(t("games.ai_snake_live.lede"))),
+			),
+			h.Div(h.Class("game-shell sub-body"),
 				h.Div(h.Class("snake-live"),
 					ui.Signals(`{snake:{}}`),
 					g.Attr("data-init", "@get('"+AISnakeStreamPath+"')"),
@@ -62,10 +64,10 @@ func AISnakeLive(lang string, a AnalyticsConfig) g.Node {
 						h.H2(g.Text(t("games.ai_snake_live.net_title"))),
 						h.Canvas(h.ID("ai-snake-live-net")),
 						h.P(h.Class("snake-live-note"), g.Text(t("games.ai_snake_live.net_caption"))),
+						h.P(h.Class("snake-live-note"), g.Text(t("games.ai_snake_live.note"))),
+						h.P(h.A(h.Href("/games/ai-snake"), g.Text(t("games.ai_snake_live.classic_link")))),
 					),
 				),
-				h.P(h.Class("snake-live-note"), g.Text(t("games.ai_snake_live.note"))),
-				h.P(h.A(h.Href("/games/ai-snake"), g.Text(t("games.ai_snake_live.classic_link")))),
 			),
 		),
 		aiSnakeLiveDescriptionSection(lang),
@@ -122,6 +124,13 @@ const aiSnakeLiveCSS = `
   display: block;
   background: var(--surface);
   border: var(--bw-2) solid var(--line);
+}
+/* wide (e.g. embedded in the homepage lab): board left, network and notes right */
+@media (min-width: 900px) {
+  .snake-live { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: var(--sp-4) var(--sp-6); }
+  .snake-live-stats { grid-column: 1 / -1; width: 100%; justify-content: flex-start; }
+  .snake-live canvas#ai-snake-live-canvas { width: 100%; }
+  .snake-live-net { width: 100%; }
 }
 `
 
