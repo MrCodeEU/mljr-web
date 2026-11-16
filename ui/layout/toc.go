@@ -52,7 +52,9 @@ func TableOfContents(p TOCProps, items ...TOCItem) g.Node {
 	}
 
 	// JS: IntersectionObserver scroll-spy + auto-populate if no items passed
+	// Runs after parsing, so headings below the TOC exist when it fills itself.
 	script := `(function(){
+  function run(){
   document.querySelectorAll('[data-component="toc"]:not([data-toc-init])').forEach(function(toc){
     toc.setAttribute('data-toc-init','1');
     var sel=toc.dataset.content||'main';
@@ -91,10 +93,13 @@ func TableOfContents(p TOCProps, items ...TOCItem) g.Node {
     },{rootMargin:'-10% 0px -80% 0px'});
     targets.forEach(function(t){ observer.observe(t); });
   });
+}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run); else run();
 })();`
 
 	return h.Nav(
 		g.Attr("data-component", "toc"),
+		g.Attr("aria-label", p.Title),
 		g.Attr("data-content", p.ContentSelector),
 		h.Style(style),
 		h.Div(g.Attr("data-slot", "title"), g.Text(p.Title)),

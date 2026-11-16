@@ -176,7 +176,8 @@
       "section_external": {
         "title": "Externe Inhalte",
         "body1": "Die Website lädt Schriftarten, Skripte und Stylesheets nach aktuellem Stand selbst gehostet aus. Es werden keine Google Fonts oder CDN-Schriften eingebunden.",
-        "body2": "Externe Links, zum Beispiel zu GitHub, LinkedIn oder Strava, führen zu Angeboten anderer Anbieter. Für deren Inhalte und Datenverarbeitung gelten die jeweiligen Datenschutzhinweise dieser Anbieter."
+        "body2": "Externe Links, zum Beispiel zu GitHub, LinkedIn oder Strava, führen zu Angeboten anderer Anbieter. Für deren Inhalte und Datenverarbeitung gelten die jeweiligen Datenschutzhinweise dieser Anbieter.",
+        "body3": "Die Karte im Abschnitt Laufbahn lädt Kartenkacheln von OpenStreetMap (OpenStreetMap Foundation, St John’s Innovation Centre, Cowley Road, Cambridge, CB4 0WS, Vereinigtes Königreich). Die Kacheln werden erst geladen, wenn die Karte in den sichtbaren Bereich scrollt. Dabei überträgt Ihr Browser Ihre IP-Adresse und technische Verbindungsdaten an die Server von OpenStreetMap. Rechtsgrundlage ist das berechtigte Interesse an einer ansprechenden Darstellung (Art. 6 Abs. 1 lit. f DSGVO). Details: https://osmfoundation.org/wiki/Privacy_Policy"
       },
       "section_legal_basis": {
         "title": "Rechtsgrundlagen",

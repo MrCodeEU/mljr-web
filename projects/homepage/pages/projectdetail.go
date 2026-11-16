@@ -9,8 +9,8 @@ import (
 	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
-	"mljr-web/ui/primitive"
 	"mljr-web/ui/special"
+	"mljr-web/ui/swiss"
 	"mljr-web/ui/token"
 )
 
@@ -34,24 +34,20 @@ func ProjectDetail(d hpdata.SiteData, p hpdata.Project, lang string, a Analytics
 		)
 	} else if len(imgs) == 1 {
 		hero = h.Img(h.Src(imgs[0]), h.Alt(p.Name), g.Attr("loading", "lazy"),
-			h.Style("width:100%;aspect-ratio:16/9;object-fit:contain;background:var(--surface-2);border:var(--bw-2) solid var(--ink)"))
+			h.Style("width:100%;aspect-ratio:16/9;object-fit:contain;background:var(--surface-2);border:1px solid var(--ink)"))
 	}
 
 	var linkNodes []g.Node
 	if p.URL != "" {
-		linkNodes = append(linkNodes, h.A(h.Href(p.URL), g.Attr("target", "_blank"), g.Attr("rel", "noopener"),
-			primitive.Button(primitive.ButtonProps{Variant: token.Outline},
-				icon.Icon("simple-icons:github"), g.Text(i18n.T(lang, "projects.source")), icon.Icon("lucide:arrow-up-right")),
-		))
+		linkNodes = append(linkNodes, swiss.BtnLink(p.URL, true, []g.Node{g.Attr("target", "_blank"), g.Attr("rel", "noopener")},
+			icon.Icon("simple-icons:github", icon.Props{Size: "1em"}), g.Text(i18n.T(lang, "projects.source")+" ↗")))
 	}
 	for _, lnk := range p.Links {
 		if lnk.URL == "" {
 			continue
 		}
-		linkNodes = append(linkNodes, h.A(h.Href(lnk.URL), g.Attr("target", "_blank"), g.Attr("rel", "noopener"),
-			primitive.Button(primitive.ButtonProps{Variant: token.Outline},
-				g.Text(lnk.Name), icon.Icon("lucide:arrow-up-right")),
-		))
+		linkNodes = append(linkNodes, swiss.BtnLink(lnk.URL, false, []g.Node{g.Attr("target", "_blank"), g.Attr("rel", "noopener")},
+			g.Text(lnk.Name+" ↗")))
 	}
 
 	var snippetNodes []g.Node
@@ -85,44 +81,32 @@ func ProjectDetail(d hpdata.SiteData, p hpdata.Project, lang string, a Analytics
 		layout.PageProps{
 			Title:       friendlyName(p.Name) + " - Michael Reinegger",
 			Description: p.DescFor(lang),
-			Theme:       token.ThemeSwissBrut,
+			Theme:       token.ThemeSwiss,
+			AutoMode:    true,
+			LockTheme:   true,
 			Mode:        token.ModeLight,
 			Lang:        lang,
 			HeadExtra:   headExtra,
 		},
-		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
+		special.ThemeToggleRoot(token.ThemeSwiss, token.ModeLight),
 		siteNavbar(lang),
-		h.Main(h.Class("legal-page"),
-			h.Div(h.Style("max-width:920px;margin:0 auto"),
-				layout.Breadcrumb(layout.BreadcrumbProps{},
-					layout.BreadcrumbItem{Label: i18n.T(lang, "nav.projects"), Href: "/#projects"},
-					layout.BreadcrumbItem{Label: friendlyName(p.Name)},
-				),
-				h.H1(h.Style("font-size:clamp(2.4rem,8vw,4.5rem);line-height:.95;margin:var(--sp-4) 0 var(--sp-3);font-weight:950"),
-					g.Text(friendlyName(p.Name))),
-				h.P(h.Style("font-size:var(--t-lg);color:var(--muted);font-weight:700;margin:0 0 var(--sp-5)"),
-					g.Text(p.DescFor(lang))),
-				g.If(len(linkNodes) > 0,
-					h.Div(h.Style("display:flex;gap:var(--sp-2);flex-wrap:wrap;margin-bottom:var(--sp-6)"), g.Group(linkNodes)),
-				),
-				g.If(hero != nil, h.Div(h.Style("margin-bottom:var(--sp-8)"), hero)),
-				h.Div(h.Class("legal-shell"),
-					h.P(h.Style("font-size:var(--t-md);line-height:1.7;max-width:none;margin:0 0 var(--sp-8)"), g.Text(longDesc)),
-					g.If(p.Diagram != "",
-						h.Div(h.Style("margin-bottom:var(--sp-8)"),
-							h.H2(g.Text("Architecture")),
-							h.Pre(h.Class("mermaid"), g.Raw(p.Diagram)),
-						),
-					),
-					g.If(len(snippetNodes) > 0,
-						h.Div(
-							h.H2(g.Text("Under the hood")),
-							g.Group(snippetNodes),
-						),
-					),
-				),
+		h.Main(h.ID("main"), h.Class("pd-page sub-page"),
+			subHead("/#projects", tr(lang, "Werkkatalog", "Catalogue"), len(p.ID),
+				h.H1(g.Text(friendlyName(p.Name))),
+				h.P(h.Class("sub-lede"), g.Text(p.DescFor(lang))),
+				g.If(len(linkNodes) > 0, h.Div(h.Class("cat-links"), g.Group(linkNodes))),
+			),
+			h.Div(h.Class("sub-body pd-body"),
+				g.If(hero != nil, h.Div(h.Class("pd-hero"), hero)),
+				h.P(h.Class("pd-long"), g.Text(longDesc)),
 			),
 		),
+		g.If(p.Diagram != "", subRow("", tr(lang, "Architektur", "Architecture"), "",
+			h.Pre(h.Class("mermaid"), g.Raw(p.Diagram)),
+		)),
+		g.If(len(snippetNodes) > 0, subRow("", tr(lang, "Unter der Haube", "Under the hood"), "",
+			g.Group(snippetNodes),
+		)),
 		siteFooter(lang),
 	)
 }
@@ -132,6 +116,10 @@ func ProjectDetail(d hpdata.SiteData, p hpdata.Project, lang string, a Analytics
 // 920px), so the same height letterboxes screenshots badly — override it
 // here with a taller, more cinematic track just for this context.
 const projectDetailCSS = `
+.pd-body { display: flex; flex-direction: column; gap: var(--swiss-pad); }
+.pd-long { margin: 0; font-size: 1.05rem; line-height: 1.7; max-width: 72ch; }
+.sub-head .cat-links { display: flex; flex-wrap: wrap; gap: .4rem; }
+.sub-row .mermaid { margin: 0; background: none; }
 .pd-hero-carousel [data-component="carousel"] [data-slot="track"] {
   height: clamp(280px, 45vw, 480px);
 }

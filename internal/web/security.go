@@ -16,6 +16,7 @@ const cspTail = "style-src 'self' 'unsafe-inline'; " +
 	"connect-src 'self'; " +
 	"media-src 'self'; " +
 	"object-src 'none'; " +
+	"frame-src 'self'; " + // homepage lab embeds the same-origin game pages
 	"frame-ancestors 'self'; " +
 	"base-uri 'self'; " +
 	"form-action 'self';"

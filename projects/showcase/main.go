@@ -41,6 +41,7 @@ func main() {
 	e := web.NewEcho()
 
 	web.MountStatic(e, assets, "projects/showcase/assets/static", web.IsDev())
+	web.MountFonts(e)
 
 	e.GET("/", func(c echo.Context) error {
 		return web.Render(c, 200, pages.Catalogue())

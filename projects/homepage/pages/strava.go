@@ -8,239 +8,218 @@ import (
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
-	"mljr-web/internal/i18n"
 	hpdata "mljr-web/projects/homepage/data"
-	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
-	"mljr-web/ui/layout"
-	"mljr-web/ui/primitive"
-	"mljr-web/ui/token"
+	"mljr-web/ui/swiss"
 )
 
-func stravaSection(num string, d hpdata.SiteData, lang string) g.Node {
+func stravaSection(p swiss.SectionProps, d hpdata.SiteData, lang string) g.Node {
 	if !d.HasStrava() {
 		return nil
 	}
-
 	s := d.Strava
-	recent := s.RecentActivities
-	if len(recent) > 8 {
-		recent = recent[:8]
+	ytd := s.YearToDateStats
+	year := s.Year
+	if year == "" {
+		year = fmt.Sprint(time.Now().Year())
+	}
+	p.Note = tr(lang, "Öffentliche Aggregate aus Strava und intervals.icu. Keine Gesundheitsdaten.", "Public aggregates from Strava and intervals.icu. No health data.")
+
+	figs := []figure{
+		{tr(lang, "Distanz ", "Distance ") + year, fmt.Sprintf("%.0f km", hpdata.DistanceKM(ytd.Distance)), tr(lang, "Laufen · Rad · Berg", "run · ride · hike"), "block", "lucide:route"},
+		{tr(lang, "Zeit in Bewegung", "Moving time"), fmt.Sprintf("%d h", ytd.MovingTime/3600), tr(lang, "seit Jänner", "since January"), "", "lucide:timer"},
+		{tr(lang, "Einheiten", "Sessions"), fmt.Sprint(ytd.Count), tr(lang, "dieses Jahr", "this year"), "", "lucide:activity"},
+		{tr(lang, "Höhenmeter", "Elevation"), fmt.Sprintf("%.0f m", ytd.ElevationGain), tr(lang, "aufwärts", "climbed"), "third", "lucide:mountain"},
+	}
+	if hr := s.AvgHeartrate(); hr > 0 {
+		figs = append(figs, figure{tr(lang, "Ø Puls", "Avg HR"), fmt.Sprintf("%.0f bpm", hr), tr(lang, "gewichtet nach Einheiten", "session-weighted"), "", "lucide:heart-pulse"})
 	}
 
-	return h.Section(
-		h.ID("activity"),
-		h.Style("padding:var(--sp-12) 0;border-top:var(--bw-2) solid var(--ink);border-bottom:var(--bw-2) solid var(--ink)"),
-		layout.Container(layout.ContainerProps{},
-			sectionHeader(num, i18n.T(lang, "sections.activity.title"), publicActivityBadge(s), token.ToneAccent),
-			h.Div(
-				h.Class("activity-grid"),
-				h.Style("display:flex;flex-direction:column;gap:var(--sp-5)"),
-				primitive.Card(primitive.CardProps{Tone: token.ToneCyan},
-					h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-5)"),
-						h.Div(
-							h.Div(h.Style("font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.7"), g.Text("Strava snapshot")),
-							h.H3(h.Style("font-size:clamp(1.8rem,3vw,3rem);line-height:1;margin:var(--sp-2) 0 0;font-weight:950"), g.Text("Training as data")),
-						),
-						h.A(h.Href("https://www.strava.com/athletes/123496455"), g.Attr("target", "_blank"), g.Attr("rel", "noopener noreferrer"),
-							primitive.Button(primitive.ButtonProps{Variant: token.Outline, Size: token.SizeSM},
-								icon.Icon("lucide:external-link"),
-								g.Text("Strava"),
-							),
-						),
-					),
-					h.Div(
-						h.Class("activity-metrics"),
-						h.Style("display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:var(--sp-3)"),
-						h.Div(h.Style("grid-column:span 3"),
-							activityMetric("Distance", fmt.Sprintf("%.1f km", hpdata.DistanceKM(s.YearToDateStats.Distance)), "run · hike · ski", "lucide:route")),
-						h.Div(h.Style("grid-column:span 3"),
-							activityMetric("Moving time", hpdata.DurationHM(s.YearToDateStats.MovingTime), "logged effort", "lucide:timer")),
-						h.Div(h.Style("grid-column:span 2"),
-							activityMetric("Sessions", fmt.Sprintf("%d", s.YearToDateStats.Count), "year to date", "lucide:flame")),
-						h.Div(h.Style("grid-column:span 2"),
-							activityMetric("Elevation", fmt.Sprintf("%.0f m", s.YearToDateStats.ElevationGain), "climbed", "lucide:mountain")),
-						g.If(s.AvgHeartrate() > 0,
-							h.Div(h.Style("grid-column:span 2"),
-								activityMetric("Avg HR", fmt.Sprintf("%.0f bpm", s.AvgHeartrate()), "session-weighted", "lucide:heart-pulse"))),
-						g.If(s.YTDCalories > 0,
-							h.Div(h.Style("grid-column:span 2"),
-								activityMetric("Calories", fmt.Sprintf("%.1fk", s.YTDCalories/1000), "burned (est.)", "lucide:zap"))),
-					),
-					g.If(len(s.Disciplines) > 0,
-						h.Div(h.Style("display:flex;flex-wrap:wrap;justify-content:center;gap:var(--sp-2);margin-top:var(--sp-5)"),
-							g.Group(func() []g.Node {
-								nodes := make([]g.Node, 0, len(s.Disciplines))
-								for _, disc := range s.Disciplines {
-									nodes = append(nodes, primitive.Tag(primitive.TagProps{Tone: token.ToneLime, Icon: disciplineIcon(disc.Type)},
-										g.Text(fmt.Sprintf("%s · %d", disc.Label, disc.Count)),
-									))
-								}
-								return nodes
-							}()),
-						),
-					),
-				),
-				primitive.Card(primitive.CardProps{Tone: token.TonePink},
-					h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-4)"),
-						h.H3(h.Style("font-size:var(--t-xl);font-weight:900;margin:0"), g.Text("Recent public activities")),
-						primitive.Tag(primitive.TagProps{Tone: token.ToneYellow}, g.Text("aggregated")),
-					),
-					h.Div(
-						h.Class("activity-list-grid"),
-						h.Style("display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-3)"),
-						g.Group(func() []g.Node {
-							nodes := make([]g.Node, 0, len(recent))
-							for _, a := range recent {
-								nodes = append(nodes, activityRow(a))
-							}
-							return nodes
-						}()),
-					),
-				),
-				fitnessCard(d.WellnessData),
+	// monthly columns: distance per month, January ticks labelled with the year
+	months := s.MonthlyActivities
+	if len(months) > 36 {
+		months = months[len(months)-36:]
+	}
+	cols := make([]colPoint, len(months))
+	for i, m := range months {
+		t, _ := time.Parse("2006-01", m.Month)
+		cols[i] = colPoint{
+			Label: t.Format("2006"),
+			Tick:  t.Month() == time.January,
+			Value: hpdata.DistanceKM(m.Distance),
+			Title: fmt.Sprintf("%s · %.0f km · %d×", t.Format("01/2006"), hpdata.DistanceKM(m.Distance), m.Count),
+		}
+	}
+
+	// personal records as a timetable
+	prRows := make([]g.Node, 0, len(s.PersonalRecords))
+	for _, r := range s.PersonalRecords {
+		prRows = append(prRows, h.Tr(
+			h.Td(h.B(g.Text(recordLabel(r.Type, lang)))),
+			h.Td(h.Class("bz-time"), g.Text(hpdata.DurationClock(r.Time))),
+			h.Td(g.Text(paceFor(r.Time, r.Distance))),
+			h.Td(g.Text(shortDate(r.Date))),
+		))
+	}
+	best := s.BestActivities
+	type rec struct {
+		label, value string
+		a            hpdata.StravaActivity
+	}
+	recs := []rec{
+		{tr(lang, "Längste Distanz", "Longest distance"), fmt.Sprintf("%.1f km", hpdata.DistanceKM(best.LongestDistance.Distance)), best.LongestDistance},
+		{tr(lang, "Längste Dauer", "Longest duration"), hpdata.DurationHM(best.LongestTime.MovingTime), best.LongestTime},
+		{tr(lang, "Schnellste Pace", "Fastest pace"), hpdata.PaceLabel(best.FastestPace.AveragePace), best.FastestPace},
+		{tr(lang, "Meiste Höhenmeter", "Most elevation"), fmt.Sprintf("%.0f m", best.MostElevation.TotalElevationGain), best.MostElevation},
+	}
+	recRows := make([]g.Node, 0, len(recs))
+	for _, r := range recs {
+		if r.a.MovingTime == 0 {
+			continue
+		}
+		recRows = append(recRows, h.Tr(h.Td(g.Text(r.label)), h.Td(h.Class("bz-time"), g.Text(r.value)), h.Td(h.Class("bz-sport"), h.Span(h.Class("bz-ico"), icon.Icon(sportIcon(r.a.Type), icon.Props{Size: "1rem"})), g.Text(friendlyName(r.a.Type))), h.Td(g.Text(r.a.DisplayDate()))))
+	}
+
+	// disciplines as a proportional bar by time
+	var discs []segment
+	for _, ds := range s.Disciplines {
+		discs = append(discs, segment{fmt.Sprintf("%s · %d×", ds.Label, ds.Count), float64(ds.TotalTime)})
+	}
+
+	recent := s.RecentActivities
+	if len(recent) > 5 {
+		recent = recent[:5]
+	}
+	actRows := make([]g.Node, len(recent))
+	for i, a := range recent {
+		title := strings.TrimSpace(a.Name)
+		if title == "" {
+			title = friendlyName(a.Type)
+		}
+		dist, pace := "—", "—"
+		if showsDistance(a.Type) && a.Distance > 0 {
+			dist = fmt.Sprintf("%.1f km", hpdata.DistanceKM(a.Distance))
+		}
+		if isRun(a.Type) && a.AveragePace > 0 {
+			pace = hpdata.PaceLabel(a.AveragePace)
+		}
+		actRows[i] = h.Tr(
+			h.Td(g.Text(a.DisplayDate())),
+			h.Td(h.Class("bz-sport"), h.Span(h.Class("bz-ico"), icon.Icon(sportIcon(a.Type), icon.Props{Size: "1rem"})), h.Span(h.B(g.Text(title)), h.Span(h.Class("bz-kind"), g.Text(friendlyName(a.Type))))),
+			h.Td(h.Class("bz-time"), g.Text(hpdata.DurationClock(a.MovingTime))),
+			h.Td(g.Text(dist)),
+			h.Td(h.Class("bz-hide"), g.Text(pace)),
+			h.Td(h.Class("bz-hide"), g.Text(orDash(a.TotalElevationGain, "↑ %.0f m"))),
+			h.Td(h.Class("bz-hide"), g.Text(orDash(a.AverageHeartrate, "♥ %.0f"))),
+			h.Td(h.Class("bz-hide"), g.Text(orDash(a.Calories, "%.0f kcal"))),
+		)
+	}
+
+	return swiss.Section(p,
+		swiss.Cell(swiss.CellProps{Variant: "flush"}, figRow(figs)),
+		g.If(len(cols) > 0, swiss.Cell(swiss.CellProps{},
+			swiss.Kicker("A. "+tr(lang, "Kilometer pro Monat", "Kilometres per month"), g.Text(fmt.Sprintf("%d %s", len(cols), tr(lang, "Monate", "months")))),
+			colChart(cols, "var(--accent)", 180),
+		)),
+		g.If(len(prRows) > 0, swiss.Cell(swiss.CellProps{Span: 4, Variant: "ink"},
+			swiss.Kicker("B. "+tr(lang, "Bestzeiten", "Best times"), g.Text(tr(lang, "Laufen", "Running"))),
+			h.Table(h.Class("bz"),
+				h.THead(h.Tr(h.Th(g.Text(tr(lang, "Strecke", "Distance"))), h.Th(g.Text(tr(lang, "Zeit", "Time"))), h.Th(g.Text("Pace")), h.Th(g.Text(tr(lang, "Datum", "Date"))))),
+				h.TBody(prRows...),
 			),
-		),
+		)),
+		g.If(len(recRows) > 0, swiss.Cell(swiss.CellProps{Span: 5},
+			swiss.Kicker("C. "+tr(lang, "Rekorde", "Records"), g.Text(tr(lang, "alle Disziplinen", "all disciplines"))),
+			h.Table(h.Class("bz"), h.TBody(recRows...)),
+			g.If(len(discs) > 0, h.Div(h.Class("bz-disc"),
+				swiss.Micro(g.Text(tr(lang, "Disziplinen nach Zeit", "Disciplines by time"))),
+				propBar(discs, "%"),
+			)),
+		)),
+		g.If(len(actRows) > 0, swiss.Cell(swiss.CellProps{},
+			swiss.Kicker("D. "+tr(lang, "Letzte Einheiten", "Latest sessions"), h.A(h.Href("https://www.strava.com/athletes/123496455"), g.Attr("target", "_blank"), g.Attr("rel", "noopener noreferrer"), g.Text("Strava ↗"))),
+			h.Table(h.Class("bz bz-acts"),
+				h.THead(h.Tr(h.Th(g.Text(tr(lang, "Datum", "Date"))), h.Th(g.Text(tr(lang, "Einheit", "Session"))), h.Th(g.Text(tr(lang, "Dauer", "Duration"))), h.Th(g.Text(tr(lang, "Distanz", "Distance"))), h.Th(h.Class("bz-hide"), g.Text("Pace")), h.Th(h.Class("bz-hide"), g.Text(tr(lang, "Höhe", "Elev."))), h.Th(h.Class("bz-hide"), g.Text(tr(lang, "Puls", "HR"))), h.Th(h.Class("bz-hide"), g.Text("kcal")))),
+				h.TBody(actRows...),
+			),
+		)),
+		fitnessCell(d.WellnessData, lang),
 	)
 }
 
-// fitnessCard charts training load (Fitness/Fatigue/Form, intervals.icu's
-// CTL/ATL/TSB) over the last ~90 days. Deliberately the only wellness metric
-// shown publicly: it reads as training-analytics engineering, not a health
-// readout — HRV, resting heart rate, and sleep stay out of the public page.
-func fitnessCard(days []hpdata.WellnessDay) g.Node {
+func recordLabel(kind, lang string) string {
+	switch kind {
+	case "half_marathon":
+		return tr(lang, "Halbmarathon", "Half marathon")
+	case "marathon":
+		return "Marathon"
+	}
+	return strings.ToUpper(strings.ReplaceAll(kind, "_", " "))
+}
+
+func paceFor(sec int, meters float64) string {
+	if meters <= 0 {
+		return "—"
+	}
+	return hpdata.PaceLabel(float64(sec) / 60 / (meters / 1000))
+}
+
+func shortDate(iso string) string {
+	t, err := time.Parse("2006-01-02", iso)
+	if err != nil {
+		return iso
+	}
+	return t.Format("02.01.2006")
+}
+
+// fitnessCell: training load (CTL/ATL/form) for the last 90 days.
+func fitnessCell(days []hpdata.WellnessDay, lang string) g.Node {
 	if len(days) < 2 {
 		return nil
 	}
 	if len(days) > 90 {
 		days = days[len(days)-90:]
 	}
-
 	ctl := make([]float64, len(days))
 	atl := make([]float64, len(days))
 	form := make([]float64, len(days))
-	labels := make([]string, len(days))
 	for i, day := range days {
-		ctl[i] = day.CTL
-		atl[i] = day.ATL
-		form[i] = day.Form
-		labels[i] = fitnessLabel(day.Date, i, len(days))
+		ctl[i], atl[i], form[i] = day.CTL, day.ATL, day.Form
 	}
 	latest := days[len(days)-1]
-
-	return primitive.Card(primitive.CardProps{Tone: token.ToneNone},
-		h.Div(h.Style("display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)"),
-			h.Div(
-				h.H3(h.Style("font-size:var(--t-xl);font-weight:900;margin:0"), g.Text("Training load")),
-				h.Div(h.Style("font-size:var(--t-xs);font-weight:800;color:var(--muted);margin-top:var(--sp-1)"),
-					g.Text("Fitness (CTL) · Fatigue (ATL) · Form, last 90 days")),
-			),
-			h.Span(h.Style("font-family:var(--font-mono,monospace);font-weight:800;font-size:var(--t-sm);white-space:nowrap"),
-				g.Text(fmt.Sprintf("Form %+.1f", latest.Form))),
-		),
-		uidata.LineChart(uidata.LineChartProps{
-			Height:   220,
-			Labels:   labels,
-			ShowGrid: true,
-			YAxis:    true,
-			Series: []uidata.LineChartSeries{
-				{Label: "Fitness", Points: ctl, Color: "var(--accent)"},
-				{Label: "Fatigue", Points: atl, Color: "var(--warning)"},
-				{Label: "Form", Points: form, Color: "var(--success)"},
-			},
-		}),
-		h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-3);margin-top:var(--sp-3);font-size:var(--t-xs);font-weight:800;color:var(--muted)"),
-			fitnessLegend("var(--accent)", "Fitness"),
-			fitnessLegend("var(--warning)", "Fatigue"),
-			fitnessLegend("var(--success)", "Form"),
-		),
+	return swiss.Cell(swiss.CellProps{},
+		swiss.Kicker("E. "+tr(lang, "Trainingsbelastung · 90 Tage", "Training load · 90 days"), g.Text(fmt.Sprintf("Form %+.1f", latest.Form))),
+		lineChart([]lineSeries{
+			{Label: tr(lang, "Fitness (CTL)", "Fitness (CTL)"), Color: "var(--accent)", Points: ctl},
+			{Label: tr(lang, "Ermüdung (ATL)", "Fatigue (ATL)"), Color: "var(--second)", Points: atl},
+			{Label: "Form", Color: "var(--ink)", Points: form},
+		}, 200, "training load"),
 	)
 }
 
-func fitnessLegend(color, label string) g.Node {
-	return h.Div(h.Style("display:flex;align-items:center;gap:var(--sp-1)"),
-		h.Span(h.Style(fmt.Sprintf("width:10px;height:10px;background:%s;border:var(--bw-1) solid var(--ink);display:inline-block", color))),
-		g.Text(label),
-	)
+// orDash formats v, or "—" when there is no value.
+func orDash(v float64, format string) string {
+	if v <= 0 {
+		return "—"
+	}
+	return fmt.Sprintf(format, v)
 }
 
-// fitnessLabel renders x-axis labels sparsely (roughly 5 across the chart)
-// to avoid a wall of overlapping dates.
-func fitnessLabel(date string, i, n int) string {
-	step := n / 4
-	if step == 0 || i%step != 0 {
-		return ""
+// sportIcon maps a Strava activity type to a lucide icon.
+func sportIcon(kind string) string {
+	switch k := strings.ToLower(kind); {
+	case isRun(k):
+		return "lucide:footprints"
+	case strings.Contains(k, "ride"), strings.Contains(k, "bike"):
+		return "lucide:bike"
+	case strings.Contains(k, "hike"), strings.Contains(k, "walk"):
+		return "lucide:mountain"
+	case strings.Contains(k, "swim"):
+		return "lucide:waves"
+	case strings.Contains(k, "weight"), strings.Contains(k, "workout"), strings.Contains(k, "training"), strings.Contains(k, "crossfit"):
+		return "lucide:dumbbell"
 	}
-	t, err := time.Parse("2006-01-02", date)
-	if err != nil {
-		return ""
-	}
-	return t.Format("Jan 2")
-}
-
-func publicActivityBadge(s hpdata.StravaData) string {
-	if s.GeneratedAt != "" {
-		return "public aggregates"
-	}
-	if s.Year != "" {
-		return s.Year + " aggregates"
-	}
-	return "public aggregates"
-}
-
-func activityMetric(label, value, sub, ic string) g.Node {
-	return h.Div(
-		h.Style("border:var(--bw-2) solid var(--ink);background:var(--bg);box-shadow:var(--shadow);padding:var(--sp-4);min-height:120px;display:flex;flex-direction:column;justify-content:space-between"),
-		h.Div(h.Style("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);font-size:var(--t-xs);font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)"),
-			g.Text(label),
-			icon.Icon(ic, icon.Props{Size: "1.1rem"}),
-		),
-		h.Div(
-			h.Div(h.Style("font-size:clamp(1.6rem,3vw,2.4rem);font-weight:950;line-height:1"), g.Text(value)),
-			h.Div(h.Style("font-size:var(--t-xs);font-weight:800;color:var(--muted);margin-top:var(--sp-1)"), g.Text(sub)),
-		),
-	)
-}
-
-func activityRow(a hpdata.StravaActivity) g.Node {
-	title := a.Name
-	if strings.TrimSpace(title) == "" {
-		title = friendlyName(a.Type)
-	}
-	// Per-type metadata: distance/pace only where it means something —
-	// workouts and weight sessions show duration, HR and calories instead.
-	meta := []string{a.DisplayDate()}
-	if a.MovingTime > 0 {
-		meta = append(meta, hpdata.DurationClock(a.MovingTime))
-	}
-	if showsDistance(a.Type) && a.Distance > 0 {
-		meta = append(meta, fmt.Sprintf("%.1f km", hpdata.DistanceKM(a.Distance)))
-	}
-	if isRun(a.Type) && a.AveragePace > 0 {
-		meta = append(meta, hpdata.PaceLabel(a.AveragePace))
-	}
-	if a.TotalElevationGain > 0 {
-		meta = append(meta, fmt.Sprintf("↑ %.0f m", a.TotalElevationGain))
-	}
-	if a.AverageHeartrate > 0 {
-		meta = append(meta, fmt.Sprintf("♥ %.0f bpm", a.AverageHeartrate))
-	}
-	if a.Calories > 0 {
-		meta = append(meta, fmt.Sprintf("%.0f kcal", a.Calories))
-	}
-
-	return h.Div(
-		h.Style("display:grid;grid-template-columns:auto 1fr;gap:var(--sp-3);align-items:center;border:var(--bw-1) solid var(--ink);background:var(--bg);padding:var(--sp-3)"),
-		h.Div(h.Style("width:42px;height:42px;border:var(--bw-2) solid var(--ink);display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);box-shadow:var(--shadow-sm)"),
-			icon.Icon(disciplineIcon(a.Type), icon.Props{Size: "1.2rem"}),
-		),
-		h.Div(
-			h.Div(h.Style("font-weight:900;line-height:1.15"), g.Text(title)),
-			h.Div(h.Style("display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-1);font-size:var(--t-xs);font-weight:800;color:var(--muted)"),
-				g.Text(strings.Join(meta, " · ")),
-			),
-		),
-	)
+	return "lucide:activity"
 }
 
 func isRun(kind string) bool {
@@ -261,23 +240,19 @@ func showsDistance(kind string) bool {
 	return true
 }
 
-func disciplineIcon(kind string) string {
-	switch strings.ToLower(kind) {
-	case "run", "running", "trailrun", "virtualrun":
-		return "lucide:footprints"
-	case "ride", "cycling", "spinning", "virtualride", "mountainbikeride", "gravelride", "ebikeride":
-		return "lucide:bike"
-	case "hike", "hiking", "walk", "snowshoe":
-		return "lucide:mountain"
-	case "weighttraining", "strength":
-		return "lucide:dumbbell"
-	case "workout", "training", "crossfit":
-		return "lucide:heart-pulse"
-	case "alpineski", "backcountryski", "nordicski", "snowboard", "ski", "skiing":
-		return "lucide:mountain-snow"
-	case "swim", "swimming":
-		return "lucide:waves"
-	default:
-		return "lucide:activity"
-	}
-}
+const bewegungCSS = `
+.bz-sport { display: flex; gap: .6rem; align-items: center; }
+.bz-ico { flex: none; width: 1.8rem; height: 1.8rem; display: grid; place-items: center; border-radius: 50%; background: var(--second); color: var(--second-fg); }
+.bz { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.bz th { text-align: left; font-family: var(--font-mono); font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 0 .6rem .4rem 0; border-bottom: 1px solid currentColor; }
+.bz td { padding: .45rem .6rem .45rem 0; border-bottom: 1px solid var(--rule-subtle); vertical-align: baseline; }
+[data-variant="ink"] .bz td { border-bottom-color: color-mix(in srgb, currentColor 25%, transparent); }
+.bz tr:last-child td { border-bottom: 0; }
+.bz-time { font-family: var(--font-mono); font-weight: 700; font-variant-numeric: tabular-nums; }
+.bz td:last-child, .bz th:last-child { padding-right: 0; }
+.bz-kind { margin-left: .5rem; font-family: var(--font-mono); font-size: .64rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.bz-acts td:first-child { font-family: var(--font-mono); font-size: .78rem; white-space: nowrap; }
+.bz-disc { margin-top: 1.25rem; }
+.bz-disc [data-component="swiss-micro"] { display: block; margin-bottom: .4rem; }
+@media (max-width: 640px) { .bz-hide { display: none; } .bz-kind { display: block; margin: 0; } }
+`

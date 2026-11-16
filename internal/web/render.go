@@ -16,10 +16,16 @@ func Render(c echo.Context, status int, n g.Node) error {
 	if err := n.Render(&buf); err != nil {
 		return err
 	}
-	SetCSPWithScriptHashes(c, inlineScripts(buf.Bytes()))
+	out := buf.Bytes()
+	if status == 200 {
+		if links := localizedHead(c); links != nil {
+			out = bytes.Replace(out, []byte("</head>"), append(links, "</head>"...), 1)
+		}
+	}
+	SetCSPWithScriptHashes(c, inlineScripts(out))
 	c.Response().Header().Set(echo.HeaderContentType, "text/html; charset=utf-8")
 	c.Response().WriteHeader(status)
-	_, err := c.Response().Writer.Write(buf.Bytes())
+	_, err := c.Response().Writer.Write(out)
 	return err
 }
 

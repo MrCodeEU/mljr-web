@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/labstack/echo/v4"
+
+	"mljr-web/ui/fonts"
 )
 
 // MountStatic serves a project's embedded assets/static under /static/ in prod,
@@ -22,6 +24,16 @@ func MountStatic(e *echo.Echo, embedded fs.FS, devPath string, dev bool) {
 		panic(err)
 	}
 	e.GET("/static/*", echo.WrapHandler(http.StripPrefix("/static/", http.FileServer(http.FS(sub)))))
+}
+
+// MountFonts serves the shared web fonts (ui/fonts) under /fonts/ with a long
+// cache lifetime; the file names are versioned by their fontsource release.
+func MountFonts(e *echo.Echo) {
+	fsrv := http.StripPrefix("/fonts/", http.FileServer(http.FS(fonts.FS)))
+	e.GET("/fonts/*", echo.WrapHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		fsrv.ServeHTTP(w, r)
+	})))
 }
 
 // MountLogos serves a project's logo variants (assets/static/img/logo) under

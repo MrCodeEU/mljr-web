@@ -163,6 +163,14 @@ func init() {
 
 Prod projects build **without** `-tags showcase` → registry is tree-shaken.
 
+## Design system (Swiss)
+
+mljr.eu (homepage, games, legal, live tools) ships the `swiss` theme. How it
+looks, which components exist (`ui/swiss`, `special.ToolShell`), the colour
+rules, accessibility checklist and recipes for new sections, sub pages and
+tools: **[docs/design-system.md](docs/design-system.md)**. Read it before
+touching any mljr.eu UI.
+
 ## Theme model (v2)
 
 - Themes: `swissbrut`, `ink`. Modes: `light`, `dark`. Total 4 skins.

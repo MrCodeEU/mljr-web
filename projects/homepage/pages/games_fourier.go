@@ -7,7 +7,6 @@ import (
 	h "maragu.dev/gomponents/html"
 
 	"mljr-web/internal/i18n"
-	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/special"
 	"mljr-web/ui/token"
@@ -32,18 +31,21 @@ func Fourier(lang string, a AnalyticsConfig) g.Node {
 		layout.PageProps{
 			Title:       "Fourier Drawing - Michael Reinegger",
 			Description: "Draw a shape and watch a chain of rotating circles reconstruct it from sine waves via the Discrete Fourier Transform.",
-			Theme:       token.ThemeSwissBrut,
+			Theme:       token.ThemeSwiss,
+			AutoMode:    true,
+			LockTheme:   true,
 			Mode:        token.ModeLight,
 			Lang:        lang,
 			HeadExtra:   append([]g.Node{g.El("style", g.Raw(homepageCSS+gameCSS+fourierCSS+gameDescCSS))}, AnalyticsHead(a)...),
 		},
-		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
+		special.ThemeToggleRoot(token.ThemeSwiss, token.ModeLight),
 		siteNavbar(lang),
-		h.Main(h.Class("game-page"),
-			h.Div(h.Class("game-shell game-shell-wide"),
-				h.A(h.Href("/"), h.Class("legal-back"), icon.Icon("lucide:arrow-left"), g.Text(i18n.T(lang, "legal.back"))),
+		h.Main(h.ID("main"), h.Class("game-page sub-page"),
+			subHead("/#playground", tr(lang, "Labor", "Lab"), 6,
 				h.H1(g.Text("Fourier Drawing")),
 				h.P(h.Class("game-lede"), g.Text(i18n.T(lang, "games.fourier.lede"))),
+			),
+			h.Div(h.Class("game-shell game-shell-wide sub-body"),
 				h.Div(h.ID("fourier-game"), h.Class("game-canvas-wrap")),
 				h.Div(h.Class("game-controls fourier-controls"),
 					h.Button(h.ID("fourier-play"), h.Class("game-btn"), g.Text(i18n.T(lang, "games.fourier.play"))),

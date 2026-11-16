@@ -23,6 +23,7 @@ func main() {
 
 	e := web.NewEcho()
 	web.MountStatic(e, assets, "projects/codec/assets/static", web.IsDev())
+	web.MountFonts(e)
 
 	e.GET("/", func(c echo.Context) error {
 		return web.Render(c, 200, pages.Home())
@@ -30,7 +31,7 @@ func main() {
 
 	e.POST("/api/eval", func(c echo.Context) error {
 		var s struct {
-			Mode  string `json:"mode"`
+			Mode  string `json:"codec"`
 			Op    string `json:"op"`
 			Input string `json:"input"`
 		}

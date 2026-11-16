@@ -17,7 +17,7 @@ import (
 // Theme and mode come from URL query params so the parent detail page can sync them.
 func ComponentPreview(c *registry.Component, props map[string]string, theme token.Theme, mode token.Mode) g.Node {
 	if theme == "" {
-		theme = token.ThemeSwissBrut
+		theme = token.ThemeSwiss
 	}
 	if mode == "" {
 		mode = token.ModeLight

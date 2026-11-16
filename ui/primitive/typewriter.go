@@ -52,6 +52,8 @@ func Typewriter(p TypewriterProps) g.Node {
   var el=document.getElementById('%s');
   if(!el) return;
   var lines=%s,li=0,ci=0,deleting=false;
+  // reduced motion: show the first line, no typing loop
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches){ el.textContent=lines[0]; return; }
   function tick(){
     var line=lines[li];
     if(!deleting){

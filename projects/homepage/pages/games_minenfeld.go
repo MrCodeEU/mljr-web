@@ -8,7 +8,6 @@ import (
 	h "maragu.dev/gomponents/html"
 
 	"mljr-web/internal/i18n"
-	"mljr-web/ui/icon"
 	"mljr-web/ui/layout"
 	"mljr-web/ui/special"
 	"mljr-web/ui/token"
@@ -19,23 +18,26 @@ func Minenfeld(lang string, a AnalyticsConfig) g.Node {
 		layout.PageProps{
 			Title:       "Minenfeld - Michael Reinegger",
 			Description: "A minefield-crossing game ported from an old side project.",
-			Theme:       token.ThemeSwissBrut,
+			Theme:       token.ThemeSwiss,
+			AutoMode:    true,
+			LockTheme:   true,
 			Mode:        token.ModeLight,
 			Lang:        lang,
 			HeadExtra:   append([]g.Node{g.El("style", g.Raw(homepageCSS+gameCSS+gameDescCSS))}, AnalyticsHead(a)...),
 		},
-		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
+		special.ThemeToggleRoot(token.ThemeSwiss, token.ModeLight),
 		siteNavbar(lang),
-		h.Main(h.Class("game-page"),
-			h.Div(h.Class("game-shell"),
-				h.A(h.Href("/"), h.Class("legal-back"), icon.Icon("lucide:arrow-left"), g.Text(i18n.T(lang, "legal.back"))),
+		h.Main(h.ID("main"), h.Class("game-page sub-page"),
+			subHead("/#playground", tr(lang, "Labor", "Lab"), 8,
 				h.H1(g.Text("Minenfeld")),
 				h.P(h.Class("game-lede"), g.Text(i18n.T(lang, "games.minenfeld.lede"))),
+			),
+			h.Div(h.Class("game-shell sub-body"),
 				h.Div(h.ID("minenfeld-game"),
 					h.Canvas(h.ID("minenfeld-canvas"), h.Width("640"), h.Height("640")),
 					h.Div(h.ID("minenfeld-input-wrap"), h.Class("game-input-wrap"),
 						h.P(h.ID("minenfeld-input-label"), g.Text("Wo wollen Sie starten? [0/19]")),
-						h.Input(h.Type("text"), h.ID("minenfeld-input-box")),
+						h.Input(h.Type("text"), h.ID("minenfeld-input-box"), g.Attr("aria-labelledby", "minenfeld-input-label")),
 						h.Button(h.ID("minenfeld-input-btn"), h.Class("game-btn"), g.Text("Go!")),
 					),
 					h.P(h.ID("minenfeld-error"), h.Class("game-error"), h.Style("display:none")),
@@ -82,28 +84,10 @@ func minenfeldDiagram() g.Node {
 }
 
 const gameCSS = `
-.game-page {
-  min-height: 70vh;
-  padding: var(--sp-12) var(--sp-4);
-}
-.game-shell {
-  max-width: 900px;
-  margin: 0 auto;
-  background: var(--surface);
-  border: var(--bw-2) solid var(--line);
-  box-shadow: var(--shadow);
-  padding: clamp(var(--sp-5), 4vw, var(--sp-10));
-}
-.game-shell h1 {
-  font-size: clamp(2.4rem, 8vw, 4rem);
-  line-height: .95;
-  margin: var(--sp-4) 0 var(--sp-2);
-  font-weight: 950;
-}
-.game-lede {
-  color: var(--muted);
-  margin: 0 0 var(--sp-6);
-}
+/* embedded in the homepage lab: game only, no page chrome */
+html.embedded body > :not(main):not(script):not(style) { display: none !important; }
+html.embedded .game-page { min-height: 0; }
+.game-page { min-height: 70vh; }
 #minenfeld-canvas {
   display: block;
   max-width: 100%;

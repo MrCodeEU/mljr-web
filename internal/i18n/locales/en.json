@@ -176,7 +176,8 @@
       "section_external": {
         "title": "External content",
         "body1": "The website currently self-hosts fonts, scripts and stylesheets. No Google Fonts or CDN fonts are embedded.",
-        "body2": "External links, for example to GitHub, LinkedIn or Strava, lead to offers from other providers. The respective privacy notices of these providers apply to their content and data processing."
+        "body2": "External links, for example to GitHub, LinkedIn or Strava, lead to offers from other providers. The respective privacy notices of these providers apply to their content and data processing.",
+        "body3": "The map in the career section loads map tiles from OpenStreetMap (OpenStreetMap Foundation, St John’s Innovation Centre, Cowley Road, Cambridge, CB4 0WS, United Kingdom). The tiles load only when the map scrolls into view. Your browser then sends your IP address and technical connection data to OpenStreetMap’s servers. The legal basis is the legitimate interest in an appealing presentation (Art. 6(1)(f) GDPR). Details: https://osmfoundation.org/wiki/Privacy_Policy"
       },
       "section_legal_basis": {
         "title": "Legal basis",

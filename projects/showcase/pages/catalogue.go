@@ -18,11 +18,12 @@ import (
 func Catalogue() g.Node {
 	return layout.PageShell(
 		layout.PageProps{
-			Title: "mljr-ui — showcase",
-			Theme: token.ThemeSwissBrut,
-			Mode:  token.ModeLight,
+			Title:    "mljr-ui — showcase",
+			Theme:    token.ThemeSwiss,
+			AutoMode: true,
+			Mode:     token.ModeLight,
 		},
-		special.ThemeToggleRoot(token.ThemeSwissBrut, token.ModeLight),
+		special.ThemeToggleRoot(token.ThemeSwiss, token.ModeLight),
 
 		layout.Navbar(layout.NavbarProps{},
 			g.Text("mljr-ui · showcase"),

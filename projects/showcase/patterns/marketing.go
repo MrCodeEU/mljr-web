@@ -23,7 +23,7 @@ func init() {
 			th := token.Theme(theme)
 			mo := token.Mode(mode)
 			if th == "" {
-				th = token.ThemeSwissBrut
+				th = token.ThemeSwiss
 			}
 			if mo == "" {
 				mo = token.ModeLight
