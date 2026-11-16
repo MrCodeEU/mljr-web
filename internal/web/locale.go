@@ -1,7 +1,9 @@
 package web
 
 import (
+	"html"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -112,10 +114,13 @@ func isPageRequest(c echo.Context) bool {
 // localizedHead returns the canonical and hreflang links for the page
 // being rendered, or nil when LangPrefix is not active.
 func localizedHead(c echo.Context) []byte {
-	path, ok := c.Get(pagePathKey).(string)
+	raw, ok := c.Get(pagePathKey).(string)
 	if !ok {
 		return nil
 	}
+	// The path comes from the request: re-encode it as a URL path and
+	// HTML-escape it so it can never break out of the href attribute.
+	path := html.EscapeString((&url.URL{Path: raw}).EscapedPath())
 	de := "/de" + path
 	if path == "/" {
 		de = "/de/"
