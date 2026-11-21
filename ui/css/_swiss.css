@@ -199,6 +199,7 @@
   [data-component="register"] [data-slot="primary"] { display: flex; flex-wrap: wrap; gap: .5rem; padding: 1rem 0; border-bottom: 1px solid var(--ink); }
   /* the ruler already links the last sections; keep only the first primary link when space runs out */
   @media (max-width: 1399px) { [data-component="colophon"] [data-slot="primary"][data-collapse] > :not(:first-child) { display: none; } }
+  @media (max-width: 480px) { [data-component="colophon"] [data-slot="primary"] > :not(:first-child) { display: none; } }
   [data-component="colophon"] [data-slot="progress"] {
     position: absolute; left: 0; right: 0; bottom: -3px; height: 3px; background: var(--accent);
     transform-origin: left; transform: scaleX(0);

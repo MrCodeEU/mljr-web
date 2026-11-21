@@ -91,6 +91,9 @@ func main() {
 	e.GET("/", func(c echo.Context) error {
 		return web.Render(c, 200, pages.Home(dataStore.Current(), web.Lang(c), analytics, hlSnapshot()))
 	})
+	e.GET("/cv", func(c echo.Context) error {
+		return web.Render(c, 200, pages.CV(dataStore.Current(), web.Lang(c), analytics))
+	})
 	e.GET("/impressum", func(c echo.Context) error {
 		return web.Render(c, 200, pages.Impressum(web.Lang(c), analytics))
 	})
@@ -166,6 +169,7 @@ func main() {
 			}
 		}
 		add("/", "weekly", "1.0")
+		add("/cv", "monthly", "0.8")
 		add("/impressum", "monthly", "0.3")
 		add("/datenschutz", "monthly", "0.3")
 		for _, it := range pages.PlaygroundURLPaths() {
