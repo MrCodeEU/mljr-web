@@ -458,17 +458,16 @@ type SkillGroup struct {
 	Short  string // short label for chart axes
 	Tone   string
 	Icon   string // Iconify icon for the group
-	Level  int    // self-assessed depth 0–100, drives the radar chart
 	Skills []string
 }
 
 var skillGroups = []SkillGroup{
-	{"Languages", "Languages", "violet", "lucide:code-2", 85, []string{"Go", "Rust", "TypeScript", "JavaScript", "Python", "Kotlin", "Java", "C#"}},
-	{"Web", "Web", "sky", "lucide:globe", 75, []string{"HTML", "CSS", "Svelte", "SvelteKit", "AngularJS", "Angular", "ASP.NET", ".NET"}},
-	{"Infra / Homelab", "Infra", "lime", "lucide:server", 82, []string{"Docker", "Puppet", "Linux", "Unraid", "Tailscale", "Caddy", "CI/CD"}},
-	{"Security", "Security", "yellow", "lucide:shield", 78, []string{"Cybersecurity", "Network Security", "IAM", "Prolog", "PAM"}},
-	{"Embedded / BLE", "Embedded", "pink", "lucide:cpu", 60, []string{"ESP32", "BLE", "Dexcom G7", "Nightscout", "Kotlin Multiplatform"}},
-	{"Ops / Data", "Ops/Data", "mint", "lucide:database", 70, []string{"SQLite", "VictoriaMetrics", "Grafana", "slog", "WebGL"}},
+	{"Languages", "Languages", "violet", "lucide:code-2", []string{"Go", "Rust", "TypeScript", "JavaScript", "Python", "Kotlin", "Java", "C#"}},
+	{"Web", "Web", "sky", "lucide:globe", []string{"HTML", "CSS", "Svelte", "SvelteKit", "AngularJS", "Angular", "ASP.NET", ".NET"}},
+	{"Infra / Homelab", "Infra", "lime", "lucide:server", []string{"Docker", "Puppet", "Linux", "Unraid", "Tailscale", "Caddy", "CI/CD"}},
+	{"Security", "Security", "yellow", "lucide:shield", []string{"Cybersecurity", "Network Security", "IAM", "Prolog", "PAM"}},
+	{"Embedded / BLE", "Embedded", "pink", "lucide:cpu", []string{"ESP32", "BLE", "Dexcom G7", "Nightscout", "Kotlin Multiplatform"}},
+	{"Ops / Data", "Ops/Data", "mint", "lucide:database", []string{"SQLite", "VictoriaMetrics", "Grafana", "slog", "WebGL"}},
 }
 
 // Load parses and returns the embedded fallback site data. Panics on bad JSON
@@ -657,6 +656,39 @@ func (d SiteData) HasWellness() bool {
 
 // SkillGroups returns the curated skill groups.
 func SkillGroups() []SkillGroup { return skillGroups }
+
+// RepoCount returns how many public GitHub projects list any of skills as
+// their language or as a topic. Names are compared without case, spaces and
+// punctuation, so "CI/CD" matches the topic "ci-cd".
+func (d SiteData) RepoCount(skills ...string) int {
+	want := map[string]bool{}
+	for _, s := range skills {
+		want[skillKey(s)] = true
+	}
+	n := 0
+	for _, p := range d.GitHub {
+		hit := want[skillKey(p.Language)]
+		for _, t := range p.Topics {
+			hit = hit || want[skillKey(t)]
+		}
+		if hit {
+			n++
+		}
+	}
+	return n
+}
+
+func skillKey(s string) string {
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '#', r == '+':
+			return r
+		case r >= 'A' && r <= 'Z':
+			return r + 'a' - 'A'
+		}
+		return -1
+	}, s)
+}
 
 // DisplayName returns the short first name.
 func (d LinkedInData) DisplayName() string {

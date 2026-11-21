@@ -35,7 +35,7 @@ func PageShell(p PageProps, body ...g.Node) g.Node {
 		p.Mode = token.ModeLight
 	}
 	if p.CSSPath == "" {
-		p.CSSPath = "/static/app.css?v=20261116-swiss"
+		p.CSSPath = "/static/app.css?v=20261121-swiss"
 	}
 	if p.JSPath == "" {
 		p.JSPath = "/static/datastar.js"
