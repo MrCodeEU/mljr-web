@@ -16,7 +16,9 @@ import (
 // /api/homelab SSE endpoint re-renders every 60s, plus the architecture as
 // a numbered flowchart.
 func homelabSection(p swiss.SectionProps, snap homelab.Snapshot, lang string) g.Node {
-	p.Note = tr(lang, "Leitstand: alle 60 s live aktualisiert über Uptime Kuma + VictoriaMetrics.", "Control room: refreshed live every 60 s from Uptime Kuma + VictoriaMetrics.")
+	p.Note = tr(lang,
+		"Leitstand: alle 60 s live aktualisiert über Uptime Kuma + VictoriaMetrics. Antwortzeiten sind komplette HTTPS-Abrufe über die öffentliche Adresse, inklusive DNS, TLS und Weg über den VPS.",
+		"Control room: refreshed live every 60 s from Uptime Kuma + VictoriaMetrics. Response times are full HTTPS requests to the public address, including DNS, TLS and the hop through the VPS.")
 	p.Attrs = []g.Node{g.Attr("data-on-interval__duration.60s", "@get('/api/homelab')")}
 	return swiss.Section(p,
 		HomelabPanel(snap),
@@ -121,7 +123,7 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 		swiss.Cell(swiss.CellProps{Variant: "flush"},
 			figRow([]figure{
 				{"Dienste / Services", fmt.Sprintf("%d/%d", snap.UpCount, total), "in Betrieb / up", upVariant, "lucide:server"},
-				{"Antwortzeit / Latency", fmt.Sprintf("%.0f", avg), "ms · Ø aktuell / avg now", "", "lucide:clock"},
+				{"Antwortzeit / Latency", fmt.Sprintf("%.0f", avg), "ms · Ø HTTPS-Abruf / avg HTTPS request", "", "lucide:clock"},
 				{"Sperren / Bans", num(snap.ActiveBans), "CrowdSec aktiv / active", "third", "lucide:shield"},
 				{"Angriffe / Attacks", num(snap.Attacks24h), "letzte 24 h / last 24 h", "", "lucide:alert-triangle"},
 				{"Hosts", num(snap.HostsOnline), "online", "", "lucide:network"},
@@ -133,7 +135,7 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 			h.Ul(h.Class("lt-grid"), g.Group(tiles)),
 		),
 		swiss.Cell(swiss.CellProps{Span: sSpan},
-			swiss.Kicker("B. Langsamste Antworten / Slowest responses", nil),
+			swiss.Kicker("B. Langsamste Antworten / Slowest responses", g.Text("HTTPS · extern / external")),
 			barList(bars),
 		),
 		g.If(len(meshRows) > 0, swiss.Cell(swiss.CellProps{Span: mSpan},
