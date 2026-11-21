@@ -27,6 +27,19 @@ func cvPath(lang string) string {
 	return "/static/cv/lebenslauf_eng.pdf"
 }
 
+// sitePrimary links the CV and the contact form from every page; contact is
+// "#contact" on the homepage and the homepage's anchor elsewhere.
+func sitePrimary(lang string, onHome bool) []g.Node {
+	contact := "#contact"
+	if !onHome {
+		contact = tr(lang, "/de/", "/") + "#contact"
+	}
+	return []g.Node{
+		swiss.BtnLink(cvPath(lang), true, []g.Node{g.Attr("type", "application/pdf")}, g.Text("CV ↓")),
+		swiss.BtnLink(contact, false, nil, g.Text(tr(lang, "Kontakt", "Contact"))),
+	}
+}
+
 // siteActions: language switch (cookie + reload) and light/dark toggle.
 // The mode button reads the $mode signal seeded by special.ThemeToggleRoot.
 func siteActions(lang string) []g.Node {
@@ -60,6 +73,7 @@ func siteNavbar(lang string) g.Node {
 		swiss.Colophon(swiss.ColophonProps{
 			Brand:     "mljr.eu",
 			BrandSub:  "— Michael Reinegger · Linz (AT)",
+			Primary:   sitePrimary(lang, false),
 			Actions:   siteActions(lang),
 			SkipLabel: tr(lang, "Zum Inhalt springen", "Skip to content"),
 		}),

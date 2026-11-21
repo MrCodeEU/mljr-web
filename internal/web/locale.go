@@ -70,9 +70,14 @@ func LocaleMiddleware() echo.MiddlewareFunc {
 			if cookieLang != "" {
 				lang = cookieLang
 			}
+			urlLang, _ := c.Get(urlLangKey).(string)
+			if urlLang != "" {
+				// /de/... is German for every client, also crawlers and
+				// tools that do not send Accept: text/html.
+				lang = urlLang
+			}
 			if on, _ := c.Get(prefixModeKey).(bool); on && isPageRequest(c) {
-				if u, _ := c.Get(urlLangKey).(string); u != "" {
-					lang = u
+				if u := urlLang; u != "" {
 					if cookieLang != u {
 						c.SetCookie(&http.Cookie{Name: LangCookieName, Value: u, Path: "/", MaxAge: 31536000, SameSite: http.SameSiteLaxMode})
 					}

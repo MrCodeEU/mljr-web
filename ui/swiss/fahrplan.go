@@ -149,7 +149,8 @@ const fahrplanJS = `(function(){
     });
     l.tracks=Math.max(1,tracks.length);
   });
-  var selected=ev.filter(function(x){return x.ongoing;})[0]||order[order.length-1];
+  // start on the most recent running station, else the latest one
+  var selected=ev.filter(function(x){return x.ongoing;}).sort(function(a,b){return b.s-a.s;})[0]||order[order.length-1];
   var ctx=document.createElement('canvas').getContext('2d');
   function textW(t){ctx.font='700 11px "JetBrains Mono", monospace';return ctx.measureText(t).width;}
   function chipW(x){return Math.ceil(4+4+22+6+textW(x.chip)+6+12+6);}

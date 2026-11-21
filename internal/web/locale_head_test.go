@@ -20,3 +20,24 @@ func TestLocalizedHeadEscapesPath(t *testing.T) {
 		t.Fatalf("unexpected canonical: %s", out)
 	}
 }
+
+func TestURLLanguageWinsWithoutHTMLAccept(t *testing.T) {
+	e := echo.New()
+	var got string
+	h := LangPrefix()(LocaleMiddleware()(func(c echo.Context) error {
+		got = Lang(c)
+		return nil
+	}))
+	for _, accept := range []string{"text/html", "*/*", ""} {
+		req := httptest.NewRequest("GET", "/de/", nil)
+		if accept != "" {
+			req.Header.Set("Accept", accept)
+		}
+		if err := h(e.NewContext(req, httptest.NewRecorder())); err != nil {
+			t.Fatal(err)
+		}
+		if got != "de" {
+			t.Errorf("Accept %q: lang = %q, want de", accept, got)
+		}
+	}
+}

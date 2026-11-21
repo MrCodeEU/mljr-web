@@ -17,7 +17,7 @@ type FlapRow struct {
 	Code  string // 3 chars; derived from Name when empty
 	Name  string
 	Gate  string // 3-char group short, e.g. "SPR"
-	Level int    // 0–100
+	Value string // last column, up to 5 chars (e.g. a count)
 	Group string // full group name (screen-reader table)
 }
 
@@ -30,7 +30,7 @@ type FlapBoardProps struct {
 	// IntervalMS between automatic page flips; default 15000.
 	IntervalMS int
 	// Column headings, page label ("Seite"), control labels, sr table caption.
-	ColCode, ColName, ColGate, ColLevel  string
+	ColCode, ColName, ColGate, ColValue  string
 	PageLabel, Pause, Resume, Prev, Next string
 	Caption, ColGroup                    string
 }
@@ -53,17 +53,15 @@ func FlapBoard(p FlapBoardProps) g.Node {
 		if code == "" {
 			code = FlapCode(r.Name)
 		}
-		n := (r.Level - 50 + 5) / 10
-		n = max(1, min(5, n))
-		rows[i] = jsRow{Icon: r.Icon, Code: code, Name: r.Name, Gate: r.Gate, Lvl: strings.Repeat("■", n) + strings.Repeat("□", 5-n)}
+		rows[i] = jsRow{Icon: r.Icon, Code: code, Name: r.Name, Gate: r.Gate, Lvl: r.Value}
 		if svg, ok := icon.SVG(r.Icon); ok {
 			icons[r.Icon] = svg
 		}
-		trs[i] = h.Tr(h.Td(g.Text(r.Group)), h.Td(g.Text(r.Name)), h.Td(g.Text(strconv.Itoa(r.Level)+" / 100")))
+		trs[i] = h.Tr(h.Td(g.Text(r.Group)), h.Td(g.Text(r.Name)), h.Td(g.Text(r.Value)))
 	}
 	data, err := json.Marshal(map[string]any{
 		"rows": rows, "icons": icons, "per": p.PerPage, "interval": p.IntervalMS,
-		"cols": [][]any{{"icon", 1, ""}, {"code", 3, p.ColCode}, {"name", 20, p.ColName}, {"gate", 3, p.ColGate}, {"lvl", 5, p.ColLevel}},
+		"cols": [][]any{{"icon", 1, ""}, {"code", 3, p.ColCode}, {"name", 20, p.ColName}, {"gate", 3, p.ColGate}, {"lvl", 5, p.ColValue}},
 		"page": p.PageLabel, "pause": p.Pause, "resume": p.Resume,
 	})
 	if err != nil {
@@ -89,7 +87,7 @@ func FlapBoard(p FlapBoardProps) g.Node {
 		),
 		h.Table(g.Attr("data-component", "swiss-sr"),
 			h.Caption(g.Text(p.Caption)),
-			h.THead(h.Tr(h.Th(g.Text(p.ColGroup)), h.Th(g.Text(p.ColName)), h.Th(g.Text(p.ColLevel)))),
+			h.THead(h.Tr(h.Th(g.Text(p.ColGroup)), h.Th(g.Text(p.ColName)), h.Th(g.Text(p.ColValue)))),
 			h.TBody(trs...),
 		),
 		h.Script(h.Type("application/json"), g.Attr("data-slot", "data"), g.Raw(strings.ReplaceAll(string(data), "</", `<\/`))),
@@ -130,7 +128,7 @@ func fbDefaults(p *FlapBoardProps) {
 	set(&p.ColCode, "Code")
 	set(&p.ColName, "Kompetenz")
 	set(&p.ColGate, "Gleis")
-	set(&p.ColLevel, "Niveau")
+	set(&p.ColValue, "Wert")
 	set(&p.PageLabel, "Seite")
 	set(&p.Pause, "Anhalten")
 	set(&p.Resume, "Weiter")
