@@ -27,7 +27,8 @@ func cvPath(lang string) string {
 	return "/static/cv/lebenslauf_eng.pdf"
 }
 
-// sitePrimary links the CV and the contact form from every page; contact is
+// sitePrimary links the compact profile (/cv, with the PDF) and the
+// contact form from every page; contact is
 // "#contact" on the homepage and the homepage's anchor elsewhere.
 func sitePrimary(lang string, onHome bool) []g.Node {
 	contact := "#contact"
@@ -35,7 +36,7 @@ func sitePrimary(lang string, onHome bool) []g.Node {
 		contact = tr(lang, "/de/", "/") + "#contact"
 	}
 	return []g.Node{
-		swiss.BtnLink(cvPath(lang), true, []g.Node{g.Attr("type", "application/pdf")}, g.Text("CV ↓")),
+		swiss.BtnLink(tr(lang, "/de/cv", "/cv"), true, nil, g.Text(tr(lang, "Kurzprofil", "Profile"))),
 		swiss.BtnLink(contact, false, nil, g.Text(tr(lang, "Kontakt", "Contact"))),
 	}
 }

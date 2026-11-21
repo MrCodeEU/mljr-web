@@ -52,7 +52,7 @@ func heroSection(p swiss.SectionProps, d hpdata.SiteData, lang string) g.Node {
 				h.P(h.Class("hero-lead"), g.Text(hero.Description)),
 				h.Div(h.Class("hero-ctas"),
 					swiss.BtnLink("#projects", true, nil, g.Text(i18n.T(lang, "hero.cta_projects")+" ↓")),
-					swiss.BtnLink("#contact", false, nil, g.Text(i18n.T(lang, "hero.cta_contact"))),
+					swiss.BtnLink(tr(lang, "/de/cv", "/cv"), false, nil, g.Text(tr(lang, "Kurzprofil · 60 s", "Profile · 60 s"))),
 					swiss.BtnLink("https://github.com/MrCodeEU", false, []g.Node{g.Attr("target", "_blank"), g.Attr("rel", "noopener noreferrer")},
 						icon.Icon("simple-icons:github", icon.Props{Size: "1em"}), g.Text(i18n.T(lang, "hero.cta_github"))),
 					swiss.BtnLink(cvPath(lang), false, []g.Node{g.Attr("download", "")},
