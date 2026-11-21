@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -33,6 +34,7 @@ func CV(d hpdata.SiteData, lang string, a AnalyticsConfig) g.Node {
 	}
 	newestFirst(work)
 	newestFirst(edu)
+	work = mergeEarlyInternships(work)
 
 	title := tr(lang, "Kurzprofil", "Profile") + " - Michael Reinegger"
 	return layout.PageShell(
@@ -100,6 +102,55 @@ func cvEntries(items []hpdata.TimelineItem, lang string) g.Node {
 		)
 	}
 	return h.Ol(h.Class("cv-list"), g.Group(rows))
+}
+
+// earlyInternships are the school-time internships. The timeline shows them
+// one by one; the CV folds them into a single line so recent work leads.
+var earlyInternships = map[string]bool{"engel-intern-2017": true, "engel-intern-2018": true, "bosch-rexroth-intern": true}
+
+// mergeEarlyInternships replaces the early internships in a newest-first list
+// with one entry at the position of the newest of them.
+func mergeEarlyInternships(items []hpdata.TimelineItem) []hpdata.TimelineItem {
+	var out []hpdata.TimelineItem
+	var orgs []string
+	first, last, at := "", "", -1
+	for _, t := range items {
+		if !earlyInternships[t.ID] {
+			out = append(out, t)
+			continue
+		}
+		if at < 0 {
+			at = len(out)
+		}
+		if !slices.Contains(orgs, t.Organization) {
+			orgs = append(orgs, t.Organization)
+		}
+		if first == "" || t.Start < first {
+			first = t.Start
+		}
+		end := t.Start
+		if t.End != nil {
+			end = *t.End
+		}
+		last = max(last, end)
+	}
+	if at < 0 {
+		return items
+	}
+	slices.Reverse(orgs) // oldest first
+	end := last[:4]
+	merged := hpdata.TimelineItem{
+		ID:           "early-internships",
+		Kind:         "work",
+		Title:        "Internships in production and assembly",
+		TitleDE:      "Praktika in Produktion und Montage",
+		Organization: strings.Join(orgs, " · "),
+		Start:        first[:4],
+		End:          &end,
+		Summary:      "Mandatory internships at ENGEL (production support, wiring of injection moulding machines, data processing) and an assembly and testing internship at Bosch Rexroth (cable ducts, hydraulic systems).",
+		SummaryDE:    "Pflichtpraktika bei ENGEL (Produktionsunterstützung, Verdrahtung von Spritzgussmaschinen, Datenverarbeitung) und Montage- und Prüfpraktikum bei Bosch Rexroth (Kabelkanäle, Hydrauliksysteme).",
+	}
+	return slices.Insert(out, at, merged)
 }
 
 func cvTheses(theses []hpdata.Thesis, lang string) g.Node {
