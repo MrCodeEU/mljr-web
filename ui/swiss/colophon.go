@@ -21,6 +21,10 @@ type ColophonProps struct {
 	// Empty = no ruler/register (sub pages).
 	Items   []NavItem
 	Actions []g.Node // right-hand controls (language, mode, …)
+	// Primary are links a visitor should always reach (CV, contact). They
+	// sit before the actions; on mobile pages with a register they move
+	// into the register dialog.
+	Primary []g.Node
 	// PageID is the element made inert while the register is open.
 	PageID        string
 	NavLabel      string // aria-label of the ruler, default "Abschnitte"
@@ -62,6 +66,7 @@ func Colophon(p ColophonProps) g.Node {
 		),
 		g.If(hasNav, h.Nav(g.Attr("data-component", "ruler"), g.Attr("aria-label", p.NavLabel), h.Ol(segs...))),
 		h.Div(g.Attr("data-slot", "actions"),
+			g.If(len(p.Primary) > 0, h.Div(append([]g.Node{g.Attr("data-slot", "primary"), g.If(hasNav, g.Attr("data-collapse", ""))}, p.Primary...)...)),
 			g.Group(p.Actions),
 			g.If(hasNav, Btn(false, []g.Node{
 				g.Attr("data-slot", "register-btn"), h.ID("swiss-register-btn"),
@@ -96,6 +101,7 @@ func Register(p ColophonProps) g.Node {
 			Micro(g.Text(p.RegisterLabel+" / Index")),
 			Btn(false, []g.Node{h.ID("swiss-register-close")}, g.Text(p.CloseLabel+" ×")),
 		),
+		g.If(len(p.Primary) > 0, h.Div(append([]g.Node{g.Attr("data-slot", "primary")}, p.Primary...)...)),
 		h.Ol(items...),
 		h.Script(g.Raw(registerJS)),
 	)

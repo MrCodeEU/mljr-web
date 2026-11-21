@@ -12,7 +12,6 @@ import (
 
 	"mljr-web/internal/i18n"
 	hpdata "mljr-web/projects/homepage/data"
-	uidata "mljr-web/ui/data"
 	"mljr-web/ui/icon"
 	"mljr-web/ui/primitive"
 	"mljr-web/ui/swiss"
@@ -134,6 +133,15 @@ func projectLinks(p hpdata.Project, lang string) g.Node {
 	return h.Div(h.Class("cat-links"), g.Group(nodes))
 }
 
+// corePicks are the projects a visitor short on time should open first;
+// they get a "Kernprojekt" mark on their plate and plate tab.
+var corePicks = map[string]bool{"homelab-automation": true, "mljr-web": true}
+
+// corePick is the mark shown on core projects and the master's thesis.
+func corePick(lang string) g.Node {
+	return h.Span(h.Class("core-pick"), g.Text(tr(lang, "★ Kernprojekt", "★ Core pick")))
+}
+
 func catalogueSection(p swiss.SectionProps, featured, rest, tools []hpdata.Project, lang string) g.Node {
 	p.Note = tr(lang, "Tafeln für Hauptprojekte, Kleintafeln und Verzeichnis für den Rest.", "Plates for the main projects, small plates and an index for the rest.")
 	gal := func(pr hpdata.Project, aspect string) g.Node {
@@ -157,6 +165,7 @@ func catalogueSection(p swiss.SectionProps, featured, rest, tools []hpdata.Proje
 		tabs[i] = h.Button(h.Type("button"), h.Class("plate-tab"), g.Attr("data-tab", n), g.Attr("aria-pressed", strconv.FormatBool(i == 0)),
 			h.Span(h.Class("plate-tab-n"), g.Text(num)),
 			h.Span(h.Class("plate-tab-t"), g.Text(friendlyName(pr.Name))),
+			g.If(corePicks[pr.ID], h.Span(h.Class("plate-tab-core"), g.Text(tr(lang, "★ Kern", "★ Core")))),
 		)
 		media := gal(pr, "4/3")
 		if media == nil {
@@ -167,6 +176,7 @@ func catalogueSection(p swiss.SectionProps, featured, rest, tools []hpdata.Proje
 			h.Div(h.Class("plate-body"),
 				swiss.Kicker(tr(lang, "Tafel ", "Plate ")+num, g.Text(fmt.Sprintf("%d / %d", i+1, len(featured)))),
 				h.H3(h.Class("plate-title"), g.Text(friendlyName(pr.Name))),
+				g.If(corePicks[pr.ID], corePick(lang)),
 				g.If(pr.Stars > 0, swiss.Micro(g.Text(fmt.Sprintf("★ %d", pr.Stars)))),
 				h.P(g.Text(truncate(pr.DescFor(lang), 350))),
 				tagPills(projectTags(pr, 6)),
@@ -498,6 +508,7 @@ func papersSection(p swiss.SectionProps, d hpdata.SiteData, lang string) g.Node 
 			h.Div(h.Class("poster-body"),
 				g.If(hasOrg, swiss.Kicker(e.TitleFor(lang), nil)),
 				h.H3(h.Class("cell-title"), g.Text(t.Title)),
+				g.If(t.Type == "Master", corePick(lang)),
 				h.P(h.Class("cell-text"), g.Text(truncate(t.Description, 360))),
 				h.Div(h.Class("cell-foot"), pdf(t, true)),
 			),
@@ -546,41 +557,45 @@ var gateShort = map[string]string{
 	"Security": "SEC", "Embedded / BLE": "EMB", "Ops / Data": "OPS",
 }
 
-func skillsSection(p swiss.SectionProps, lang string) g.Node {
+func skillsSection(p swiss.SectionProps, d hpdata.SiteData, lang string) g.Node {
 	var rows []swiss.FlapRow
 	groups := hpdata.SkillGroups()
 	for _, sg := range groups {
 		for _, s := range sg.Skills {
-			rows = append(rows, swiss.FlapRow{Icon: hpdata.TechIcon(s), Name: s, Gate: gateShort[sg.Label], Level: sg.Level, Group: sg.Label})
+			v := "—"
+			if n := d.RepoCount(s); n > 0 {
+				v = strconv.Itoa(n)
+			}
+			rows = append(rows, swiss.FlapRow{Icon: hpdata.TechIcon(s), Name: s, Gate: gateShort[sg.Label], Value: v, Group: sg.Label})
 		}
 	}
-	p.Note = fmt.Sprintf(tr(lang, "Fallblatt-Anzeige. %d Kompetenzen, %d Gleise. Niveau ■ = Selbsteinschätzung.", "Split-flap display. %d skills, %d groups. Level ■ = self-assessment."), len(rows), len(groups))
+	p.Note = fmt.Sprintf(tr(lang,
+		"Fallblatt-Anzeige. %d Kompetenzen, %d Gleise. Repos = öffentliche GitHub-Projekte mit dieser Technik; Berufserfahrung steht in der Laufbahn.",
+		"Split-flap display. %d skills, %d groups. Repos = public GitHub projects using it; work experience is in the career section."), len(rows), len(groups))
 	p.Attrs = append(p.Attrs, h.Class("sec-inv"))
-	fb := swiss.FlapBoardProps{ID: "skills-board", Rows: rows}
+	fb := swiss.FlapBoardProps{ID: "skills-board", Rows: rows, ColValue: "Repos"}
 	if lang != "de" {
 		fb.PageLabel, fb.Pause, fb.Resume, fb.Prev, fb.Next = "Page", "Pause", "Resume", "Previous page", "Next page"
 		fb.Caption, fb.ColGroup = "Skills by group", "Group"
 	}
-	axes := make([]string, len(groups))
-	vals := make([]float64, len(groups))
+	counts := make([]int, len(groups))
+	most := 1
+	for i, sg := range groups {
+		counts[i] = d.RepoCount(sg.Skills...)
+		most = max(most, counts[i])
+	}
 	legend := make([]g.Node, len(groups))
 	for i, sg := range groups {
-		axes[i], vals[i] = gateShort[sg.Label], float64(sg.Level)
 		legend[i] = h.Li(
 			h.Span(h.Class("sk-gate"), g.Text(gateShort[sg.Label])),
 			h.Span(h.Class("sk-name"), g.Text(sg.Label), h.Small(g.Text(fmt.Sprintf(" · %d", len(sg.Skills))))),
-			h.Span(h.Class("sk-bar"), h.I(h.Style(fmt.Sprintf("width:%d%%", sg.Level)))),
-			h.Span(h.Class("sk-val"), g.Text(strconv.Itoa(sg.Level))),
+			h.Span(h.Class("sk-bar"), h.I(h.Style(fmt.Sprintf("width:%d%%", counts[i]*100/most)))),
+			h.Span(h.Class("sk-val"), g.Text(strconv.Itoa(counts[i]))),
 		)
 	}
 	return swiss.Section(p,
-		swiss.Cell(swiss.CellProps{Span: 3, Attrs: []g.Node{h.Class("sk-radar")}},
-			swiss.Kicker(tr(lang, "Tiefe × Breite", "Depth × breadth"), nil),
-			uidata.RadarChart(uidata.RadarChartProps{Axes: axes, ShowGrid: true, GridLevels: 4, Size: 260, Max: 100},
-				uidata.RadarSeries{Label: tr(lang, "Tiefe", "Depth"), Values: vals, Color: "var(--tile-hi)"}),
-		),
-		swiss.Cell(swiss.CellProps{Span: 6},
-			swiss.Kicker(tr(lang, "Gleise", "Groups"), g.Text(tr(lang, "Selbsteinschätzung 0–100", "self-assessed 0–100"))),
+		swiss.Cell(swiss.CellProps{},
+			swiss.Kicker(tr(lang, "Gleise", "Groups"), g.Text(tr(lang, "Kompetenzen · Repos", "skills · repos"))),
 			h.Ul(h.Class("sk-legend"), g.Group(legend)),
 		),
 		swiss.Cell(swiss.CellProps{}, swiss.FlapBoard(fb)),
@@ -588,7 +603,7 @@ func skillsSection(p swiss.SectionProps, lang string) g.Node {
 }
 
 const skillsCSS = `
-.sk-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
+.sk-legend { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); gap: .55rem 2.5rem; }
 .sk-legend li { display: grid; grid-template-columns: 3.2rem minmax(0, 12rem) minmax(0, 1fr) 2.5rem; gap: .8rem; align-items: center; }
 .sk-gate { font-family: var(--font-mono); font-weight: 800; font-size: .75rem; color: var(--tile-hi); }
 .sk-name { font-weight: 700; font-size: .9rem; }
@@ -596,8 +611,6 @@ const skillsCSS = `
 .sk-bar { height: 10px; background: var(--tile); }
 .sk-bar i { display: block; height: 100%; background: var(--tile-fg); }
 .sk-val { font-family: var(--font-mono); font-size: .8rem; text-align: right; }
-.sk-radar [data-component="radar-chart-wrap"], .sk-radar svg { max-width: 100%; height: auto; }
-.sk-radar text { fill: var(--tile-fg); }
 /* the board is dark in both modes: give the radar grid and kickers board colours */
 .sec-inv > [data-slot="body"] { --line: #5a5f70; --muted: #a6a8b0; }
 .sec-inv [data-component="swiss-kicker"] [data-slot="aside"] { color: var(--tile-hi); }
@@ -614,6 +627,9 @@ const catalogueCSS = `
 .plate-tab:not([aria-pressed="true"]) { box-shadow: 1px 0 0 var(--ink), inset 0 -4px 0 var(--rule-subtle); }
 .plate-tab:not([aria-pressed="true"]):hover { box-shadow: 1px 0 0 var(--ink), inset 0 -4px 0 var(--act-fg); }
 .plate-tab { all: unset; position: relative; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; gap: .35rem; padding: .8rem var(--swiss-pad); box-shadow: 1px 0 0 var(--ink); min-width: 0; }
+.core-pick { align-self: flex-start; display: inline-block; font-family: var(--font-mono); font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; padding: .2rem .45rem; background: var(--block); color: var(--block-fg); }
+.plate-tab-core { font-family: var(--font-mono); font-size: .62rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--main-text); }
+.plate-tab[aria-pressed="true"] .plate-tab-core { color: inherit; }
 .plate-tab-n { font-size: 1.9rem; font-weight: 900; letter-spacing: -0.05em; line-height: .85; color: var(--main-text); }
 .plate-tab-t { font-family: var(--font-mono); font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .plate-tab:hover { background: var(--act); color: var(--act-fg); }

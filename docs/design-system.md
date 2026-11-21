@@ -65,8 +65,8 @@ Rules:
 | `swiss.Kicker(label, aside)` | the mono line that opens a cell |
 | `swiss.Figure`, `swiss.Micro`, `swiss.Pill(s)` | big number, small mono label, spec tag |
 | `swiss.Btn` / `swiss.BtnLink` | square mono button; `primary` = filled; `aria-pressed="true"` = ink fill |
-| `swiss.Colophon` + `swiss.Register` | sticky top bar with the section ruler (labels below 1800px, numbers above) and the full-screen register on mobile; `SkipLabel` adds the skip link to `#main` |
-| `swiss.Gallery`, `swiss.FlapBoard`, `swiss.Fahrplan` | figure gallery, departure board, timeline |
+| `swiss.Colophon` + `swiss.Register` | sticky top bar with the section ruler (labels below 1800px, numbers above) and the full-screen register on mobile; `SkipLabel` adds the skip link to `#main`; `Primary` holds links that must always be reachable (CV, contact): in the bar on desktop, at the top of the register on mobile |
+| `swiss.Gallery`, `swiss.FlapBoard`, `swiss.Fahrplan` | figure gallery, departure board (last column `Value`, up to 5 chars), timeline |
 | `swiss.SROnly` | text for screen readers only |
 
 Tool and form blocks (`ui/swiss/tool.go`):

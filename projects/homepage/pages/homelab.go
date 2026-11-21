@@ -252,6 +252,7 @@ const leitstandCSS = `
 .lt-down { background: var(--second); color: var(--second-fg); }
 .lt-state, .lt-meta { font-family: var(--font-mono); font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
 .lt-meta { opacity: .8; }
+.lt-down .lt-meta { opacity: 1; }
 .lt-live { color: var(--main-text); }
 .lt-sub { display: block; margin: 1rem 0 .4rem; color: var(--muted); }
 .lt-table { width: 100%; border-collapse: collapse; font-size: .8rem; }

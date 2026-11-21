@@ -65,7 +65,7 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 		{"papers", "Schriften", "Papers", func(p swiss.SectionProps) g.Node { return papersSection(p, d, lang) }},
 		{"homelab", "Heimnetz", "Homelab", func(p swiss.SectionProps) g.Node { return homelabSection(p, hl, lang) }},
 		{"activity", "Bewegung", "Training", func(p swiss.SectionProps) g.Node { return stravaSection(p, d, lang) }},
-		{"skills", "Kompetenzen", "Skills", func(p swiss.SectionProps) g.Node { return skillsSection(p, lang) }},
+		{"skills", "Kompetenzen", "Skills", func(p swiss.SectionProps) g.Node { return skillsSection(p, d, lang) }},
 		{"under-the-hood", "Maschinenraum", "Under the Hood", func(p swiss.SectionProps) g.Node { return codeShowcaseSection(p, lang) }},
 		{"contact", "Kontakt", "Contact", func(p swiss.SectionProps) g.Node { return contactSection(p, d.ContentFor(lang).Contact, lang) }},
 	}
@@ -84,6 +84,7 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 		Brand:     "mljr.eu",
 		BrandSub:  "— Michael Reinegger · Linz (AT)",
 		Items:     items,
+		Primary:   sitePrimary(lang, true),
 		Actions:   siteActions(lang),
 		PageID:    "page",
 		SkipLabel: tr(lang, "Zum Inhalt springen", "Skip to content"),
