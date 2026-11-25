@@ -38,8 +38,8 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 	liveTools := d.LiveToolProjects()
 	title := tr(lang, "Michael Reinegger — IT-Security-Engineer in Linz", "Michael Reinegger — IT Security Engineer, Linz")
 	ogDescription := tr(lang,
-		"Portfolio von Michael Reinegger: Dipl.-Ing. Netzwerke & IT-Sicherheit (JKU Linz), Go, selbst gehostete Infrastruktur, Projekte, Laufbahn und Homelab live.",
-		"Portfolio of Michael Reinegger: Dipl.-Ing. in Networks & IT Security (JKU Linz), Go, self-hosted infrastructure, projects, career and a live homelab.")
+		"Portfolio von Michael Reinegger: Dipl.-Ing. Netzwerke & IT-Sicherheit (JKU Linz), Go, selbst gehostete Infrastruktur, Projekte, Laufbahn und ein Zero-Trust-Homelab live.",
+		"Portfolio of Michael Reinegger: Dipl.-Ing. in Networks & IT Security (JKU Linz), Go, self-hosted infrastructure, projects, career and a live zero-trust homelab.")
 	ogURL := tr(lang, "https://mljr.eu/de/", "https://mljr.eu/")
 	headExtra := append([]g.Node{
 		g.El("style", g.Raw(homepageCSS+homeCSS+chartCSS+netCSS+careerMapCSS+leitstandCSS+hoodCSS+contactCSS+bewegungCSS+catalogueCSS+tabsCSS+labCSS+skillsCSS)),

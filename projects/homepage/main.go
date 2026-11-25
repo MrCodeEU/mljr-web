@@ -90,6 +90,9 @@ func main() {
 	e.GET("/cv", func(c echo.Context) error {
 		return web.Render(c, 200, pages.CV(dataStore.Current(), web.Lang(c), analytics))
 	})
+	e.GET("/notes/zero-trust", func(c echo.Context) error {
+		return web.Render(c, 200, pages.ZeroTrustNote(dataStore.Current(), web.Lang(c), analytics))
+	})
 	e.GET("/impressum", func(c echo.Context) error {
 		return web.Render(c, 200, pages.Impressum(web.Lang(c), analytics))
 	})
@@ -166,6 +169,7 @@ func main() {
 		}
 		add("/", "weekly", "1.0")
 		add("/cv", "monthly", "0.8")
+		add("/notes/zero-trust", "monthly", "0.7")
 		add("/impressum", "monthly", "0.3")
 		add("/datenschutz", "monthly", "0.3")
 		for _, it := range pages.PlaygroundURLPaths() {
