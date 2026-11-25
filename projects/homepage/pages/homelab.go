@@ -58,11 +58,12 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 	if snap.UpCount < total {
 		upVariant = "second"
 	}
-	routersUp, linksUp := 0, 0
+	routersUp, linksUp, dark := 0, 0, 0
 	for _, m := range snap.Mesh {
 		if m.Online {
 			routersUp++
 		}
+		dark += m.Services
 	}
 	for _, l := range snap.MeshLinks {
 		if l.Up {
@@ -121,7 +122,7 @@ func HomelabPanel(snap homelab.Snapshot) g.Node {
 		}
 		figs = append(figs,
 			figure{"Ziti-Router", fmt.Sprintf("%d/%d", routersUp, len(snap.Mesh)), fmt.Sprintf("online · %d/%d Links", linksUp, len(snap.MeshLinks)), meshVariant, "lucide:network"},
-			figure{"Verbindungen / Circuits", num(snap.MeshCircuits), "offen übers Overlay / open on the overlay", "", "lucide:lock"},
+			figure{"Dunkle Dienste / Dark services", fmt.Sprint(dark), fmt.Sprintf("nur übers Overlay · %s offene Verbindungen / overlay only · open circuits", num(snap.MeshCircuits)), "", "lucide:lock"},
 		)
 	} else {
 		figs = append(figs,
@@ -458,13 +459,44 @@ func archFlow(lang string) g.Node {
 }
 
 // migrationCell folds the zero-trust migration into one line that opens to
-// the full list of gated phases.
+// the full list of gated phases and a link to the field note.
 func migrationCell(mig *hpdata.MigrationContent, lang string) g.Node {
 	if mig == nil || len(mig.Phases) == 0 {
 		return nil
 	}
-	active, last := "", mig.Phases[len(mig.Phases)-1].Num
+	return swiss.Cell(swiss.CellProps{Variant: "flush"},
+		h.Details(h.Class("zt"),
+			h.Summary(
+				h.Span(h.Class("zt-title"), g.Text(mig.Title)),
+				h.Span(h.Class("zt-status"), g.Text(migrationStatus(mig, lang))),
+				h.Span(h.Class("zt-open"), g.Attr("aria-hidden", "true"), g.Text("+")),
+			),
+			h.Div(h.Class("zt-body"),
+				g.If(mig.Intro != "", h.P(h.Class("zt-intro"), g.Text(mig.Intro))),
+				migrationList(mig, lang),
+				h.P(h.Class("zt-more"), swiss.BtnLink(tr(lang, "/de/notes/zero-trust", "/notes/zero-trust"), false, nil,
+					g.Text(tr(lang, "Die ganze Geschichte: Von Tailscale zu OpenZiti →", "The whole story: from Tailscale to OpenZiti →")))),
+			),
+		),
+	)
+}
+
+// migrationStatus names the running phase, or how many are done.
+func migrationStatus(mig *hpdata.MigrationContent, lang string) string {
 	done := 0
+	for _, ph := range mig.Phases {
+		switch ph.Status {
+		case "active":
+			return fmt.Sprintf(tr(lang, "Phase %s von %s läuft", "Phase %s of %s in progress"), ph.Num, mig.Phases[len(mig.Phases)-1].Num)
+		case "done":
+			done++
+		}
+	}
+	return fmt.Sprintf(tr(lang, "%d von %d Phasen erledigt", "%d of %d phases done"), done, len(mig.Phases))
+}
+
+// migrationList renders the phases with their status and gate date.
+func migrationList(mig *hpdata.MigrationContent, lang string) g.Node {
 	rows := make([]g.Node, len(mig.Phases))
 	for i, ph := range mig.Phases {
 		mark := map[string]string{"done": "✓", "active": "●", "planned": "○"}[ph.Status]
@@ -473,14 +505,6 @@ func migrationCell(mig *hpdata.MigrationContent, lang string) g.Node {
 			"active":  tr(lang, "läuft", "in progress"),
 			"planned": tr(lang, "geplant", "planned"),
 		}[ph.Status]
-		switch ph.Status {
-		case "done":
-			done++
-		case "active":
-			if active == "" {
-				active = ph.Num
-			}
-		}
 		if ph.Date != "" {
 			if t, err := time.Parse("2006-01-02", ph.Date); err == nil {
 				state += " · " + t.Format("02.01.2006")
@@ -495,23 +519,7 @@ func migrationCell(mig *hpdata.MigrationContent, lang string) g.Node {
 			h.Span(h.Class("zt-state"), g.Text(mark+" "+state)),
 		)
 	}
-	status := fmt.Sprintf(tr(lang, "%d von %d Phasen erledigt", "%d of %d phases done"), done, len(mig.Phases))
-	if active != "" {
-		status = fmt.Sprintf(tr(lang, "Phase %s von %s läuft", "Phase %s of %s in progress"), active, last)
-	}
-	return swiss.Cell(swiss.CellProps{Variant: "flush"},
-		h.Details(h.Class("zt"),
-			h.Summary(
-				h.Span(h.Class("zt-title"), g.Text(mig.Title)),
-				h.Span(h.Class("zt-status"), g.Text(status)),
-				h.Span(h.Class("zt-open"), g.Attr("aria-hidden", "true"), g.Text("+")),
-			),
-			h.Div(h.Class("zt-body"),
-				g.If(mig.Intro != "", h.P(h.Class("zt-intro"), g.Text(mig.Intro))),
-				h.Ol(h.Class("zt-list"), g.Group(rows)),
-			),
-		),
-	)
+	return h.Ol(h.Class("zt-list"), g.Group(rows))
 }
 
 func g2(place string) string {
@@ -588,6 +596,7 @@ const leitstandCSS = `
 .zt-active { background: var(--block); color: var(--block-fg); padding-left: .5rem; padding-right: .5rem; }
 .zt-active p { color: inherit; }
 .zt-planned .zt-num, .zt-planned b { color: var(--muted); }
+.zt-more { margin: 1rem 0 0; }
 @media (max-width: 1024px) {
   .lab-panel { grid-template-columns: minmax(0, 1fr); }
   .lab-panel > [data-span] { grid-column: 1 / -1; }

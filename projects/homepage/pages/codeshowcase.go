@@ -31,7 +31,7 @@ func codeShowcaseSection(p swiss.SectionProps, lang string) g.Node {
 		{tr(lang, "Abfrage", "Poller"), "The homelab panel polls VictoriaMetrics — range queries over 40 days come back empty, so the attack heatmap is fetched in 30-day chunks.", "projects/homepage/homelab/homelab.go", pollerExcerpt},
 		{tr(lang, "Reiter", "Tabs"), tr(lang, "Diese Blätter, die Tafeln und der Netzplan teilen ein kleines Skript: ein Klick-Listener für die ganze Seite, Pfeiltasten, und Spiele laufen nur, solange ihr Reiter offen ist.", "These sheets, the plates and the Netzplan share one small script: one click listener for the whole page, arrow keys, and games only run while their tab is open."), "projects/homepage/pages/tabs.go · tabsJS.js", tabsExcerpt},
 		{"Live", "Live updates without a framework: one attribute on the section, one SSE handler, Datastar morphs the panel in place.", "projects/homepage/handlers.go", sseExcerpt},
-		{"Radar", "The skills radar — plain trigonometry rendered to an SVG polygon at request time.", "ui/data/radarchart.go", radarExcerpt},
+		{"Mesh", tr(lang, "Privatsphäre durch Aggregation: Jede Mesh-Abfrage gruppiert nur nach Router-Namen. Identitäten wie Handy oder Laptop stehen zwar in den Metriken, erreichen die Seite aber nie.", "Privacy by aggregation: every mesh query groups by router name only. Identities such as a phone or a laptop are in the metrics, but they never reach the page."), "projects/homepage/homelab/ziti.go", meshExcerpt},
 	}
 
 	tabs := make([]g.Node, len(examples))
@@ -319,24 +319,18 @@ e.GET("/api/homelab", func(c echo.Context) error {
 // Datastar morphs #homelab-panel in place every 60 s:
 // no reload, no virtual DOM, no client-side state to sync.`
 
-const radarExcerpt = `// Radar chart: axis i sits at angle 2πi/n, starting at
-// 12 o'clock. Values scale along the spoke; the series
-// becomes a single <polygon>.
-angle := func(i int) float64 {
-	return float64(i)*2*math.Pi/float64(n) - math.Pi/2
-}
-pt := func(radius float64, i int) (float64, float64) {
-	a := angle(i)
-	return cx + radius*math.Cos(a), cy + radius*math.Sin(a)
-}
+const meshExcerpt = `// Each query aggregates down to router names, so
+// identity, client and service labels (personal devices,
+// internal service names) never reach the page.
+const (
+	qRouterOnline = "max by (router) (ziti_mesh_router_online)"
+	qLinkUp       = "max by (source, target) (ziti_mesh_link_up)"
+	qLinkLatency  = "max by (source, target) (ziti_mesh_link_latency_seconds)"
+	qTerminators  = "count by (router) (ziti_mesh_terminators > 0)"
+	qCircuits     = "sum(ziti_mesh_circuits)"
+)
 
-pts := make([]string, len(p.Axes))
-for i := range p.Axes {
-	scaled := (s.Values[i] / p.Max) * r
-	x, y := pt(scaled, i)
-	pts[i] = fmt.Sprintf("%.1f,%.1f", x, y)
-}
-sb.WriteString(fmt.Sprintf(
-	'<polygon points="%s" fill="%s" fill-opacity="0.18"
-	   stroke="%s" stroke-width="2"/>',
-	strings.Join(pts, " "), color, color))`
+// A link to a router that is offline counts as down,
+// whatever the other end still reports.
+link := MeshLink{Source: src.Name, Target: dst.Name,
+	Up: l.Value == 1 && src.Online && dst.Online}`

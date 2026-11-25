@@ -483,7 +483,7 @@ var skillGroups = []SkillGroup{
 	{"Languages", "Languages", "violet", "lucide:code-2", []string{"Go", "Rust", "TypeScript", "JavaScript", "Python", "Kotlin", "Java", "C#"}},
 	{"Web", "Web", "sky", "lucide:globe", []string{"HTML", "CSS", "Svelte", "SvelteKit", "AngularJS", "Angular", "ASP.NET", ".NET"}},
 	{"Infra / Homelab", "Infra", "lime", "lucide:server", []string{"Docker", "Puppet", "Linux", "Unraid", "OpenZiti", "Caddy", "CI/CD"}},
-	{"Security", "Security", "yellow", "lucide:shield", []string{"Cybersecurity", "Network Security", "IAM", "Prolog", "PAM"}},
+	{"Security", "Security", "yellow", "lucide:shield", []string{"Cybersecurity", "Network Security", "Zero Trust", "PKI", "IAM", "Prolog", "PAM"}},
 	{"Embedded / BLE", "Embedded", "pink", "lucide:cpu", []string{"ESP32", "BLE", "Dexcom G7", "Nightscout", "Kotlin Multiplatform"}},
 	{"Ops / Data", "Ops/Data", "mint", "lucide:database", []string{"SQLite", "VictoriaMetrics", "Grafana", "slog", "WebGL"}},
 }
@@ -923,6 +923,8 @@ func TechIcon(keyword string) string {
 		"strava":     "simple-icons:strava",
 		"pocketbase": "simple-icons:pocketbase",
 		"openziti":   "lucide:network",
+		"zero trust": "lucide:shield-check",
+		"pki":        "lucide:key",
 		"devops":     "lucide:workflow",
 		"cicd":       "lucide:git-branch",
 		"ci/cd":      "lucide:git-branch",
