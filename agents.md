@@ -701,11 +701,13 @@ Config loaded from `internal/config/config.go` via env vars:
 ### Homelab live panel — `homelab/` + `pages/homelab.go`
 
 - `homelab.New(kumaURL, slug, promURL)` + `Start(ctx, 60*time.Second)` from `main.go`; `Snapshot()` is lock-protected and cheap per request.
-- Sources: Uptime Kuma public status-page API (`/api/status-page/{slug}` + `/heartbeat/{slug}`, no auth) and PromQL instant queries against VictoriaMetrics over Tailscale (CrowdSec `cs_*` metrics, `up`).
+- Sources: Uptime Kuma public status-page API (`/api/status-page/{slug}` + `/heartbeat/{slug}`, no auth) and PromQL instant queries against VictoriaMetrics, reached over OpenZiti (CrowdSec `cs_*` metrics, `up`, and the `ziti_mesh_*` metrics of `ziti-mesh-exporter`).
 - `pages.HomelabPanel(snap)` is exported — `/api/homelab` re-renders it and patches `#homelab-panel` by id; the section polls via `data-on-interval__duration.60s`.
 - Dev fallback: `homelab.Sample()` when Kuma is unreachable and `web.IsDev()`.
 - CrowdSec detail: `promQueryVector(query, label)` powers `TopThreats` (`topk by (reason)`) and the `BansCommunity`/`BansLocal` origin split (`sum by (origin)`; CAPI/lists = community, rest = local). `threatLabel()` in `pages/homelab.go` prettifies reason names.
-- `archCard()` (static, no live data) draws the infra diagram: Internet → Caddy ingress on the VPS, a dashed Tailscale-mesh box with the three devices (mljr VPS / nuc home server / nas Unraid), and an Ansible IaC bar. Update it when the fleet changes.
+- OpenZiti mesh: `homelab/ziti.go` queries routers, links, latency, terminator counts and the circuit total; every query aggregates down to router names, so identity names (personal devices) never reach the page. A failed or empty poll keeps the last good mesh. `zitiMesh()` draws the topology (controller above the internet line, home routers below, arrows in dial direction) beside a table with the same facts.
+- `archFlow()` (static, no live data) draws the request path (Internet → mljr → OpenZiti → nuc → nas · ugreen), the web and machine planes, and the OpenVox loop. Update it when the fleet changes.
+- `migrationCell()` renders `content.json` → `migration` (the zero-trust phases) folded in a `<details>`; phase status lives in mljr-data, so updating it needs no deploy.
 
 ### Strava integration — `pages/strava.go`
 

@@ -59,11 +59,11 @@ func Home(d hpdata.SiteData, lang string, a AnalyticsConfig, hl homelab.Snapshot
 	all := []homeSection{
 		{"hero", "Identität", "Identity", func(p swiss.SectionProps) g.Node { return heroSection(p, d, lang) }},
 		{"projects", "Werkkatalog", "Catalogue", func(p swiss.SectionProps) g.Node { return catalogueSection(p, featured, rest, liveTools, lang) }},
+		{"homelab", "Heimnetz", "Homelab", func(p swiss.SectionProps) g.Node { return homelabSection(p, hl, d.ContentFor(lang).Migration, lang) }},
 		{"playground", "Labor", "Kinetic Lab", func(p swiss.SectionProps) g.Node { return labSection(p, lang) }},
 		{"opensource", "Quelltext", "Open Source", func(p swiss.SectionProps) g.Node { return githubSection(p, d, lang) }},
 		{"experience", "Laufbahn", "Career Network", func(p swiss.SectionProps) g.Node { return careerSection(p, d, lang) }},
 		{"papers", "Schriften", "Papers", func(p swiss.SectionProps) g.Node { return papersSection(p, d, lang) }},
-		{"homelab", "Heimnetz", "Homelab", func(p swiss.SectionProps) g.Node { return homelabSection(p, hl, lang) }},
 		{"activity", "Bewegung", "Training", func(p swiss.SectionProps) g.Node { return stravaSection(p, d, lang) }},
 		{"skills", "Kompetenzen", "Skills", func(p swiss.SectionProps) g.Node { return skillsSection(p, d, lang) }},
 		{"under-the-hood", "Maschinenraum", "Under the Hood", func(p swiss.SectionProps) g.Node { return codeShowcaseSection(p, lang) }},

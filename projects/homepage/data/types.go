@@ -55,8 +55,26 @@ func (d SiteData) ThesisFor(lang string) []Thesis {
 // SiteContent holds hand-authored copy for sections that change
 // independently of the GitHub/LinkedIn/Strava data feeds (mljr-data/content.json).
 type SiteContent struct {
-	Hero    HeroContent    `json:"hero"`
-	Contact ContactContent `json:"contact"`
+	Hero      HeroContent       `json:"hero"`
+	Contact   ContactContent    `json:"contact"`
+	Migration *MigrationContent `json:"migration,omitempty"`
+}
+
+// MigrationContent is the homelab's migration in gated phases, shown folded
+// in the homelab section.
+type MigrationContent struct {
+	Title  string           `json:"title"`
+	Intro  string           `json:"intro"`
+	Phases []MigrationPhase `json:"phases"`
+}
+
+// MigrationPhase is one phase. Status is "done", "active" or "planned".
+type MigrationPhase struct {
+	Num     string `json:"num"`
+	Title   string `json:"title"`
+	Summary string `json:"summary"`
+	Status  string `json:"status"`
+	Date    string `json:"date,omitempty"`
 }
 
 type HeroContent struct {
@@ -464,7 +482,7 @@ type SkillGroup struct {
 var skillGroups = []SkillGroup{
 	{"Languages", "Languages", "violet", "lucide:code-2", []string{"Go", "Rust", "TypeScript", "JavaScript", "Python", "Kotlin", "Java", "C#"}},
 	{"Web", "Web", "sky", "lucide:globe", []string{"HTML", "CSS", "Svelte", "SvelteKit", "AngularJS", "Angular", "ASP.NET", ".NET"}},
-	{"Infra / Homelab", "Infra", "lime", "lucide:server", []string{"Docker", "Puppet", "Linux", "Unraid", "Tailscale", "Caddy", "CI/CD"}},
+	{"Infra / Homelab", "Infra", "lime", "lucide:server", []string{"Docker", "Puppet", "Linux", "Unraid", "OpenZiti", "Caddy", "CI/CD"}},
 	{"Security", "Security", "yellow", "lucide:shield", []string{"Cybersecurity", "Network Security", "IAM", "Prolog", "PAM"}},
 	{"Embedded / BLE", "Embedded", "pink", "lucide:cpu", []string{"ESP32", "BLE", "Dexcom G7", "Nightscout", "Kotlin Multiplatform"}},
 	{"Ops / Data", "Ops/Data", "mint", "lucide:database", []string{"SQLite", "VictoriaMetrics", "Grafana", "slog", "WebGL"}},
@@ -904,7 +922,7 @@ func TechIcon(keyword string) string {
 		"openvox":    "simple-icons:puppet",
 		"strava":     "simple-icons:strava",
 		"pocketbase": "simple-icons:pocketbase",
-		"tailscale":  "simple-icons:tailscale",
+		"openziti":   "lucide:network",
 		"devops":     "lucide:workflow",
 		"cicd":       "lucide:git-branch",
 		"ci/cd":      "lucide:git-branch",

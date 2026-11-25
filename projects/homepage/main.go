@@ -59,14 +59,6 @@ func main() {
 		KumaURL:  cfg.Homelab.KumaURL,
 		KumaSlug: cfg.Homelab.KumaSlug,
 		PromURL:  cfg.Homelab.PromURL,
-
-		TailscaleAPIKey:  cfg.Homelab.TailscaleAPIKey,
-		TailscaleTailnet: cfg.Homelab.TailscaleTailnet,
-		InventoryURL:     cfg.Homelab.InventoryURL,
-		ServicesURL:      cfg.Homelab.ServicesURL,
-
-		NtfyURL:   cfg.Homelab.NtfyURL,
-		NtfyTopic: cfg.Homelab.NtfyTopic,
 	})
 	hlPoller.Start(context.Background(), 60*time.Second)
 	hlSnapshot := func() homelab.Snapshot {
@@ -84,6 +76,10 @@ func main() {
 			snap.ActiveBans, snap.Attacks24h, snap.SecurityEvents, snap.HostsOnline = sm.ActiveBans, sm.Attacks24h, sm.SecurityEvents, sm.HostsOnline
 			snap.BansCommunity, snap.BansLocal, snap.TopThreats = sm.BansCommunity, sm.BansLocal, sm.TopThreats
 			snap.AttackDays, snap.CPUUtil, snap.CPULabels = sm.AttackDays, sm.CPUUtil, sm.CPULabels
+		}
+		if !snap.MeshOK {
+			sm := homelab.Sample()
+			snap.MeshOK, snap.Mesh, snap.MeshLinks, snap.MeshCircuits = true, sm.Mesh, sm.MeshLinks, sm.MeshCircuits
 		}
 		return snap
 	}

@@ -13,7 +13,6 @@ require (
 	github.com/starfederation/datastar-go v1.2.2
 	golang.org/x/image v0.47.0
 	golang.org/x/net v0.62.0
-	gopkg.in/yaml.v3 v3.0.1
 	maragu.dev/gomponents v1.3.0
 )
 

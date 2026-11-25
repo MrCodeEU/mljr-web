@@ -1,5 +1,6 @@
 // Package homelab polls live infrastructure data for the homepage panel:
-// Uptime Kuma's public status-page API and PromQL stats (CrowdSec, hosts).
+// Uptime Kuma's public status-page API and PromQL stats (CrowdSec, hosts,
+// the OpenZiti mesh).
 // A background goroutine refreshes an in-memory snapshot; visitors never
 // trigger upstream calls.
 package homelab
@@ -53,28 +54,30 @@ type Snapshot struct {
 	CPUUtil    []float64  // avg CPU % across hosts, last 24h, oldest→newest
 	CPULabels  []string   // hour labels aligned to CPUUtil
 
-	// Tailscale mesh, filtered to infra hosts listed in the public
-	// homelab-automation inventory (personal devices never appear here).
-	MeshOK bool
-	Mesh   []MeshHost
+	// OpenZiti mesh: edge routers and the links between them. Only router
+	// names and counts; identities (personal devices) never appear here.
+	MeshOK       bool
+	Mesh         []MeshHost
+	MeshLinks    []MeshLink
+	MeshCircuits int // open circuits (live connections); -1 = unavailable
 }
 
-// MeshHost is one infra host in the Tailscale mesh view.
+// MeshHost is one Ziti edge router.
 type MeshHost struct {
-	Name        string // inventory hostname, e.g. "mljr"
-	TailscaleIP string
-	OS          string // OS family only (linux/windows/macOS/...), no version
-	Online      bool
-	Relay       bool // true if this host is currently reachable only via a DERP relay
-	Services    []MeshService
+	Name       string // router name, e.g. "mljr"
+	Controller bool   // runs next to the controller on the public host
+	Online     bool
+	LinksUp    int
+	LinksTotal int
+	Services   int // services hosted behind this router (terminators)
 }
 
-// MeshService is one service hosted on a MeshHost (from the public
-// homelab-automation service registry).
-type MeshService struct {
-	Name        string
-	Domain      string
-	Description string
+// MeshLink is one router-to-router link. Source dialled Target.
+type MeshLink struct {
+	Source  string
+	Target  string
+	Up      bool
+	Latency time.Duration // worse of both ends; 0 = unknown
 }
 
 // NameValue is a labeled counter (e.g. threat category → active bans).
@@ -89,8 +92,8 @@ type DayValue struct {
 	Count int
 }
 
-// Sample returns a plausible snapshot for dev environments without
-// Tailscale access to the homelab.
+// Sample returns a plausible snapshot for dev environments without access
+// to the homelab.
 func Sample() Snapshot {
 	return Snapshot{
 		FetchedAt: time.Now(),
@@ -120,28 +123,33 @@ func Sample() Snapshot {
 			{Name: "http:exploit", Value: 9},
 			{Name: "http:crawl", Value: 7},
 		},
-		AttackDays: sampleAttackDays(),
-		CPUUtil:    []float64{12, 14, 11, 18, 22, 19, 15, 13, 24, 31, 28, 21, 17, 14, 16, 19, 23, 26, 20, 15, 13, 12, 14, 17},
-		CPULabels:  sampleHourLabels(24),
-		MeshOK:     true,
-		Mesh:       sampleMesh(),
+		AttackDays:   sampleAttackDays(),
+		CPUUtil:      []float64{12, 14, 11, 18, 22, 19, 15, 13, 24, 31, 28, 21, 17, 14, 16, 19, 23, 26, 20, 15, 13, 12, 14, 17},
+		CPULabels:    sampleHourLabels(24),
+		MeshOK:       true,
+		Mesh:         sampleMesh(),
+		MeshLinks:    sampleMeshLinks(),
+		MeshCircuits: 23,
 	}
 }
 
 func sampleMesh() []MeshHost {
 	return []MeshHost{
-		{Name: "mljr", TailscaleIP: "100.100.20.1", OS: "linux", Online: true, Services: []MeshService{
-			{Name: "authelia", Domain: "auth.mljr.eu", Description: "Authelia SSO"},
-			{Name: "ntfy", Domain: "ntfy.mljr.eu", Description: "Push Notifications"},
-		}},
-		{Name: "nuc", TailscaleIP: "100.100.10.1", OS: "linux", Online: true, Services: []MeshService{
-			{Name: "uptime-kuma", Domain: "uptime.mljr.eu", Description: "Uptime Monitoring"},
-			{Name: "grafana", Domain: "grafana.mljr.eu", Description: "Monitoring"},
-		}},
-		{Name: "nas", TailscaleIP: "100.100.10.2", OS: "linux", Online: true, Relay: true},
-		{Name: "homeassistant", TailscaleIP: "100.100.10.200", OS: "linux", Online: false, Services: []MeshService{
-			{Name: "home-assistant", Domain: "home.mljr.eu", Description: "Home Automation"},
-		}},
+		{Name: "mljr", Controller: true, Online: true, LinksUp: 3, LinksTotal: 3, Services: 14},
+		{Name: "nas", Online: true, LinksUp: 2, LinksTotal: 2, Services: 9},
+		{Name: "nuc", Online: true, LinksUp: 3, LinksTotal: 3, Services: 18},
+		{Name: "ugreen", Online: true, LinksUp: 2, LinksTotal: 2, Services: 4},
+	}
+}
+
+func sampleMeshLinks() []MeshLink {
+	ms := time.Millisecond
+	return []MeshLink{
+		{Source: "nas", Target: "mljr", Up: true, Latency: 25 * ms},
+		{Source: "nas", Target: "nuc", Up: true, Latency: 5 * ms},
+		{Source: "nuc", Target: "mljr", Up: true, Latency: 24 * ms},
+		{Source: "ugreen", Target: "mljr", Up: true, Latency: 27 * ms},
+		{Source: "ugreen", Target: "nuc", Up: true, Latency: 6 * ms},
 	}
 }
 
@@ -178,16 +186,7 @@ func sampleHourLabels(n int) []string {
 type Options struct {
 	KumaURL  string
 	KumaSlug string
-	PromURL  string
-
-	TailscaleAPIKey  string // empty disables the mesh panel entirely
-	TailscaleTailnet string
-
-	InventoryURL string // public homelab-automation OpenVox tailscale_hosts map (raw YAML, common.yaml)
-	ServicesURL  string // public homelab-automation services_catalog (raw YAML, common.yaml)
-
-	NtfyURL   string // ops alert target, e.g. failed Tailscale API auth
-	NtfyTopic string
+	PromURL  string // also feeds the OpenZiti mesh
 }
 
 type Poller struct {
@@ -195,47 +194,23 @@ type Poller struct {
 	kumaSlug string
 	promURL  string
 
-	tsAPIKey     string
-	tsTailnet    string
-	inventoryURL string
-	servicesURL  string
-	ntfyURL      string
-	ntfyTopic    string
-
 	client *http.Client
-
-	// Inventory/service-registry caches and mesh-alert throttle state are
-	// only ever touched from the single poll() goroutine — no locking needed.
-	invCache      map[string]string // inventory hostname -> tailscale_ip
-	invFetchedAt  time.Time
-	svcCache      []ServiceEntry
-	svcFetchedAt  time.Time
-	lastTSAlertAt time.Time
 
 	mu   sync.RWMutex
 	snap Snapshot
 }
 
 // New creates a poller. Empty KumaURL or PromURL disables that source;
-// empty TailscaleAPIKey disables the mesh panel.
+// without PromURL there is no mesh either.
 func New(opts Options) *Poller {
 	if opts.KumaSlug == "" {
 		opts.KumaSlug = "all"
 	}
-	if opts.TailscaleTailnet == "" {
-		opts.TailscaleTailnet = "-"
-	}
 	return &Poller{
-		kumaURL:      opts.KumaURL,
-		kumaSlug:     opts.KumaSlug,
-		promURL:      opts.PromURL,
-		tsAPIKey:     opts.TailscaleAPIKey,
-		tsTailnet:    opts.TailscaleTailnet,
-		inventoryURL: opts.InventoryURL,
-		servicesURL:  opts.ServicesURL,
-		ntfyURL:      opts.NtfyURL,
-		ntfyTopic:    opts.NtfyTopic,
-		client:       &http.Client{Timeout: 10 * time.Second},
+		kumaURL:  opts.KumaURL,
+		kumaSlug: opts.KumaSlug,
+		promURL:  opts.PromURL,
+		client:   &http.Client{Timeout: 10 * time.Second},
 	}
 }
 
@@ -272,6 +247,7 @@ func (p *Poller) poll(ctx context.Context) {
 		SecurityEvents: -1,
 		BansCommunity:  -1,
 		BansLocal:      -1,
+		MeshCircuits:   -1,
 	}
 
 	if p.kumaURL != "" {
@@ -281,9 +257,7 @@ func (p *Poller) poll(ctx context.Context) {
 	}
 	if p.promURL != "" {
 		p.fetchProm(ctx, &next)
-	}
-	if p.tsAPIKey != "" {
-		p.fetchTailscale(ctx, &next)
+		p.fetchZitiMesh(ctx, &next)
 	}
 
 	p.mu.Lock()
@@ -296,11 +270,13 @@ func (p *Poller) poll(ctx context.Context) {
 		next.PingHistory = prev.PingHistory
 		next.FetchedAt = prev.FetchedAt
 	}
-	// Same for the mesh: a transient Tailscale API hiccup shouldn't blank
-	// out the panel (the ntfy alert already covers persistent failures).
+	// Same for the mesh: a failed or empty query keeps the last good one,
+	// so a stopped router or exporter does not blank the cell at once.
 	if !next.MeshOK && prev.MeshOK {
 		next.MeshOK = true
 		next.Mesh = prev.Mesh
+		next.MeshLinks = prev.MeshLinks
+		next.MeshCircuits = prev.MeshCircuits
 	}
 	p.snap = next
 	p.mu.Unlock()
@@ -523,9 +499,15 @@ func (p *Poller) promQueryRange(ctx context.Context, query string, start, end ti
 	return out, nil
 }
 
-// promQueryVector runs an instant PromQL query and returns one NameValue per
-// result series, named by the given label, sorted by value descending.
-func (p *Poller) promQueryVector(ctx context.Context, query, label string) ([]NameValue, error) {
+// promSample is one series of an instant query result.
+type promSample struct {
+	Metric map[string]string
+	Value  float64
+}
+
+// promQuerySeries runs an instant PromQL query and returns every result
+// series with its labels.
+func (p *Poller) promQuerySeries(ctx context.Context, query string) ([]promSample, error) {
 	var res struct {
 		Status string `json:"status"`
 		Data   struct {
@@ -542,7 +524,7 @@ func (p *Poller) promQueryVector(ctx context.Context, query, label string) ([]Na
 	if res.Status != "success" || len(res.Data.Result) == 0 {
 		return nil, fmt.Errorf("no data")
 	}
-	out := make([]NameValue, 0, len(res.Data.Result))
+	out := make([]promSample, 0, len(res.Data.Result))
 	for _, r := range res.Data.Result {
 		str, ok := r.Value[1].(string)
 		if !ok {
@@ -552,7 +534,21 @@ func (p *Poller) promQueryVector(ctx context.Context, query, label string) ([]Na
 		if err != nil {
 			continue
 		}
-		out = append(out, NameValue{Name: r.Metric[label], Value: int(f)})
+		out = append(out, promSample{Metric: r.Metric, Value: f})
+	}
+	return out, nil
+}
+
+// promQueryVector runs an instant PromQL query and returns one NameValue per
+// result series, named by the given label, sorted by value descending.
+func (p *Poller) promQueryVector(ctx context.Context, query, label string) ([]NameValue, error) {
+	series, err := p.promQuerySeries(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]NameValue, 0, len(series))
+	for _, r := range series {
+		out = append(out, NameValue{Name: r.Metric[label], Value: int(r.Value)})
 	}
 	sort.Slice(out, func(a, b int) bool { return out[a].Value > out[b].Value })
 	return out, nil

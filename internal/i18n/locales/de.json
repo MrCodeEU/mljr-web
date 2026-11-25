@@ -50,7 +50,7 @@
     },
     "homelab": {
       "title": "Homelab",
-      "sub": "live via Tailscale"
+      "sub": "live über OpenZiti"
     },
     "activity": {
       "title": "Aktivität"

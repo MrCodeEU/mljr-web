@@ -10,7 +10,7 @@ import (
 	h "maragu.dev/gomponents/html"
 )
 
-// MeshNode is one infra host in a Tailscale-style mesh diagram.
+// MeshNode is one infra host in a hub-and-spoke mesh diagram.
 type MeshNode struct {
 	Name     string
 	OS       string // OS family, e.g. "linux", "windows", "macOS"
