@@ -136,7 +136,6 @@ simple-icons:ansible
 simple-icons:puppet
 simple-icons:strava
 simple-icons:pocketbase
-simple-icons:tailscale
 simple-icons:csharp
 simple-icons:grafana
 simple-icons:angular

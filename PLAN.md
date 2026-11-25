@@ -138,7 +138,7 @@ never hit upstream sources.
 ```bash
 HOMELAB_KUMA_URL="https://uptime.mljr.eu"   # default; public, no auth
 HOMELAB_KUMA_SLUG="all"                     # default
-HOMELAB_PROM_URL="http://nuc.tail33930.ts.net:19090"  # Tailscale-only; empty disables PromQL stats
+HOMELAB_PROM_URL="http://ziti-proxy:19090"  # over OpenZiti; empty disables PromQL stats and the mesh
 ```
 
 The metrics backend is VictoriaMetrics (PromQL-compatible; deployed via the
